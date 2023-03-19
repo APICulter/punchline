@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Hello world</title>
+	</head>
+	<script src="/socket.io/socket.io.js"></script>
+
+	<body>
+		<div id="error-container"></div>
+		<input
+			id="player-name"
+			type="text"
+			name="name"
+			value=""
+			placeholder="Enter your name!"
+		/>
+		<button
+			id="name-button"
+			type="button"
+			name="button"
+			onclick="setUsername()"
+		>
+			Enter Name
+		</button>
+		<div>
+			<input
+				id="room-pin"
+				type="text"
+				name="name"
+				value=""
+				placeholder="Give the pin for the room"
+			/>
+			<button
+				id="join-room-button"
+				type="button"
+				name="play"
+				onclick="joinRoom()"
+			>
+				Join room
+			</button>
+		</div>
+
+		<div>
+			<button
+				id="createGame"
+				type="button"
+				name="createGame"
+				onclick="createGame()"
+			>
+				Create Game
+			</button>
+		</div>
+
+		<div>
+			<p id="pin-created"></p>
+		</div>
+
+		<ul id="players"></ul>
+	</body>
+
+	<script>
+		var socket = io();
+
+		//choix du nom
+		function setUsername() {
+			socket.emit("setUsername", document.getElementById("player-name").value);
+		}
+		var user;
+		socket.on("userExists", function (data) {
+			document.getElementById("error-container").innerHTML = data;
+		});
+		socket.on("userSet", function (data) {
+			user = data.username;
+			let finalName = document.createElement("p");
+			finalName.textContent = "My name is " + user;
+			document.getElementById("player-name").remove();
+			document.getElementById("name-button").remove();
+			document.getElementById("error-container").innerHTML = "";
+			document.body.prepend(finalName);
+			console.log(finalName);
+		});
+
+		//choix du game
+		function createGame() {
+			socket.emit("createGame", { user: user });
+		}
+		socket.on("new pin", function (data) {
+			if (user) {
+				document.getElementById("pin-created").innerHTML +=
+					"<div><b> Pin for the game </b>: " + data + "</div>";
+			}
+		});
+
+		//rejoindre une room
+		function joinRoom() {
+			//faire une vérif que c'est pas vide et que c'est bien un nombre
+			socket.emit("joinRoom", {
+				pin: document.getElementById("room-pin").value,
+				user: user,
+			});
+		}
+		socket.on("joined", function (data) {
+			if (user) {
+				if (data) {
+                    let joined = document.createElement('div');
+                    joined.textContent = 'Vous avez rejoint la game avec le pin ' + data.game.pin ;
+                    document.body.append(joined);
+				}
+			}
+		});
+
+		//début du jeu
+		function startGame() {
+			//    socket.emit('startGame',  document.getElementById('room-pin').value );
+		}
+	</script>
+</html>
