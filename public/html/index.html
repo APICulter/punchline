@@ -55,11 +55,23 @@
 			<p id="pin-created"></p>
 		</div>
 
+		<div>
+			<button
+				id="startGame"
+				type="button"
+				name="startGame"
+				onclick="startGame()"
+			>
+				Play
+			</button>
+		</div>
+		
+		<p>Players for the game</p>
 		<ul id="players"></ul>
 	</body>
 
 	<script>
-		var socket = io();
+		const socket = io();
 
 		//choix du nom
 		function setUsername() {
@@ -87,17 +99,28 @@
 		socket.on("new pin", function (data) {
 			if (user) {
 				document.getElementById("pin-created").innerHTML +=
-					"<div><b> Pin for the game </b>: " + data + "</div>";
+					"<div><b> Pin for the game </b>: <span id='pin' value=" + data + ">" + data + "</span></div>";
+			}
+		});
+        socket.on("game already exists", function (data) {
+			if (user) {
+				document.getElementById("pin-created").innerHTML +=
+					"<div><b> The player already hosts a game of pin </b>: " + data + "</div>";
 			}
 		});
 
 		//rejoindre une room
 		function joinRoom() {
 			//faire une vérif que c'est pas vide et que c'est bien un nombre
-			socket.emit("joinRoom", {
+			if( document.getElementById("room-pin").value.length > 0 && !isNaN(document.getElementById("room-pin").value)) {
+				socket.emit("joinRoom", {
 				pin: document.getElementById("room-pin").value,
 				user: user,
 			});
+			} else {
+				document.getElementById('join-room-button').append('<span>Ne peut pas être vide et unqiueemnt des chiffres</span>')
+			}
+			
 		}
 		socket.on("joined", function (data) {
 			if (user) {
@@ -108,10 +131,24 @@
 				}
 			}
 		});
+		socket.on("newJoiner", function (data) {
+			if (user) {
+				if (data) {
+                    let joined = document.createElement('li');
+                    joined.textContent = data ;
+                    document.getElementById('players').append(joined);
+				}
+			}
+		});
+
+		socket.on('redirect', newGameURL => {
+   			 // redirect to new URL
+   			 window.location = newGameURL;
+		});
 
 		//début du jeu
 		function startGame() {
-			//    socket.emit('startGame',  document.getElementById('room-pin').value );
+			 socket.emit('startGame',  document.getElementById('pin').value );
 		}
 	</script>
 </html>

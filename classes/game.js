@@ -1,10 +1,12 @@
 class Game {
-    constructor (pin, hostId, players, content, settings) {
+    constructor (pin, hostSocketId, players, content, settings, questions, answers) {
        this.pin = pin;
-       this.hostId = hostId;
+       this.hostSocketId = hostSocketId;
        this.players = [];
        this.content = content;
        this.settings = settings;
+       this.questions = questions;
+       this.answers = answers;
     }
 }
 

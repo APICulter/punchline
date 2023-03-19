@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt</title>
+</head>
+<script src="/socket.io/socket.io.js"></script>
+<body>
+    <p>this is the prompt to answer </p>
+    <div class="hidden" id="pin"></div>
+
+  
+    <textarea name="answer" id="answer" cols="30" rows="10" placeholder="Your answer"></textarea>
+    <button type="submit" id="button" class="bg-gray-400 p-2 rounded-md" onclick="sendAnswer()">Enter</button>
+</body>
+<script>
+    const socket = io();
+    var user;
+    socket.on('redirect', newGameURL => {
+   			 // redirect to new URL
+   			 window.location = newGameURL;
+		});
+
+    socket.on('game-pin', function (data) {
+			// if (user) {
+				if (data) {
+                    document.getElementById('pin').value = data;
+				}
+			// }
+		});
+    
+    function sendAnswer() {
+        socket.emit('answer', { answer: document.getElementById('answer').textContent, pin: document.getElementById('pin').value });
+        document.getElementById('button').setAttribute('disabled', 'disabled');
+    }
+</script>
+</html>
