@@ -21,3 +21,7 @@
 </ul>
 
 <h5>Installation Instructions</h5>
+
+npm init -y
+npm install --save express socket.io
+npm install -g nodemon
