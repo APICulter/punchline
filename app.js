@@ -120,15 +120,18 @@ io.on("connection", function (socket) {
 				textAnswer: data.answer
 				});
 			game.maxAnswers++;
-
+			socket.emit('redirect', "/html/prompt.html");
+			
 			if(game.maxAnswers == game.nbOfPlayers) {
-			socket.broadcast.emit("redirect", "/html/waiting.html");
-			io.to(game.hostSocketId).emit("vote", game.pin, game.answers);
+				//faire en sorte que tout le monde soit redirigé. ici broadcast 
+			// socket.broadcast.emit("redirect", "/html/waiting.html");
+			io.to(game.hostSocketId).emit("displayAnswers", game.pin, game.answers, game.players);
 			}
-		} else {
-			socket.broadcast.emit("redirect", "/html/waiting.html");
-			// io.to(game.hostSocketId).emit("newJoiner", data.user);
-		}
+		} 
+		// else {
+		// 	socket.broadcast.emit("redirect", "/html/waiting.html");
+		// 	// io.to(game.hostSocketId).emit("newJoiner", data.user);
+		// }
 	});
 
 

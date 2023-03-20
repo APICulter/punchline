@@ -1,45 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Punchline Game</title>
-</head>
-<script src="/socket.io/socket.io.js"></script>
-<body>
-    <p>This is the game</p>
-<br>
-<br>
-    
-</body>
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Punchline Game</title>
+	</head>
+	<script src="/socket.io/socket.io.js"></script>
+	<body>
+		<p>This is the game</p>
+		<br />
+		<br />
+	</body>
 
-<script>
-    const socket = io();
-    let punchlinePin;
-    let playerName;
-    let numberQuestion = 0;
+	<script>
+		const socket = io();
+		let punchlinePin;
+		let playerName;
+		let numberQuestion = 0;
 
-    window.onload = function () {
-        playerName = sessionStorage.getItem('playerName');
-        punchlinePin = sessionStorage.getItem('punchlinePin');
-        getQuestion(numberQuestion);
-    }
+		window.onload = function () {
+			playerName = sessionStorage.getItem("playerName");
+			punchlinePin = sessionStorage.getItem("punchlinePin");
+			getQuestion(numberQuestion);
+		};
 
-    function getQuestion(numberQuestion) {
-        socket.emit('getQuestion', { punchlinePin: punchlinePin, numberQuestion: numberQuestion } );
-    }
+		function getQuestion(numberQuestion) {
+			socket.emit("getQuestion", {
+				punchlinePin: punchlinePin,
+				numberQuestion: numberQuestion,
+			});
+		}
 
-    socket.on("question", function (data) {
-        let question = document.createElement('div');
-        question.textContent = data.question;
-        document.body.append(question);
+		socket.on("question", function (data) {
+			let question = document.createElement("div");
+			question.textContent = data.question;
+			document.body.append(question);
 		});
 
-    socket.on("vote", function (data) {
-			
+		socket.on("displayAnswers", function (data) {
+			//montrer toutes les réponses une à une de manière aléatoire (pas dans l'ordre d'arrivée des réponses)
+			//faire un emit "getVote" qui renvoie les joeurs sur la page de vote
+			//créer la page de vote et envoyer les réponses de manière aléatoire
 		});
 
-
-</script>
+		socket.on("vote", function (data) {
+			//faire le vote pour chaque réponse le cas échéant
+			//faire le décompte des points
+			//passer à la question suivante s'il en reste une, sinon passer au tableau de score final
+		});
+	</script>
 </html>
