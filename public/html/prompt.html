@@ -8,31 +8,28 @@
 </head>
 <script src="/socket.io/socket.io.js"></script>
 <body>
-    <p>this is the prompt to answer </p>
-    <div class="hidden" id="pin"></div>
-
-  
+    
     <textarea name="answer" id="answer" cols="30" rows="10" placeholder="Your answer"></textarea>
     <button type="submit" id="button" class="bg-gray-400 p-2 rounded-md" onclick="sendAnswer()">Enter</button>
 </body>
+
 <script>
     const socket = io();
-    var user;
+    let punchlinePin;
+    let playerName;
+
+    window.onload = function () {
+        playerName = sessionStorage.getItem('playerName');
+        punchlinePin = sessionStorage.getItem('punchlinePin');
+    }
+
     socket.on('redirect', newGameURL => {
    			 // redirect to new URL
    			 window.location = newGameURL;
 		});
 
-    socket.on('game-pin', function (data) {
-			// if (user) {
-				if (data) {
-                    document.getElementById('pin').value = data;
-				}
-			// }
-		});
-    
     function sendAnswer() {
-        socket.emit('answer', { answer: document.getElementById('answer').textContent, pin: document.getElementById('pin').value });
+        socket.emit('answer', { answer: document.getElementById('answer').value, punchlinePin: punchlinePin, playerName: playerName });
         document.getElementById('button').setAttribute('disabled', 'disabled');
     }
 </script>

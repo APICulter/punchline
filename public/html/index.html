@@ -84,6 +84,8 @@
 		socket.on("userSet", function (data) {
 			user = data.username;
 			let finalName = document.createElement("p");
+			sessionStorage.setItem('playerName', user);
+
 			finalName.textContent = "My name is " + user;
 			document.getElementById("player-name").remove();
 			document.getElementById("name-button").remove();
@@ -141,14 +143,15 @@
 			}
 		});
 
-		socket.on('redirect', newGameURL => {
+		socket.on('redirect', (newGameURL, gamePin) => {
    			 // redirect to new URL
-   			 window.location = newGameURL;
+   			window.location = newGameURL;
+			sessionStorage.setItem('punchlinePin', gamePin);
 		});
 
 		//début du jeu
 		function startGame() {
-			 socket.emit('startGame',  document.getElementById('pin').value );
+			 socket.emit('startGame', { pin: document.getElementById('pin').textContent } );
 		}
 	</script>
 </html>

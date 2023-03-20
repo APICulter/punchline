@@ -14,9 +14,10 @@
 
 <script>
 var socket = io();
-socket.on('redirect', newGameURL => {
+socket.on('redirect', (newGameURL, gamePin) => {
    			 // redirect to new URL
    			 window.location = newGameURL;
+             sessionStorage.setItem('punchlinePin', gamePin);
 		});
 
 

@@ -82,33 +82,76 @@ io.on("connection", function (socket) {
 		}
 	});
 
-	//Send message to everyone
+	
 	socket.on("startGame", function (data) {
 		//lance la game pour tous les joueurs dans la room
-		socket.broadcast.emit("redirect", "/html/prompt.html");
-		socket.broadcast.emit("game-pin", data);
-		socket.emit('redirect', "/html/game.html" );
+		let game = games.find((game) => game.pin === Number(data.pin));
+		game.nbOfPlayers = game.players.length;
+		socket.broadcast.emit("redirect", "/html/prompt.html", data.pin);
+		//emit ci dessous a deplacer dans la fonction de jeu
+		socket.emit('redirect', "/html/game.html", data.pin );
 		//plus aucun nouveau joueur ne peut entrer dans la room
-		
+		initQuestions(game);
+		//ajouter la configuration => plus tard
+		// socket.emit('question', game.questions );
 		
 		//le client qui a créé la game n'est pas joeur et sort du pool
 		//appelle la fonction qui va s'occuper de l'algorithme principal du jeu
 	});
 
-	socket.on('answer', function(data){
-		let game = games.find((game) => game.pin === Number(data.pin));
+	//à changer car on devrait pouvoir faire la séquence de questions de manière générique, et avec un meilleur nom
+	socket.on('getQuestion', function (data){
+		let game = games.find((game) => game.pin === Number(data.punchlinePin));
+		let question = game.questions[Number(data.numberQuestion)];
+		socket.emit('question', question);
 
-		game.answers.push({
-			playerSocketId: ID, 
-			//a voir si la connexion est coupée...
-			playerName: game.players.find((player) => player.socketId === ID),
-			textAnswer: data.answer
-			});
+
 	});
+
+	socket.on('answer', function (data){
+
+		let game = games.find((game) => game.pin === Number(data.punchlinePin));
+		let player = game.players.find((player) => player.name === data.playerName);
+		if (game.maxAnswers < game.nbOfPlayers) {
+			game.answers.push({
+				// playerSocketId: ID, 
+				//a voir si la connexion est coupée...
+				playerName: player.name,
+				textAnswer: data.answer
+				});
+			game.maxAnswers++;
+
+			if(game.maxAnswers == game.nbOfPlayers) {
+			socket.broadcast.emit("redirect", "/html/waiting.html");
+			io.to(game.hostSocketId).emit("vote", game.pin, game.answers);
+			}
+		} else {
+			socket.broadcast.emit("redirect", "/html/waiting.html");
+			// io.to(game.hostSocketId).emit("newJoiner", data.user);
+		}
+	});
+
+
+
+	//Cherche les questions en BDD et les ajoute à la game
+	function initQuestions(game) {
+		//boucle
+		game.questions.push({id: 1, question: 'de quelle couleur est le ciel ?'});
+		game.questions.push({id: 2, question: 'Pourquoi les poissons ?'});
+		
+	}
+
+	function vote(game) {
+		
+	}
+
 });
 
 http.listen(3000, function () {
 	console.log("listening on localhost:3000");
 });
+
+//peut être mettre cette fonction à l'intérieur du  io.on("connection", function (socket) {
+
 
 

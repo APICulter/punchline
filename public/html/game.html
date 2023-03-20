@@ -6,10 +6,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Punchline Game</title>
 </head>
+<script src="/socket.io/socket.io.js"></script>
 <body>
     <p>This is the game</p>
 <br>
 <br>
-    <p>quelle est la couleur du ciel ?</p>
+    
 </body>
+
+<script>
+    const socket = io();
+    let punchlinePin;
+    let playerName;
+    let numberQuestion = 0;
+
+    window.onload = function () {
+        playerName = sessionStorage.getItem('playerName');
+        punchlinePin = sessionStorage.getItem('punchlinePin');
+        getQuestion(numberQuestion);
+    }
+
+    function getQuestion(numberQuestion) {
+        socket.emit('getQuestion', { punchlinePin: punchlinePin, numberQuestion: numberQuestion } );
+    }
+
+    socket.on("question", function (data) {
+        let question = document.createElement('div');
+        question.textContent = data.question;
+        document.body.append(question);
+		});
+
+    socket.on("vote", function (data) {
+			
+		});
+
+
+</script>
 </html>
