@@ -121,11 +121,11 @@ io.on("connection", function (socket) {
 				});
 			game.maxAnswers++;
 			socket.emit('redirect', "/html/prompt.html");
-			
+
 			if(game.maxAnswers == game.nbOfPlayers) {
 				//faire en sorte que tout le monde soit redirigé. ici broadcast 
 			// socket.broadcast.emit("redirect", "/html/waiting.html");
-			io.to(game.hostSocketId).emit("displayAnswers", game.pin, game.answers, game.players);
+			io.to(game.hostSocketId).emit("displayAnswers", game.answers);
 			}
 		} 
 		// else {

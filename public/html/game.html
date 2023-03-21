@@ -11,6 +11,10 @@
 		<p>This is the game</p>
 		<br />
 		<br />
+
+        <div id="answer">
+            
+        </div>
 	</body>
 
 	<script>
@@ -40,6 +44,12 @@
 
 		socket.on("displayAnswers", function (data) {
 			//montrer toutes les réponses une à une de manière aléatoire (pas dans l'ordre d'arrivée des réponses)
+            let randomAnswers = shuffle(data.game.answers);
+            
+            randomAnswers.forEach(element => {
+            //    setTimeout( "document.getElementById('answer').textContent = element.textAnswer",  3000);
+            console.log(element);
+            });
 			//faire un emit "getVote" qui renvoie les joeurs sur la page de vote
 			//créer la page de vote et envoyer les réponses de manière aléatoire
 		});
