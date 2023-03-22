@@ -53,10 +53,14 @@
                index++;
             });
 
-            document.getElementById('answer').textContent = "";
+            setTimeout(function() {
+                document.getElementById('answer').remove();
+                socket.emit('getVotes', { punchlinePin: punchlinePin });
+            }, data.length*5000 + 5000);
             
+
             //faire un emit "getVote" qui renvoie les joeurs sur la page de vote
-            socket.emit('getVotes', { punchlinePin: punchlinePin });
+            
 			
 			//créer la page de vote et envoyer les réponses de manière aléatoire
 		});

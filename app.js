@@ -140,14 +140,15 @@ io.on("connection", function (socket) {
 	socket.on('getVotes', function (data){
 
 		// let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		socket.emit('redirect', "/html/vote.html");
+		socket.emit('redirect', "/html/votePrompt.html");
 		
 	});
 
 	socket.on('getAnswers', function (data){
 
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		socket.emit('postAnswers', game.answers);
+		socket.broadcast.emit('postAnswers', game.answers);
+		socket.emit('redirect', "/html/votes.html" );
 		
 	});
 
