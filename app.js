@@ -125,13 +125,30 @@ io.on("connection", function (socket) {
 			if(game.maxAnswers == game.nbOfPlayers) {
 				//faire en sorte que tout le monde soit redirigé. ici broadcast 
 			// socket.broadcast.emit("redirect", "/html/waiting.html");
-			io.to(game.hostSocketId).emit("displayAnswers", game.answers);
+			// io.to(game.hostSocketId).emit("displayAnswers", game.answers);
+
+			//à changer pour que émette uniquement vers la room
+			io.emit("displayAnswers", game.answers);
 			}
 		} 
 		// else {
 		// 	socket.broadcast.emit("redirect", "/html/waiting.html");
 		// 	// io.to(game.hostSocketId).emit("newJoiner", data.user);
 		// }
+	});
+
+	socket.on('getVotes', function (data){
+
+		// let game = games.find((game) => game.pin === Number(data.punchlinePin));
+		socket.emit('redirect', "/html/vote.html");
+		
+	});
+
+	socket.on('getAnswers', function (data){
+
+		let game = games.find((game) => game.pin === Number(data.punchlinePin));
+		socket.emit('postAnswers', game.answers);
+		
 	});
 
 

@@ -44,13 +44,20 @@
 
 		socket.on("displayAnswers", function (data) {
 			//montrer toutes les réponses une à une de manière aléatoire (pas dans l'ordre d'arrivée des réponses)
-            let randomAnswers = shuffle(data.game.answers);
-            
-            randomAnswers.forEach(element => {
-            //    setTimeout( "document.getElementById('answer').textContent = element.textAnswer",  3000);
-            console.log(element);
+            // let randomAnswers = shuffle(data.game.answers);
+           let index = 1;
+            data.forEach(element => {
+                setTimeout(() => {
+                    document.getElementById('answer').textContent = element.textAnswer;
+                }, 5000*index);
+               index++;
             });
-			//faire un emit "getVote" qui renvoie les joeurs sur la page de vote
+
+            document.getElementById('answer').textContent = "";
+            
+            //faire un emit "getVote" qui renvoie les joeurs sur la page de vote
+            socket.emit('getVotes', { punchlinePin: punchlinePin });
+			
 			//créer la page de vote et envoyer les réponses de manière aléatoire
 		});
 

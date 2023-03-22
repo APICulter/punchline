@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote</title>
+</head>
+<script src="/socket.io/socket.io.js"></script>
+<body>
+    <ul id="answers">
+
+    </ul>
+</body>
+
+<script>
+    const socket = io();
+    let punchlinePin;
+
+    window.onload = function () {
+			punchlinePin = sessionStorage.getItem("punchlinePin");
+            socket.emit('getAnswers', { punchlinePin: punchlinePin });
+		};
+    
+        socket.on('postAnswers', function (data) {
+            //randomizer
+            data.forEach(element => {
+                document.getElementById('answers').append('<div>' + element.answer + '</div>');
+            });
+        });
+
+</script>
+</html>
