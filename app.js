@@ -94,7 +94,11 @@ io.on("connection", function (socket) {
 		initQuestions(game);
 		//ajouter la configuration => plus tard
 		// socket.emit('question', game.questions );
-		
+
+		//init des votes
+		game.players.forEach((player) => {
+			game.votes[player.name] = 0;
+		});
 		//le client qui a créé la game n'est pas joeur et sort du pool
 		//appelle la fonction qui va s'occuper de l'algorithme principal du jeu
 	});
@@ -120,7 +124,7 @@ io.on("connection", function (socket) {
 				textAnswer: data.answer
 				});
 			game.maxAnswers++;
-			socket.emit('redirect', "/html/prompt.html");
+			socket.emit('redirect', "/html/waiting.html");
 
 			if(game.maxAnswers == game.nbOfPlayers) {
 				//faire en sorte que tout le monde soit redirigé. ici broadcast 
@@ -140,16 +144,22 @@ io.on("connection", function (socket) {
 	socket.on('getVotes', function (data){
 
 		// let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		socket.emit('redirect', "/html/votePrompt.html");
-		
+		socket.broadcast.emit('redirect', "/html/votePrompt.html");
+		// socket.emit('redirect', '/html/votes.html');
 	});
 
 	socket.on('getAnswers', function (data){
 
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		socket.broadcast.emit('postAnswers', game.answers);
-		socket.emit('redirect', "/html/votes.html" );
+		socket.emit('postAnswers', game.answers);
 		
+		
+	});
+
+	socket.on('vote', function(playerName, pin){
+		let game = games.find((game) => game.pin === Number(pin));
+		game.votes[playerName]++;
+		socket.emit('redirect', "/html/waiting.html");
 	});
 
 

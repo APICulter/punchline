@@ -8,9 +8,16 @@
 </head>
 <script src="/socket.io/socket.io.js"></script>
 <body>
-    <ul id="answers">
 
-    </ul>
+    <form action="">
+        <div id="answers">
+
+        </div>
+        <br>
+        <button id="vote" type="submit">Vote</button>
+    </form>
+
+    
 </body>
 
 <script>
@@ -25,9 +32,39 @@
         socket.on('postAnswers', function (data) {
             //randomizer
             data.forEach(element => {
-                document.getElementById('answers').append('<div>' + element.answer + '</div>');
+                let answerBlock = document.createElement('div');
+                answerBlock.id = data.indexOf(element);
+                
+                let answer = document.createElement('input');
+                answer.setAttribute("type", "radio");
+                answer.id = element.playerName;
+                answer.value = element.textAnswer;
+                answer.name = 'answer';
+
+                let label = document.createElement('label');
+                label.textContent = element.textAnswer;
+                label.setAttribute("for", answer.id);
+
+                document.getElementById('answers').append(answerBlock);
+                document.getElementById(answerBlock.id).append(answer);
+                document.getElementById(answerBlock.id).append(label);
             });
+
+            
         });
+
+        const form = document.querySelector("form");
+        //envoyer juste l'id ou le nom du joueur plutot que la réponse...
+       form.addEventListener('submit', function() {
+
+            let answer = document.querySelector('input[name=answer]:checked').id;
+            socket.emit('vote', answer, punchlinePin);
+            });
+
+       socket.on('redirect', newGameURL => {
+   			 // redirect to new URL
+   			 window.location = newGameURL;
+		});
 
 </script>
 </html>

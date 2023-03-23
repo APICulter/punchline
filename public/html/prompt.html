@@ -29,8 +29,15 @@
 		});
 
     function sendAnswer() {
+        
         socket.emit('answer', { answer: document.getElementById('answer').value, punchlinePin: punchlinePin, playerName: playerName });
         document.getElementById('button').setAttribute('disabled', 'disabled');
     }
+
+    socket.on('redirect', (newGameURL, gamePin) => {
+   			 // redirect to new URL
+   			 window.location = newGameURL;
+             sessionStorage.setItem('punchlinePin', gamePin);
+		});
 </script>
 </html>

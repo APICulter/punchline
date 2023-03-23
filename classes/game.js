@@ -1,5 +1,5 @@
 class Game {
-    constructor (pin, hostSocketId, players = [], settings = 'default', questions = [], answers = [], maxAnswers = 0, nbOfPlayers, votes = []) {
+    constructor (pin, hostSocketId, players = [], settings = 'default', questions = [], answers = [], maxAnswers = 0, nbOfPlayers, votes = [], maxVotes = 0) {
        this.pin = pin;
        this.hostSocketId = hostSocketId;
        this.players = players;
@@ -9,6 +9,7 @@ class Game {
        this.maxAnswers = maxAnswers;
        this.nbOfPlayers = nbOfPlayers;
        this.votes = votes;
+       this.maxVotes = maxVotes;
     }
 }
 

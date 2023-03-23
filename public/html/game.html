@@ -65,9 +65,16 @@
 			//créer la page de vote et envoyer les réponses de manière aléatoire
 		});
 
-		socket.on("vote", function (data) {
+        socket.on('redirect', newGameURL => {
+   			 // redirect to new URL
+   			 window.location = newGameURL;
+		});
+
+		socket.on("displayVote", function (data) {
 			//faire le vote pour chaque réponse le cas échéant
-			//faire le décompte des points
+			//si un joueur / réponse a un ou plusieurs votes, afficher la réponse et le nombre de votes
+			//afficher le nombre de points pour chaque joueur ?
+			//renvoyer le nombre de points MAJ vers le back
 			//passer à la question suivante s'il en reste une, sinon passer au tableau de score final
 		});
 	</script>
