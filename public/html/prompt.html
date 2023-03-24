@@ -34,10 +34,10 @@
         document.getElementById('button').setAttribute('disabled', 'disabled');
     }
 
-    socket.on('redirect', (newGameURL, gamePin) => {
+    socket.on('redirect', newGameURL => {
    			 // redirect to new URL
    			 window.location = newGameURL;
-             sessionStorage.setItem('punchlinePin', gamePin);
+            //  sessionStorage.setItem('punchlinePin', gamePin);
 		});
 </script>
 </html>

@@ -49,14 +49,14 @@
             data.forEach(element => {
                 setTimeout(() => {
                     document.getElementById('answer').textContent = element.textAnswer;
-                }, 5000*index);
+                }, 1000*index);
                index++;
             });
 
             setTimeout(function() {
                 document.getElementById('answer').remove();
                 socket.emit('getVotes', { punchlinePin: punchlinePin });
-            }, data.length*5000 + 5000);
+            }, data.length*1000 + 1000);
             
 
             //faire un emit "getVote" qui renvoie les joeurs sur la page de vote
@@ -70,7 +70,7 @@
    			 window.location = newGameURL;
 		});
 
-		socket.on("displayVote", function (data) {
+		socket.on("displayVotes", function (data) {
 			//faire le vote pour chaque réponse le cas échéant
 			//si un joueur / réponse a un ou plusieurs votes, afficher la réponse et le nombre de votes
 			//afficher le nombre de points pour chaque joueur ?

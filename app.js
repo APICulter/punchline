@@ -71,7 +71,7 @@ io.on("connection", function (socket) {
 				game.players.push(players.find((player) => player.name === data.user));
 				// io.to(game.hostSocketId).emit('redirect', '/html/settings.html');
 				io.to(game.hostSocketId).emit("newJoiner", data.user);
-				socket.emit("redirect", "/html/waiting.html");
+				socket.emit("redirect", "/html/waiting.html", data.pin);
 			} else {
 				//utile?
 				io.sockets.emit("player already joined");
@@ -87,7 +87,7 @@ io.on("connection", function (socket) {
 		//lance la game pour tous les joueurs dans la room
 		let game = games.find((game) => game.pin === Number(data.pin));
 		game.nbOfPlayers = game.players.length;
-		socket.broadcast.emit("redirect", "/html/prompt.html", data.pin);
+		socket.broadcast.emit("redirect", "/html/prompt.html");
 		//emit ci dessous a deplacer dans la fonction de jeu
 		socket.emit('redirect', "/html/game.html", data.pin );
 		//plus aucun nouveau joueur ne peut entrer dans la room
@@ -159,7 +159,11 @@ io.on("connection", function (socket) {
 	socket.on('vote', function(playerName, pin){
 		let game = games.find((game) => game.pin === Number(pin));
 		game.votes[playerName]++;
+		game.maxVotes++;
 		socket.emit('redirect', "/html/waiting.html");
+		if(game.maxVotes == game.nbOfPlayers) {
+			io.emit("displayVotes", game.answers);
+		}
 	});
 
 

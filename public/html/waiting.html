@@ -14,10 +14,17 @@
 
 <script>
 var socket = io();
-socket.on('redirect', (newGameURL, gamePin) => {
+// socket.on('redirect', (newGameURL, gamePin) => {
+//    			 // redirect to new URL
+//    			 window.location = newGameURL;
+//              if(gamePin) {
+//                 sessionStorage.setItem('punchlinePin', gamePin);
+//              }
+           
+// 		});
+        socket.on('redirect', newGameURL => {
    			 // redirect to new URL
    			 window.location = newGameURL;
-             sessionStorage.setItem('punchlinePin', gamePin);
 		});
 
 
