@@ -108,12 +108,19 @@ io.on("connection", function (socket) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		//condition pour checker s'il reste une question, sinon afficher le tableau de bord
 		game.question++;
-		let question = game.questions[Number(game.question)];
-		game.answers = [];
-		game.maxAnswers = 0;
-		game.maxVotes = 0;
-		socket.broadcast.emit("redirect", "/html/prompt.html");
-		socket.emit('question', question);
+		if (game.question <= game.questions.length) {
+			let question = game.questions[Number(game.question-1)];
+			game.answers = [];
+			game.maxAnswers = 0;
+			game.maxVotes = 0;
+			socket.broadcast.emit("redirect", "/html/prompt.html");
+			socket.emit('question', question);
+		} else {
+			socket.broadcast.emit("redirect", "/html/waiting.html");
+			socket.emit('redirect', "/html/scores.html");
+		}
+		
+		
 		
 	});
 
@@ -178,6 +185,15 @@ io.on("connection", function (socket) {
 		}
 	});
 
+
+	socket.on('getScores', function (pin){
+		let game = games.find((game) => game.pin === Number(pin.punchlinePin));
+		// let scores = [];
+		// game.players.forEach(player => {
+		// 	scores[player.name] = player.points;
+		// });
+		socket.emit('scores', game.players);
+	});
 	
 
 	//Cherche les questions en BDD et les ajoute à la game
@@ -185,7 +201,8 @@ io.on("connection", function (socket) {
 		//boucle
 		game.questions.push({id: 1, question: 'de quelle couleur est le ciel ?'});
 		game.questions.push({id: 2, question: 'Pourquoi les poissons ?'});
-		
+
+	
 	}
 
 	
