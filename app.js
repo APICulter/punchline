@@ -106,10 +106,15 @@ io.on("connection", function (socket) {
 	//à changer car on devrait pouvoir faire la séquence de questions de manière générique, et avec un meilleur nom
 	socket.on('getQuestion', function (data){
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
+		//condition pour checker s'il reste une question, sinon afficher le tableau de bord
 		game.question++;
 		let question = game.questions[Number(game.question)];
-		socket.emit('question', question);
+		game.answers = [];
+		game.maxAnswers = 0;
+		game.maxVotes = 0;
 		socket.broadcast.emit("redirect", "/html/prompt.html");
+		socket.emit('question', question);
+		
 	});
 
 	socket.on('answer', function (data){
@@ -152,6 +157,7 @@ io.on("connection", function (socket) {
 	socket.on('getAnswers', function (data){
 
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
+		//mettre une condition pour éviter de faire planter si on revient sur la tab
 		socket.emit('postAnswers', game.answers);
 		
 		
@@ -162,6 +168,8 @@ io.on("connection", function (socket) {
 		let answer = game.answers.find((answer) => answer.playerName === playerName);
 		answer.votes++;
 		game.answers[playerName]++;
+		let player = game.players.find((player) => player.name === playerName);
+		player.points++;
 		game.maxVotes++;
 		socket.emit('redirect', "/html/waiting.html");
 		if(game.maxVotes == game.nbOfPlayers) {
