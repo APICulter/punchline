@@ -54,7 +54,7 @@
             });
 
             setTimeout(function() {
-                document.getElementById('answer').remove();
+                // document.getElementById('answer').remove();
                 socket.emit('getVotes', { punchlinePin: punchlinePin });
             }, data.length*1000 + 1000);
             
@@ -70,7 +70,22 @@
    			 window.location = newGameURL;
 		});
 
-		socket.on("displayVotes", function (data) {
+		socket.on("displayVotes", function (answers) {
+
+			let index = 1;
+            answers.forEach(element => {
+				if(element.votes > 0)
+                setTimeout(() => {
+                    document.getElementById('answer').textContent = element.textAnswer + ' et ' + element.votes + ' points pour ' + element.playerName;
+                }, 5000*index);
+               index++;
+            });
+
+            setTimeout(function() {
+                // document.getElementById('answer').remove();
+                socket.emit('getQuestion', { punchlinePin: punchlinePin });
+            }, answers.length*5000 + 5000);
+            
 			//faire le vote pour chaque réponse le cas échéant
 			//si un joueur / réponse a un ou plusieurs votes, afficher la réponse et le nombre de votes
 			//afficher le nombre de points pour chaque joueur ?

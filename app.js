@@ -87,7 +87,7 @@ io.on("connection", function (socket) {
 		//lance la game pour tous les joueurs dans la room
 		let game = games.find((game) => game.pin === Number(data.pin));
 		game.nbOfPlayers = game.players.length;
-		socket.broadcast.emit("redirect", "/html/prompt.html");
+		// socket.broadcast.emit("redirect", "/html/prompt.html");
 		//emit ci dessous a deplacer dans la fonction de jeu
 		socket.emit('redirect', "/html/game.html", data.pin );
 		//plus aucun nouveau joueur ne peut entrer dans la room
@@ -96,9 +96,9 @@ io.on("connection", function (socket) {
 		// socket.emit('question', game.questions );
 
 		//init des votes
-		game.players.forEach((player) => {
-			game.votes[player.name] = 0;
-		});
+		// game.players.forEach((player) => {
+		// 	game.votes[player.name] = 0;
+		// });
 		//le client qui a créé la game n'est pas joeur et sort du pool
 		//appelle la fonction qui va s'occuper de l'algorithme principal du jeu
 	});
@@ -106,10 +106,10 @@ io.on("connection", function (socket) {
 	//à changer car on devrait pouvoir faire la séquence de questions de manière générique, et avec un meilleur nom
 	socket.on('getQuestion', function (data){
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		let question = game.questions[Number(data.numberQuestion)];
+		game.question++;
+		let question = game.questions[Number(game.question)];
 		socket.emit('question', question);
-
-
+		socket.broadcast.emit("redirect", "/html/prompt.html");
 	});
 
 	socket.on('answer', function (data){
@@ -121,7 +121,8 @@ io.on("connection", function (socket) {
 				// playerSocketId: ID, 
 				//a voir si la connexion est coupée...
 				playerName: player.name,
-				textAnswer: data.answer
+				textAnswer: data.answer,
+				votes: 0
 				});
 			game.maxAnswers++;
 			socket.emit('redirect', "/html/waiting.html");
@@ -158,15 +159,18 @@ io.on("connection", function (socket) {
 
 	socket.on('vote', function(playerName, pin){
 		let game = games.find((game) => game.pin === Number(pin));
-		game.votes[playerName]++;
+		let answer = game.answers.find((answer) => answer.playerName === playerName);
+		answer.votes++;
+		game.answers[playerName]++;
 		game.maxVotes++;
 		socket.emit('redirect', "/html/waiting.html");
 		if(game.maxVotes == game.nbOfPlayers) {
 			io.emit("displayVotes", game.answers);
+			//mettre les votes dans game.answers
 		}
 	});
 
-
+	
 
 	//Cherche les questions en BDD et les ajoute à la game
 	function initQuestions(game) {
@@ -176,9 +180,7 @@ io.on("connection", function (socket) {
 		
 	}
 
-	function vote(game) {
-		
-	}
+	
 
 });
 
