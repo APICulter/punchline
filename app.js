@@ -69,6 +69,8 @@ io.on("connection", function (socket) {
 			let player = game.players.find((player) => player.name === data.user);
 			if (typeof player === "undefined") {
 				game.players.push(players.find((player) => player.name === data.user));
+				let onlinePlayer = players.find((player) => player.name === data.user);
+				onlinePlayer.game = game.pin;
 				// io.to(game.hostSocketId).emit('redirect', '/html/settings.html');
 				io.to(game.hostSocketId).emit("newJoiner", data.user);
 				socket.emit("redirect", "/html/waiting.html", data.pin);
@@ -87,6 +89,7 @@ io.on("connection", function (socket) {
 		//lance la game pour tous les joueurs dans la room
 		let game = games.find((game) => game.pin === Number(data.pin));
 		game.nbOfPlayers = game.players.length;
+		
 		// socket.broadcast.emit("redirect", "/html/prompt.html");
 		//emit ci dessous a deplacer dans la fonction de jeu
 		socket.emit('redirect', "/html/game.html", data.pin );
@@ -193,6 +196,17 @@ io.on("connection", function (socket) {
 		// 	scores[player.name] = player.points;
 		// });
 		socket.emit('scores', game.players);
+	});
+
+	socket.on('endGame', function(pin) {
+		let game = games.find((game) => game.pin === Number(pin.punchlinePin));
+		game.players.forEach(player => {
+			let onLinePlayer = players.find((onLinePlayer) => onLinePlayer.id === player.id);
+			// onLinePlayer.game = undefined;
+			players.splice(players.indexOf(onLinePlayer), 1);
+		});
+		games.splice(games.indexOf(game), 1);
+		socket.broadcast.emit('redirect', "/html/index.html", 'clear');
 	});
 	
 

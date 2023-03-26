@@ -22,9 +22,12 @@ var socket = io();
 //              }
            
 // 		});
-        socket.on('redirect', newGameURL => {
+        socket.on('redirect', (newGameURL, clear) => {
    			 // redirect to new URL
    			 window.location = newGameURL;
+             if(clear === 'clear') {
+                sessionStorage.clear();
+             }
 		});
 
 

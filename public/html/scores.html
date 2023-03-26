@@ -9,6 +9,8 @@
 <script src="/socket.io/socket.io.js"></script>
 <body>
 
+    <button id="home"><a href="/html/index.html">Menu principal</a></button>
+
     <table>
         <tbody>
             <tr id="head">
@@ -55,8 +57,15 @@
 			});
 
 			document.body.appendChild(table);
-            
+
 		});
+
+        document.getElementById('home').addEventListener('click', function() {
+            socket.emit('endGame', {
+				punchlinePin: punchlinePin
+			});
+            sessionStorage.clear();
+        });
 
     
 </script>
