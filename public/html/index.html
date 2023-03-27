@@ -6,40 +6,6 @@
 	<script src="/socket.io/socket.io.js"></script>
 
 	<body>
-		<div id="error-container"></div>
-		<input
-			id="player-name"
-			type="text"
-			name="name"
-			value=""
-			placeholder="Enter your name!"
-		/>
-		<button
-			id="name-button"
-			type="button"
-			name="button"
-			onclick="setUsername()"
-		>
-			Enter Name
-		</button>
-		<div>
-			<input
-				id="room-pin"
-				type="text"
-				name="name"
-				value=""
-				placeholder="Give the pin for the room"
-			/>
-			<button
-				id="join-room-button"
-				type="button"
-				name="play"
-				onclick="joinRoom()"
-			>
-				Join room
-			</button>
-		</div>
-
 		<div>
 			<button
 				id="createGame"
@@ -51,59 +17,37 @@
 			</button>
 		</div>
 
-		<div>
-			<p id="pin-created"></p>
-		</div>
-
+		
 		<div>
 			<button
-				id="startGame"
+				id="join-room-button"
 				type="button"
-				name="startGame"
-				onclick="startGame()"
+				name="play"
+				onclick="joinRoom()"
 			>
-				Play
+				Join room
 			</button>
 		</div>
+
 		
-		<p>Players for the game</p>
-		<ul id="players"></ul>
+
+		
 	</body>
 
 	<script>
 		const socket = io();
 
-		//choix du nom
-		function setUsername() {
-			socket.emit("setUsername", document.getElementById("player-name").value);
-		}
-		var user;
-		socket.on("userExists", function (data) {
-			document.getElementById("error-container").innerHTML = data;
-		});
-		socket.on("userSet", function (data) {
-			user = data.username;
-			let finalName = document.createElement("p");
-			sessionStorage.setItem('playerName', user);
-
-			finalName.textContent = "My name is " + user;
-			document.getElementById("player-name").remove();
-			document.getElementById("name-button").remove();
-			document.getElementById("error-container").innerHTML = "";
-			document.body.prepend(finalName);
-			console.log(finalName);
-		});
-
-		//choix du game
+		//creation de la game
 		function createGame() {
-			socket.emit("createGame", { user: user });
+			socket.emit("createGame");
 		}
-		socket.on("new pin", function (data) {
-			if (user) {
-				document.getElementById("pin-created").innerHTML +=
-					"<div><b> Pin for the game </b>: <span id='pin' value=" + data + ">" + data + "</span></div>";
-			}
-		});
+		
+		socket.on("newGame", function (host, game) {
+				sessionStorage.setItem('punchlinePin', game.pin);
+				sessionStorage.setItem('hostID', host.id);
+				window.location = '/html/createGame.html';
+			});
+
         socket.on("game already exists", function (data) {
 			if (user) {
 				document.getElementById("pin-created").innerHTML +=
@@ -113,45 +57,8 @@
 
 		//rejoindre une room
 		function joinRoom() {
-			//faire une vérif que c'est pas vide et que c'est bien un nombre
-			if( document.getElementById("room-pin").value.length > 0 && !isNaN(document.getElementById("room-pin").value)) {
-				socket.emit("joinRoom", {
-				pin: document.getElementById("room-pin").value,
-				user: user,
-			});
-			} else {
-				document.getElementById('join-room-button').append('<span>Ne peut pas être vide et unqiueemnt des chiffres</span>')
-			}
-			
+			window.location = '/html/join.html';
 		}
-		socket.on("joined", function (data) {
-			if (user) {
-				if (data) {
-                    let joined = document.createElement('div');
-                    joined.textContent = 'Vous avez rejoint la game avec le pin ' + data.game.pin ;
-                    document.body.append(joined);
-				}
-			}
-		});
-		socket.on("newJoiner", function (data) {
-			if (user) {
-				if (data) {
-                    let joined = document.createElement('li');
-                    joined.textContent = data ;
-                    document.getElementById('players').append(joined);
-				}
-			}
-		});
 
-		socket.on('redirect', (newGameURL, gamePin) => {
-   			 // redirect to new URL
-   			window.location = newGameURL;
-			sessionStorage.setItem('punchlinePin', gamePin);
-		});
-
-		//début du jeu
-		function startGame() {
-			 socket.emit('startGame', { pin: document.getElementById('pin').textContent } );
-		}
 	</script>
 </html>

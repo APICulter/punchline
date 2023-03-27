@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Game</title>
+</head>
+<script src="/socket.io/socket.io.js"></script>
+<body>
+    <div>
+        <p id="punchlinePin"></p>
+    </div>
+
+    <div>
+        <p id="pin-created"></p>
+    </div>
+
+    <div>
+        <button
+            id="startGame"
+            type="button"
+            name="startGame"
+            onclick="startGame()"
+        >
+            Play
+        </button>
+    </div>
+    
+    <p>Players for the game</p>
+    <ul id="players"></ul>
+    
+</body>
+<script>
+    const socket = io();
+    let pin;
+    let hostID;
+
+    window.onload = function () {
+        pin = sessionStorage.getItem('punchlinePin');
+        hostID = sessionStorage.getItem('hostID');
+        document.getElementById("punchlinePin").innerHTML =
+					"<div><b> Pin for the game </b>: <span id='pin' value=" + pin + ">" 
+                        + pin + "</span></div>";
+        socket.emit('maintainSocket', pin, hostID);
+    }
+
+    socket.on("newJoiner", function (data) {
+        console.log(data);
+            if (data) {
+                let joined = document.createElement('li');
+                joined.textContent = data ;
+                document.getElementById('players').append(joined);
+            }
+        
+    });
+
+    //début du jeu
+    function startGame() {
+            socket.emit('startGame', { pin: document.getElementById('pin').textContent } );
+    }
+
+</script>
+</html>

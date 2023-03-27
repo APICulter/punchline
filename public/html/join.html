@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Room</title>
+</head>
+<script src="/socket.io/socket.io.js"></script>
+<body>
+
+    <div id="error-container"></div>
+		<input
+			id="player-name"
+			type="text"
+			name="name"
+			value=""
+			placeholder="Enter your name!"
+		/>
+		<button
+			id="name-button"
+			type="button"
+			name="button"
+			onclick="setUsername()"
+		>
+			Enter Name
+		</button>
+
+
+    <div>
+        <input
+            id="room-pin"
+            type="text"
+            name="name"
+            value=""
+            placeholder="Give the pin for the room"
+        />
+        <button
+            id="join-room-button"
+            type="button"
+            name="play"
+            onclick="joinRoom()"
+        >
+            Join room
+        </button>
+    </div>
+    
+</body>
+<script>
+    const socket = io();
+
+    function joinRoom() {
+			
+			//faire une vérif que c'est pas vide et que c'est bien un nombre
+			if( document.getElementById("room-pin").value.length > 0 && !isNaN(document.getElementById("room-pin").value)) {
+				socket.emit("joinRoom", {
+				pin: document.getElementById("room-pin").value,
+				user: user,
+			});
+			} else {
+				document.getElementById('join-room-button').append('<span>Ne peut pas être vide et unqiueemnt des chiffres</span>')
+			}
+			
+		}
+
+        //choix du nom
+		function setUsername() {
+			socket.emit("setUsername", document.getElementById("player-name").value);
+		}
+		var user;
+		socket.on("userExists", function (data) {
+			document.getElementById("error-container").innerHTML = data;
+		});
+		socket.on("userSet", function (data) {
+			user = data.username;
+			let finalName = document.createElement("p");
+			sessionStorage.setItem('playerName', user);
+
+			finalName.textContent = "My name is " + user;
+			document.getElementById("player-name").remove();
+			document.getElementById("name-button").remove();
+			document.getElementById("error-container").innerHTML = "";
+			document.body.prepend(finalName);
+			console.log(finalName);
+		});
+
+        socket.on("joined", function (data) {
+			if (user) {
+				if (data) {
+                    let joined = document.createElement('div');
+                    joined.textContent = 'Vous avez rejoint la game avec le pin ' + data.game.pin ;
+                    document.body.append(joined);
+				}
+			}
+		});
+
+        socket.on('redirect', (newGameURL, gamePin) => {
+   			 // redirect to new URL
+   			window.location = newGameURL;
+			sessionStorage.setItem('punchlinePin', gamePin);
+		});
+
+</script>
+</html>
