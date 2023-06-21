@@ -2,72 +2,83 @@
 <html>
 	<head>
 		<title>Hello world</title>
+		<link rel="stylesheet" href="../css/style.css" />
 	</head>
 	<script src="/socket.io/socket.io.js"></script>
+	
 
 	<body>
-		<div id="error-container"></div>
-		<input
-			id="player-name"
-			type="text"
-			name="name"
-			value=""
-			placeholder="Enter your name!"
-		/>
-		<button
-			id="name-button"
-			type="button"
-			name="button"
-			onclick="setUsername()"
-		>
-			Enter Name
-		</button>
-		<div>
+		<div class=" container flex flex-wrap justify-center mx-auto bg-amber-500">
+			<div id="error-container"></div>
 			<input
-				id="room-pin"
+				id="player-name"
 				type="text"
 				name="name"
 				value=""
-				placeholder="Give the pin for the room"
+				placeholder="Enter your name!"
 			/>
 			<button
-				id="join-room-button"
+				id="name-button"
 				type="button"
-				name="play"
-				onclick="joinRoom()"
+				name="button"
+				onclick="setUsername()"
+				class="text-red-700"
 			>
-				Join room
+				Enter Name
 			</button>
-		</div>
 
-		<div>
-			<button
-				id="createGame"
-				type="button"
-				name="createGame"
-				onclick="createGame()"
-			>
-				Create Game
-			</button>
-		</div>
+			<div>
+				<input
+					id="room-pin"
+					type="text"
+					name="name"
+					value=""
+					placeholder="Give the pin for the room"
+				/>
+				<button
+					id="join-room-button"
+					type="button"
+					name="play"
+					onclick="joinRoom()"
+				>
+					Join room
+				</button>
+			</div>
 
-		<div>
-			<p id="pin-created"></p>
-		</div>
 
-		<div>
-			<button
-				id="startGame"
-				type="button"
-				name="startGame"
-				onclick="startGame()"
-			>
-				Play
-			</button>
+			<div>
+				<button
+					id="createGame"
+					type="button"
+					name="createGame"
+					onclick="createGame()"
+				>
+					Create Game
+				</button>
+			</div>
+	
+			<div>
+				<p id="pin-created"></p>
+			</div>
+	
+			<div>
+				<button
+					id="startGame"
+					type="button"
+					name="startGame"
+					onclick="startGame()"
+				>
+					Play
+				</button>
+			</div>
+			
+			<p>Players for the game</p>
+			<ul id="players"></ul>
+
+
 		</div>
 		
-		<p>Players for the game</p>
-		<ul id="players"></ul>
+		
 	</body>
 
 	<script>
