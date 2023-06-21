@@ -35,7 +35,7 @@ io.on("connection", function (socket) {
 			players.push(player);
 			socket.emit("userSet", { username: data });
 		} else {
-			socket.emit("userExists", "ce nom est déjà pris");
+			socket.emit("userExists", "Ce nom est déjà pris");
 		}
 	});
 

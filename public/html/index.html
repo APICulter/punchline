@@ -5,164 +5,236 @@
 		<link rel="stylesheet" href="../css/style.css" />
 	</head>
 	<script src="/socket.io/socket.io.js"></script>
-	
 
-	<body>
-		<div class=" container flex flex-wrap justify-center mx-auto bg-amber-500">
-			<div id="error-container"></div>
-			<input
-				id="player-name"
-				type="text"
-				name="name"
-				value=""
-				placeholder="Enter your name!"
-			/>
-			<button
-				id="name-button"
-				type="button"
-				name="button"
-				onclick="setUsername()"
-				class="text-red-700"
-			>
-				Enter Name
-			</button>
+	<body class="bg-amber-600">
+		<h1 class="text-8xl text-center font-bold m-8 p-8">Punchline</h1>
 
-			<div>
+		<div class="container mx-auto pt-16 pb-20 px-4 max-w-7xl mx-auto sm:px-6 lg:pb-28 lg:px-8">
+			<div id="name" class="flex flex-col items-center">
+				<div id="nameInput" class="text-center text-2xl m-8">
+					<input
+						id="player-name"
+						type="text"
+						name="name"
+						value=""
+						placeholder="Name"
+						class="rounded shadow-xl p-2 bg-slate-100 focus:outline-none"
+					/>
+					<button
+						id="name-button"
+						type="button"
+						name="button"
+						onclick="setUsername()"
+						class="bg-amber-500 w-200 rounded shadow-xl p-2 transition ease-in hover:cursor-pointer active:-rotate-12 duration-150 hover:bg-amber-400"
+					>
+						Go
+					</button>
+					<div id="error-container"></div>
+				</div>
+			</div>
+
+			<div class="flex-col items-center">
+				<div id="choice" class="text-center text-4xl m-8 invisible">
+					<div class="text-4xl m-8 w-200">
+						<button
+							id="createGame"
+							type="button"
+							name="createGame"
+							onclick="createGame()"
+							class="bg-stone-500 w-200 rounded shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
+						>
+							Create Game
+						</button>
+					</div>
+
+					<button
+						id="display-join-room-button"
+						type="button"
+						name="play"
+						onclick="displayJoinRoom()"
+						class="bg-stone-500 w-200 rounded shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
+					>
+						Join Room
+					</button>
+				</div>
+			</div>
+
+			<div id="join" class="text-center text-4xl m-8 invisible">
 				<input
 					id="room-pin"
 					type="text"
 					name="name"
 					value=""
-					placeholder="Give the pin for the room"
+					placeholder="Pin"
+					class="max-w-xs rounded shadow-xl p-2 bg-slate-100 focus:outline-none"
 				/>
 				<button
 					id="join-room-button"
 					type="button"
 					name="play"
 					onclick="joinRoom()"
+					class="bg-stone-500 w-200 rounded shadow-xl p-2 active:-rotate-12 duration-150 hover:bg-amber-400"
 				>
-					Join room
+					Join
 				</button>
 			</div>
 
-
-			<div>
-				<button
-					id="createGame"
-					type="button"
-					name="createGame"
-					onclick="createGame()"
-				>
-					Create Game
-				</button>
-			</div>
-	
 			<div>
 				<p id="pin-created"></p>
 			</div>
-	
+
 			<div>
 				<button
 					id="startGame"
 					type="button"
 					name="startGame"
 					onclick="startGame()"
+					class="invisible"
 				>
 					Play
 				</button>
 			</div>
-			
-			<p>Players for the game</p>
+
+			<p class="invisible">Players for the game</p>
 			<ul id="players"></ul>
-
-
 		</div>
-		
-		
 	</body>
 
 	<script>
 		const socket = io();
 
-		//choix du nom
+		/** choix du nom **/
 		function setUsername() {
-			socket.emit("setUsername", document.getElementById("player-name").value);
+			if (document.getElementById("player-name").value.length !== 0) {
+				socket.emit(
+					"setUsername",
+					document.getElementById("player-name").value
+				);
+			}
 		}
+
 		var user;
 		socket.on("userExists", function (data) {
 			document.getElementById("error-container").innerHTML = data;
 		});
 		socket.on("userSet", function (data) {
 			user = data.username;
-			let finalName = document.createElement("p");
-			sessionStorage.setItem('playerName', user);
-
-			finalName.textContent = "My name is " + user;
+			let finalName = document.createElement("div");
+			finalName.id="userName";
+			sessionStorage.setItem("playerName", user);
+			finalName.textContent = "Name: " + user;
+			finalName.classList.add("text-4xl");
+			document.getElementById("name").append(finalName);
 			document.getElementById("player-name").remove();
 			document.getElementById("name-button").remove();
 			document.getElementById("error-container").innerHTML = "";
-			document.body.prepend(finalName);
-			console.log(finalName);
+
+			document.getElementById("choice").classList.remove("invisible");
 		});
 
-		//choix du game
-		function createGame() {
-			socket.emit("createGame", { user: user });
-		}
-		socket.on("new pin", function (data) {
-			if (user) {
-				document.getElementById("pin-created").innerHTML +=
-					"<div><b> Pin for the game </b>: <span id='pin' value=" + data + ">" + data + "</span></div>";
+			//choix du nom en validant avec la touche "Entrée"
+			document.getElementById("name").addEventListener("keyup", function (event) {
+			event.preventDefault();
+			if (event.keyCode === 13) {
+				setUsername();
 			}
 		});
-        socket.on("game already exists", function (data) {
+
+
+
+
+
+
+		/**choix du game **/
+		function createGame() {
+			socket.emit("createGame", { user: user });
+			// document.getElementById("display-join-room-button").classList.add("invisible");
+		}
+
+		socket.on("new pin", function (data) {
 			if (user) {
-				document.getElementById("pin-created").innerHTML +=
-					"<div><b> The player already hosts a game of pin </b>: " + data + "</div>";
+					let pinCreated = document.createElement("div");
+					pinCreated.textContent =
+						"Game: " + data;
+					pinCreated.classList.add("text-4xl");
+					document.getElementById("name").append(pinCreated);
+
+					document.getElementById("createGame").classList.add("invisible");
+			}
+		});
+		socket.on("game already exists", function (data) {
+			if (user) {
+				document.getElementById("createGame").setAttribute("disabled", "");
+				
 			}
 		});
 
 		//rejoindre une room
+
+		function displayJoinRoom() { 
+			// document.getElementById("createGame").classList.add("invisible");
+			document.getElementById("display-join-room-button").classList.add("invisible");
+			document.getElementById("createGame").classList.add("absolute");
+			// document.getElementById("createGame").classList.add("-z-30");
+			document.getElementById("join").classList.remove("invisible");
+
+		 }
+
 		function joinRoom() {
 			//faire une vérif que c'est pas vide et que c'est bien un nombre
-			if( document.getElementById("room-pin").value.length > 0 && !isNaN(document.getElementById("room-pin").value)) {
+			if (
+				document.getElementById("room-pin").value.length > 0 &&
+				!isNaN(document.getElementById("room-pin").value)
+			) {
 				socket.emit("joinRoom", {
-				pin: document.getElementById("room-pin").value,
-				user: user,
-			});
+					pin: document.getElementById("room-pin").value,
+					user: user,
+				});
+
 			} else {
-				document.getElementById('join-room-button').append('<span>Ne peut pas être vide et unqiueemnt des chiffres</span>')
+				document.getElementById("room-pin").value="";
 			}
 			
+			// 	if(!document.getElementById("errorJoinPin")) {
+			// 		let errorMessage = document.createElement("p");
+			// 	errorMessage.textContent = "Ne peut pas être vide et doit contenir uniquement des chiffres";
+			// 	errorMessage.id="errorJoinPin";
+			// 	document.getElementById("join").append(errorMessage);
+			// 	document.getElementById("room-pin").value="";
+			// 	}
+
 		}
 		socket.on("joined", function (data) {
 			if (user) {
 				if (data) {
-                    let joined = document.createElement('div');
-                    joined.textContent = 'Vous avez rejoint la game avec le pin ' + data.game.pin ;
-                    document.body.append(joined);
+					let joined = document.createElement("div");
+					joined.textContent =
+						"Vous avez rejoint la game avec le pin " + data.game.pin;
+					document.body.append(joined);
 				}
 			}
 		});
 		socket.on("newJoiner", function (data) {
 			if (user) {
 				if (data) {
-                    let joined = document.createElement('li');
-                    joined.textContent = data ;
-                    document.getElementById('players').append(joined);
+					let joined = document.createElement("li");
+					joined.textContent = data;
+					document.getElementById("players").append(joined);
 				}
 			}
 		});
 
-		socket.on('redirect', (newGameURL, gamePin) => {
-   			 // redirect to new URL
-   			window.location = newGameURL;
-			sessionStorage.setItem('punchlinePin', gamePin);
+		socket.on("redirect", (newGameURL, gamePin) => {
+			// redirect to new URL
+			window.location = newGameURL;
+			sessionStorage.setItem("punchlinePin", gamePin);
 		});
 
 		//début du jeu
 		function startGame() {
-			 socket.emit('startGame', { pin: document.getElementById('pin').textContent } );
+			socket.emit("startGame", {
+				pin: document.getElementById("pin").textContent,
+			});
 		}
 	</script>
 </html>
