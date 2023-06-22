@@ -12,6 +12,7 @@ le retour en arrière sur la page d'accueil fait planter l'appli...
 bouton de reload sur la page ?
 sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter
 faire le menu des options en modal ?
+remplissage tu tableau (9 max, configurable)
 
 
 quand je clique sur "Create Game", le bouton pour joindre une partie est accessible ?

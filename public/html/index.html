@@ -101,12 +101,28 @@
 
 				<table
 					id="players-table"
-					class="table-fixed w-64 max-w-2xl border-separate border-spacing-2 mx-auto"
+					class=" mt-8 mb-8 table-fixed max-w-2xl ml-0"
 				>
 					<tbody id="body-players-table" class="bg-gray-200">
 						<tr id="table-players-row" class="col-span-2 invisible bg-gray-200">
-							<td>Players</td>
+							<th class="rounded bg-stone-800 text-gray-300 m-2 p-2">Players</th>
 						</tr>
+
+						<!-- <tr>
+							<td class="rounded bg-stone-800 text-gray-300 m-2 p-2"></td>
+							<td class="rounded bg-stone-800 text-gray-300 m-2 p-2"></td>
+							<td class="rounded bg-stone-800 text-gray-300 m-2 p-2"></td>
+						</tr>
+						<tr>
+							<td class="rounded bg-stone-800 text-gray-300 m-2 p-2"></td>
+							<td class="rounded bg-stone-800 text-gray-300 m-2 p-2"></td>
+							<td class="rounded bg-stone-800 text-gray-300 m-2 p-2"></td>
+						</tr>
+						<tr>
+							<td class="rounded bg-stone-800 text-gray-300 m-2 p-2"></td>
+							<td class="rounded bg-stone-800 text-gray-300 m-2 p-2"></td>
+							<td class="rounded bg-stone-800 text-gray-300 m-2 p-2"></td>
+						</tr> -->
 					</tbody>
 				</table>
 
@@ -116,7 +132,7 @@
 						type="button"
 						name="startGame"
 						onclick="startGame()"
-						class="invisible text-4xl bg-indigo-500 w-200 rounded-md shadow-xl p-4 hover:cursor-pointer ease-in-out duration-300 transition hover:scale-110"
+						class="invisible text-4xl bg-indigo-500 w-full rounded-full w-90 flex-none shadow-xl p-4 hover:cursor-pointer ease-in-out duration-300 transition hover:scale-110 active:scale-90"
 					>
 						Play
 					</button>

@@ -1,6 +1,10 @@
 
 		const socket = io();
 
+        // sessionStorage.setItem("nbOfPlayers", 0);
+        let nbOfPlayers = 0;
+        let playerNumero = 1;
+
 		/** choix du nom **/
 		function setUsername() {
 			if (document.getElementById("player-name").value.length !== 0) {
@@ -114,10 +118,18 @@
 						.getElementById("table-players-row")
 						.classList.remove("invisible");
 					let tableRef = document.getElementById("players-table");
+
+                    if(playerNumero == 1 || playerNumero == 2 || playerNumero == 3) {
+                        
+                    }
+
 					let newRow = tableRef.insertRow(-1);
 					let newCell = newRow.insertCell(0);
 					let newText = document.createTextNode(data);
 					newCell.appendChild(newText);
+                    newCell.className += "rounded bg-indigo-400 text-gray-300 m-2 p-2";
+                    nbOfPlayers  += 1;
+                    // sessionStorage.setItem("nbOfPlayers", nbOfPlayers);
 				}
 			}
 		});
@@ -130,7 +142,14 @@
 
 		//début du jeu
 		function startGame() {
-			socket.emit("startGame", {
-				pin: document.getElementById("table-game-pin").textContent,
-			});
+
+            if (nbOfPlayers < 1 ) {
+
+            } else {
+                socket.emit("startGame", {
+                    pin: document.getElementById("createGame").textContent,
+                });
+            }
+
+			
 		}
