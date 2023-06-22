@@ -3,6 +3,7 @@ var path = require("path");
 var app = express();
 var http = require("http").Server(app);
 var io = require("socket.io")(http);
+// import 'animate.css';
 
 const { Game } = require("./classes/game");
 const { Player } = require("./classes/player");

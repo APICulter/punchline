@@ -1,0 +1,177 @@
+------------------
+
+1) faire le design
+2) corriger les petits trucs au fur et à mesure en mode User Story:
+
+
+le "join" fout la merdre sur le centrage de l'écran.
+
+
+Mettre une infobulle si on entre un "name" vide 
+le retour en arrière sur la page d'accueil fait planter l'appli...
+bouton de reload sur la page ?
+sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter
+faire le menu des options en modal ?
+
+
+quand je clique sur "Create Game", le bouton pour joindre une partie est accessible ?
+quand je clique sur "Join Room", le bouton create Game est accessible ?
+sinon on fait un bouton avec une petite flèche vers la gauche pour réafficher les boutons à l'origine...
+si on crée la game, on ne peut pas rejoindre sa propre game
+description du jeu ? 
+faire une vérification quand on clique sur "Play". s'il y a moins de 3 joueurs, la partie ne peut pas se lancer. il faut stocker en session le nombre de joueurs
+
+2 boutons:
+create game
+join a room
+
+Si on clique sur create game, ça affiche le pin
+si on clique sur join, on doit rentrer son nom, puis le pin de la room. Le souci c'est que la game est créée comme ça; donc on changera à la fin...
+
+utiliser les données en Session pour de pas avoir à réécrire le nom à chaque fois...
+
+
+
+
+
+3) faire la connexion avec la BDD
+4) cleaner le code pour le rendre plus pro/ efficace
+5) faire le menu avec les options
+	faire des themes, catégories
+6) dockeriser
+7) internationaliser ? car on doit faire le contenu en plus ... On peut faire appel à une IA pour la traduction 
+
+*******
+5) BONUS: réaliser le truc avec les différentes rooms
+6) BONUS: CI /CD
+7) BONUS: authentification avec JWT
+8) BONUS: mettre la BDD sur Cloud Mongo / AWS
+9) BONUS: Mettre les photos sur Flickr avec une api (soit en JS, soit en Java spring boot)
+10) BONUS: échapper les champs pour éviter les injections 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+tutorial pointz
+DEBUG:
+https://rethinkdb.com/blog/websocket-debugging/
+---
+
+https://www.udemy.com/course/javascript-la-formation-ultime/learn/lecture/17195730#overview
+cookie?
+https?
+session storage
+
+
+redis ? https://www.youtube.com/watch?v=vJIgFQ5YBvc&ab_channel=LesterFernandez
+
+créer une room par game ?
+https://atinux.developpez.com/tutoriels/javascript/utiliser-socket-io/
+
+map, set, weak pour les anwers et les réponses?
+
+https://github.com/socketio/socket.io/blob/main/examples/express-session-example/index.js
+
+=> utiliser io.emit, meme si ça envoie à tout le monde, au moins le host le reçoit !!! (on peut faire juste la room limite)
+
+=> namespace pour le lobby ? https://stackoverflow.com/questions/56672050/how-can-i-redirect-all-clients-to-another-page-with-socket-io
+
+----
+- lors que le host crée la game, il crée une romm également. Quand quelqu'un rejoint la game, il rejoint la room également
+- attention au double lien Host et Game
+- d'abord le champ pour le nom, puis on fait apparaître le champ pour le pin de la game (CSS / JS)
+- on entrera son nom uniquement si on rejoint une game
+- BDD Mongo
+- CSS
+- randomiser les réponses
+- randomizer les votes
+- ordonner le tableau des scores pour mettre le max en haut
+- gérer la donnée (autre que le texte): images, videos
+
+- s'accorder sur la langue: anglais ou français pour l'affiche ? permettre de switcher avec un bouton ? voir l'internationalisation avec Tailwind
+ne pas jouer en navigation privée ? à cause du sessionStorage
+- ne pas pouvoir voter pour sois meme
+- jouer à 3 minimum ?
+- rajouter les commandes de la ligne de commande dans le README (pour moi quand j'aurai oublié)
+- utliser des Set, des Maps? Changer les objets Players et faire plus de classes ?
+- rajouter des fonctions plutot que de réécrire du code
+- nettoyer commentaires, mettre tout en anglais
+- guillemets simples partout
+- gestion des erreurs: blog error first, github kahoot...
+- après que tout le monde ait voté: remettre les réponses à l'écran qui ont obtenu des votes et afficher le nombre de votes + mettre en bas de l'écran les noms des joueurs pour montrer les votes
+-  gérer la customisation des games (nombre de rounds, type de questions, explicit ou non, volume du jeu + mute ...)
+Détruire l'ancien pin dès qu'on participe à une nouvelle game ? tester 2 games de suite voir s'il est écrasé, le nom du joueur aussi
+faire un ssytème de room pour avoir plusieurs jeux qui tournent en même temps ? +> obligé car les emit all envoient à tout le monde, mieux pour le CV aussi => gérer le nb de connexions, sockets, room etc. 
+- passer en localStorage pour éviter de tout perdre à chaque fois ?
+- quand quelqu'un vote, afficher son nom et ses points  en bas de l'écran de jeu
+calculer le temps de mise à l'écran en fonction de la taille de la réponse ?
+=> rentrer un code secret pour avoir accès au contenu explicit ! ou double authent sur mon téléphone
+- rajouter des timers si les joueurs n'ont pas voté ou joué 
+- relire le code pour nettoyer les incohérences (const ou var pour io dans le front...)
+-créer des fonctions propres pour éviter de répéter le code
+
+
+--
+
+revoir attributs (game dans host et host dans game ?)
+
+
+
+https://socket.io/get-started/private-messaging-part-2/
+
+
+
+created() {
+  const sessionID = localStorage.getItem("sessionID");
+
+  if (sessionID) {
+    this.usernameAlreadySelected = true;
+    socket.auth = { sessionID };
+    socket.connect();
+  }
+  // ...
+}
+
+You should now be able to refresh your tab without losing your session:
+
+1) création de la game, redirection vers createGame.html. Envoi du socket ID à la game / room
+2) quand quelqu'un join, envoi du nom du joueur vers le host
+
+a) rester sur la même page pour éviter les déconnexions et les changements d'ID
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
