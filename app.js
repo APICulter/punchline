@@ -47,7 +47,7 @@ io.on("connection", function (socket) {
 	//Sends the pin game only to the creator of the game
 	//for now, the hostSocketId is used to now how is hosting the game, but the case of disconnect has not been made
 	//Does the socket id change if the client reconnects ?
-	socket.on("createGame", function (data) {
+	socket.on("createGame", function () {
 		let game = games.find((game) => game.hostSocketId === ID);
 		if (typeof game === "undefined") {
 			let game = new Game();
