@@ -11,7 +11,7 @@ window.onload = function () {
         data.forEach(element => {
             let answerBlock = document.createElement('div');
             answerBlock.id = data.indexOf(element);
-            answerBlock.className += "cursor-pointer h-10 min-w-max text-left mx-4 p-2 bg-indigo-400 rounded-md shadow text-gray-200 hover:bg-indigo-500 checked:bg-indigo-500 checked:checked:bg-indigo-500";
+            answerBlock.className += "cursor-pointer h-10 min-w-max text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 hover:bg-indigo-500 checked:bg-indigo-500 checked:checked:bg-indigo-500";
             answerBlock.textContent = element.textAnswer;
 
             let answer = document.createElement('input');

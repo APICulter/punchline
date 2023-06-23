@@ -18,6 +18,8 @@ faire le menu des options en modal ?
 remplissage tu tableau (9 max, configurable)
 en 3x3
 
+mettre le chrono en haut à gauche de la page de vote/réponse ou en haut sur l'écran de jeu ?
+
 quand je clique sur "Create Game", le bouton pour joindre une partie est accessible ?
 quand je clique sur "Join Room", le bouton create Game est accessible ?
 sinon on fait un bouton avec une petite flèche vers la gauche pour réafficher les boutons à l'origine...
