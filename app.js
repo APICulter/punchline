@@ -214,8 +214,16 @@ io.on("connection", function (socket) {
 	//Cherche les questions en BDD et les ajoute à la game
 	function initQuestions(game) {
 		//boucle
+		// let goOn = true;
+		// let indexLoop = 1;
+		// while (goOn) {
+		// 	game.questions.push({id: indexLoop, question: 'Pourquoi les poissons ?'});
+		// 	indexLoop++;
+		// 	if(indexLoop > 200) {
+		// 		goOn = false;
+		// 	}
+		// }
 		game.questions.push({id: 1, question: 'de quelle couleur est le ciel ?'});
-		game.questions.push({id: 2, question: 'Pourquoi les poissons ?'});
 
 	
 	}

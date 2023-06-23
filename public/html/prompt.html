@@ -8,37 +8,17 @@
     <title>Prompt</title>
 </head>
 <script src="/socket.io/socket.io.js"></script>
-<body>
+<body class="bg-amber-600">
     
-    <textarea name="answer" id="answer" cols="30" rows="10" placeholder="Your answer"></textarea>
-    <button type="submit" id="button" class="bg-gray-400 p-2 rounded-md" onclick="sendAnswer()">Enter</button>
+		<div id="answer-box" class=" mt-10 container mx-auto  flex flex-col items-center  align-center justify-center">
+            <textarea class="rounded-lg sm:max-w-xs bg-gray-300 focus:outline-none shadow-lg resize-none" name="answer" id="answer" cols="30" rows="7" placeholder="Your answer..."></textarea>
+            <button type="submit" id="button" class=" w-max grow bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400"
+            onclick="sendAnswer()">Enter</button>
+        </div>
+        
+            
 </body>
 
-<script>
-    const socket = io();
-    let punchlinePin;
-    let playerName;
+<script src="../js/prompt.js"></script>
 
-    window.onload = function () {
-        playerName = sessionStorage.getItem('playerName');
-        punchlinePin = sessionStorage.getItem('punchlinePin');
-    }
-
-    socket.on('redirect', newGameURL => {
-   			 // redirect to new URL
-   			 window.location = newGameURL;
-		});
-
-    function sendAnswer() {
-        
-        socket.emit('answer', { answer: document.getElementById('answer').value, punchlinePin: punchlinePin, playerName: playerName });
-        document.getElementById('button').setAttribute('disabled', 'disabled');
-    }
-
-    socket.on('redirect', newGameURL => {
-   			 // redirect to new URL
-   			 window.location = newGameURL;
-            //  sessionStorage.setItem('punchlinePin', gamePin);
-		});
-</script>
 </html>

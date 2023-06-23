@@ -5,7 +5,10 @@
 
 
 le "join" fout la merdre sur le centrage de l'écran.
+si on appuie sur "Menu principal", ça ne nous demande pas notre nom une deuxième fois et passe direct à create game et join pin
 
+
+compteur sur la page de game 5, 4, 3, 2, 1, puis on affiche la question
 
 Mettre une infobulle si on entre un "name" vide 
 le retour en arrière sur la page d'accueil fait planter l'appli...
@@ -13,7 +16,7 @@ bouton de reload sur la page ?
 sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter
 faire le menu des options en modal ?
 remplissage tu tableau (9 max, configurable)
-
+en 3x3
 
 quand je clique sur "Create Game", le bouton pour joindre une partie est accessible ?
 quand je clique sur "Join Room", le bouton create Game est accessible ?

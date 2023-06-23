@@ -5,6 +5,8 @@
         let nbOfPlayers = 0;
         let playerNumero = 1;
 
+        sessionStorage.clear();
+
 		/** choix du nom **/
 		function setUsername() {
 			if (document.getElementById("player-name").value.length !== 0) {
@@ -120,7 +122,7 @@
 					let tableRef = document.getElementById("players-table");
 
                     if(playerNumero == 1 || playerNumero == 2 || playerNumero == 3) {
-                        
+
                     }
 
 					let newRow = tableRef.insertRow(-1);

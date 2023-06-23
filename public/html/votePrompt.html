@@ -8,67 +8,27 @@
     <title>Vote</title>
 </head>
 <script src="/socket.io/socket.io.js"></script>
-<body>
+<body class="bg-amber-600">
 
     <!-- <form> -->
-        <div id="answers">
-
+        
+        <div id="answers" class="container mx-auto flex flex-col align-center justify-center">
+		
+       
         </div>
-        <br>
+        <div id="vote-box" class="container mx-auto flex flex-col align-center justify-center">
+		
+            <button id="vote"  type="button" name="button" class=" bg-amber-500 rounded-md shadow-xl mx-4 py-2 mt-10 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400" >
+                Vote</button>
+        </div>
+        
+        
         <!-- <button id="vote" type="submit">Vote</button> -->
-        <button id="vote">Vote</button>
+        <!-- <button id="vote">Vote</button> -->
     <!-- </form> -->
 
     
 </body>
 
-<script>
-    const socket = io();
-    // let punchlinePin;
-
-    window.onload = function () {
-			punchlinePin = sessionStorage.getItem("punchlinePin");
-            socket.emit('getAnswers', { punchlinePin: punchlinePin });
-		};
-    
-        socket.on('postAnswers', function (data) {
-            //randomizer
-            data.forEach(element => {
-                let answerBlock = document.createElement('div');
-                answerBlock.id = data.indexOf(element);
-                
-                let answer = document.createElement('input');
-                answer.setAttribute("type", "radio");
-                answer.id = element.playerName;
-                answer.value = element.textAnswer;
-                answer.name = 'answer';
-
-                let label = document.createElement('label');
-                label.textContent = element.textAnswer;
-                label.setAttribute("for", answer.id);
-
-                document.getElementById('answers').append(answerBlock);
-                document.getElementById(answerBlock.id).append(answer);
-                document.getElementById(answerBlock.id).append(label);
-            });
-
-            
-        });
-
-        // const form = document.querySelector("form");
-        //envoyer juste l'id ou le nom du joueur plutot que la réponse...
-        const button = document.querySelector('#vote');
-        button.addEventListener('click', function() {
-
-            let answer = document.querySelector('input[name=answer]:checked').id;
-            socket.emit('vote', answer, punchlinePin);
-            // window.location = "/html/waiting.html";
-            });
-
-       socket.on('redirect', newGameURL => {
-   			 // redirect to new URL
-   			 window.location = newGameURL;
-		});
-
-</script>
+<script src="../js/votePrompt.js"></script>
 </html>

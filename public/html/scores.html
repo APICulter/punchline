@@ -1,49 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../css/style.css" />
-    <title>Scores</title>
-</head>
-<script src="/socket.io/socket.io.js"></script>
-<body>
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="../css/style.css" />
+		<title>Scores</title>
+	</head>
+	<script src="/socket.io/socket.io.js"></script>
+	<body class="bg-amber-600">
+		<div
+			id="score-table"
+			class="container mx-auto flex flex-col align-center justify-center"
+		>
+			<button id="home" class="">
+				<a href="/html/index.html">Menu principal</a>
+			</button>
 
-    <button id="home"><a href="/html/index.html">Menu principal</a></button>
+			<table>
+				<tbody>
+					<tr id="head"></tr>
+				</tbody>
+			</table>
+		</div>
+	</body>
+	<script>
+		var socket = io();
+		let punchlinePin;
 
-    <table>
-        <tbody>
-            <tr id="head">
-                <td>Joueur</td>
-                <td>Points</td>
-            </tr>
-
-        </tbody>
-    </table>
-    
-</body>
-<script>
-    var socket = io();
-    let punchlinePin;
-
-    window.onload = function () {
-        punchlinePin = sessionStorage.getItem("punchlinePin");
-        socket.emit('getScores', {
-				punchlinePin: punchlinePin
+		window.onload = function () {
+			punchlinePin = sessionStorage.getItem("punchlinePin");
+			socket.emit("getScores", {
+				punchlinePin: punchlinePin,
 			});
-    };
+		};
 
-
-    socket.on('redirect', newGameURL => {
-   			 // redirect to new URL
-   			 window.location = newGameURL;
+		socket.on("redirect", (newGameURL) => {
+			// redirect to new URL
+			window.location = newGameURL;
 		});
 
+		socket.on("scores", function (scores) {
+			//ordoner les scores du plus haut au plus bas (à faire dans le back)
+			var table = document.createElement("table");
 
-    socket.on('scores', function (scores) {
-			
-            var table = document.createElement('table');
+			var row = table.insertRow();
+			var cell = row.insertCell();
+			var text = document.createTextNode("Players");
+			cell.appendChild(text);
+			cell = row.insertCell();
+			text = document.createTextNode("Points");
+			cell.appendChild(text);
 
 			scores.forEach((element) => {
 				var row = table.insertRow();
@@ -52,22 +59,19 @@
 				var text = document.createTextNode(element.name);
 				cell.appendChild(text);
 
-				var cell = row.insertCell();
-				var text = document.createTextNode(element.points);
+				cell = row.insertCell();
+				text = document.createTextNode(element.points);
 				cell.appendChild(text);
 			});
 
-			document.body.appendChild(table);
-
+			document.getElementById("score-table").append(table);
 		});
 
-        document.getElementById('home').addEventListener('click', function() {
-            socket.emit('endGame', {
-				punchlinePin: punchlinePin
+		document.getElementById("home").addEventListener("click", function () {
+			socket.emit("endGame", {
+				punchlinePin: punchlinePin,
 			});
-            sessionStorage.clear();
-        });
-
-    
-</script>
+			sessionStorage.clear();
+		});
+	</script>
 </html>
