@@ -85,15 +85,14 @@ io.on("connection", function (socket) {
 		}
 	});
 
-	
 	socket.on("startGame", function (data) {
 		//lance la game pour tous les joueurs dans la room
 		let game = games.find((game) => game.pin === Number(data.pin));
 		game.nbOfPlayers = game.players.length;
-		
+
 		// socket.broadcast.emit("redirect", "/html/prompt.html");
 		//emit ci dessous a deplacer dans la fonction de jeu
-		socket.emit('redirect', "/html/game.html", data.pin );
+		socket.emit("redirect", "/html/game.html", data.pin);
 		//plus aucun nouveau joueur ne peut entrer dans la room
 		initQuestions(game);
 		//ajouter la configuration => plus tard
@@ -108,108 +107,106 @@ io.on("connection", function (socket) {
 	});
 
 	//à changer car on devrait pouvoir faire la séquence de questions de manière générique, et avec un meilleur nom
-	socket.on('getQuestion', function (data){
+	socket.on("getQuestion", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		//condition pour checker s'il reste une question, sinon afficher le tableau de bord
 		game.question++;
 		if (game.question <= game.questions.length) {
-			let question = game.questions[Number(game.question-1)];
+			let question = game.questions[Number(game.question - 1)];
 			game.answers = [];
 			game.maxAnswers = 0;
 			game.maxVotes = 0;
 			socket.broadcast.emit("redirect", "/html/prompt.html");
-			socket.emit('question', question);
+			socket.emit("question", question);
 		} else {
 			socket.broadcast.emit("redirect", "/html/waiting.html");
-			socket.emit('redirect', "/html/scores.html");
+			socket.emit("redirect", "/html/scores.html");
 		}
-		
-		
-		
 	});
 
-	socket.on('answer', function (data){
-
+	socket.on("answer", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		let player = game.players.find((player) => player.name === data.playerName);
 		if (game.maxAnswers < game.nbOfPlayers) {
 			game.answers.push({
-				// playerSocketId: ID, 
+				// playerSocketId: ID,
 				//a voir si la connexion est coupée...
 				playerName: player.name,
 				textAnswer: data.answer,
-				votes: 0
-				});
+				votes: 0,
+			});
 			game.maxAnswers++;
-			socket.emit('redirect', "/html/waiting.html");
+			socket.emit("redirect", "/html/waiting.html");
 
-			if(game.maxAnswers == game.nbOfPlayers) {
-				//faire en sorte que tout le monde soit redirigé. ici broadcast 
-			// socket.broadcast.emit("redirect", "/html/waiting.html");
-			// io.to(game.hostSocketId).emit("displayAnswers", game.answers);
+			if (game.maxAnswers == game.nbOfPlayers) {
+				//faire en sorte que tout le monde soit redirigé. ici broadcast
+				// socket.broadcast.emit("redirect", "/html/waiting.html");
+				// io.to(game.hostSocketId).emit("displayAnswers", game.answers);
 
-			//à changer pour que émette uniquement vers la room
-			io.emit("displayAnswers", game.answers);
+				//à changer pour que émette uniquement vers la room
+				io.emit("displayAnswers", game.answers);
 			}
-		} 
+		}
 		// else {
 		// 	socket.broadcast.emit("redirect", "/html/waiting.html");
 		// 	// io.to(game.hostSocketId).emit("newJoiner", data.user);
 		// }
 	});
 
-	socket.on('getVotes', function (data){
-
+	socket.on("getVotes", function (data) {
 		// let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		socket.broadcast.emit('redirect', "/html/votePrompt.html");
+		socket.broadcast.emit("redirect", "/html/votePrompt.html");
 		// socket.emit('redirect', '/html/votes.html');
 	});
 
-	socket.on('getAnswers', function (data){
-
+	socket.on("getAnswers", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		//mettre une condition pour éviter de faire planter si on revient sur la tab
-		socket.emit('postAnswers', game.answers);
-		
-		
+		socket.emit("postAnswers", game.answers);
 	});
 
-	socket.on('vote', function(playerName, pin){
+	socket.on("vote", function (playerName, pin) {
 		let game = games.find((game) => game.pin === Number(pin));
-		let answer = game.answers.find((answer) => answer.playerName === playerName);
+		let answer = game.answers.find(
+			(answer) => answer.playerName === playerName
+		);
 		answer.votes++;
 		game.answers[playerName]++;
 		let player = game.players.find((player) => player.name === playerName);
 		player.points++;
 		game.maxVotes++;
-		socket.emit('redirect', "/html/waiting.html");
-		if(game.maxVotes == game.nbOfPlayers) {
+		socket.emit("redirect", "/html/waiting.html");
+		if (game.maxVotes == game.nbOfPlayers) {
 			io.emit("displayVotes", game.answers);
 			//mettre les votes dans game.answers
 		}
 	});
 
-
-	socket.on('getScores', function (pin){
+	socket.on("getScores", function (pin) {
 		let game = games.find((game) => game.pin === Number(pin.punchlinePin));
 		// let scores = [];
 		// game.players.forEach(player => {
 		// 	scores[player.name] = player.points;
 		// });
-		socket.emit('scores', game.players);
+
+		//faire une méthode de classe statique ?
+		let playersRankedByPoints = game.players;
+		playersRankedByPoints.sort(function(a,b) { return parseFloat(b.points) - parseFloat(a.points) } );
+		socket.emit("scores", game.players);
 	});
 
-	socket.on('endGame', function(pin) {
+	socket.on("endGame", function (pin) {
 		let game = games.find((game) => game.pin === Number(pin.punchlinePin));
-		game.players.forEach(player => {
-			let onLinePlayer = players.find((onLinePlayer) => onLinePlayer.id === player.id);
+		game.players.forEach((player) => {
+			let onLinePlayer = players.find(
+				(onLinePlayer) => onLinePlayer.id === player.id
+			);
 			// onLinePlayer.game = undefined;
 			players.splice(players.indexOf(onLinePlayer), 1);
 		});
 		games.splice(games.indexOf(game), 1);
-		socket.broadcast.emit('redirect', "/html/index.html", 'clear');
+		socket.broadcast.emit("redirect", "/html/index.html", "clear");
 	});
-	
 
 	//Cherche les questions en BDD et les ajoute à la game
 	function initQuestions(game) {
@@ -223,13 +220,8 @@ io.on("connection", function (socket) {
 		// 		goOn = false;
 		// 	}
 		// }
-		game.questions.push({id: 1, question: 'de quelle couleur est le ciel ?'});
-
-	
+		game.questions.push({ id: 1, question: "de quelle couleur est le ciel ?" });
 	}
-
-	
-
 });
 
 http.listen(3000, function () {
@@ -237,6 +229,3 @@ http.listen(3000, function () {
 });
 
 //peut être mettre cette fonction à l'intérieur du  io.on("connection", function (socket) {
-
-
-
