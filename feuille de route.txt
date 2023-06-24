@@ -5,9 +5,9 @@ IMPORTANT:
 
 cliquer sur "Join Room". Entrer le pin de la room. Une fois fait, entrer son nom. Et ENSUITE ça envoie au serveur les deux infos !
 on ne peut pas voter pour sa réponse (grisé)
-lors du choix de la réponse, toujours mettre en évidence le choix fait avec le bg foncé, meme si on clique dehors (sinon les gens vont mal voter)
+lors du choix de la réponse, toujours mettre en évidence le choix fait avec le bg foncé, meme si on clique dehors (sinon les gens vont mal voter) (en attendant, hover:bg-indigo-500 sur le input)
 compteur sur la page de game 5, 4, 3, 2, 1, puis on affiche la question. Mettre ensuite un compteur de 60 secondes au dessus pour voter. Si la personne n'a pas voté à temps, que se passe t-il ?
-lors des votes, afficher le nom de la personne et le nombre de points gagnés
+
 lors de l'affichage des réponses, mélanger l'ordre des réponses
 lors du vote, mélanger l'ordre des réponses ou remettre l'ordre d'affichage ?
 Timers courts pour tester! 
@@ -18,10 +18,7 @@ sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour év
 si on crée la game, on ne peut pas rejoindre sa propre game
 description du jeu
 
-
-fait:
-faire un grand affichage pour l'écran de jeu "game.html" car on est senser jouer sur TV
-lors du passage au vote, on efface la dernière réponse
+échapper les caractères spéciaux genre " et '
 
 
 

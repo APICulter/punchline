@@ -11,7 +11,7 @@ window.onload = function () {
         data.forEach(element => {
             let answerBlock = document.createElement('div');
             answerBlock.id = data.indexOf(element);
-            answerBlock.className += " cursor-pointer text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 hover:bg-indigo-500 checked:bg-indigo-500 max-w-lg";
+            answerBlock.className += " cursor-pointer text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 checked:bg-indigo-500 max-w-lg";
             answerBlock.textContent = element.textAnswer;
 
             let answer = document.createElement('input');
@@ -41,6 +41,32 @@ window.onload = function () {
         
     });
 
+
+    const radioButtons = document.querySelectorAll('input[name="answer"]');
+
+    // Loop through each radio button and add an event listener
+    radioButtons.forEach(function(radioButton) {
+    radioButton.addEventListener('change', function() {
+        if (this.checked) {
+            console.log("Radio button is checked");
+        // Code to execute when the radio button is checked
+        // radioButton.classList.add("bg-indigo-500");
+        } else {
+            console.log("Radio button is NOT checked");
+        // Code to execute when the radio button is unchecked
+        // radioButton.classList.add("bg-indigo-400");
+        }
+    });
+    });
+
+// let checked = document.querySelector('input[name=answer]');
+// checked.addEventListener('change', function() {
+//     alert('dt');
+// });
+
+
+
+
     // const form = document.querySelector("form");
     //envoyer juste l'id ou le nom du joueur plutot que la réponse...
     const button = document.querySelector('#vote');
@@ -56,11 +82,4 @@ window.onload = function () {
             window.location = newGameURL;
     });
 
-    let answers = document.getElementsByName("answer");
-
-    for (let i=0; i < answers.length; i++) {
-        answers[i].onclick = function() {
-            let target = document.getElementById("label-" + i);
-            target.style.backgroundColor = "bg-amber-100";
-        }
-    }
+   

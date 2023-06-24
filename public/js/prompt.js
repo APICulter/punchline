@@ -16,6 +16,8 @@ function sendAnswer() {
     if (document.getElementById('answer').value.length > 0) {
         socket.emit('answer', { answer: document.getElementById('answer').value, punchlinePin: punchlinePin, playerName: playerName });
         document.getElementById('button').setAttribute('disabled', 'disabled');
+    } else {
+        document.getElementById("button").classList.add("invalid:border-red-500");
     }
    
 }
