@@ -1,40 +1,44 @@
 ------------------
 
-1) faire le design
-2) corriger les petits trucs au fur et à mesure en mode User Story:
 
+IMPORTANT:
 
-le "join" fout la merdre sur le centrage de l'écran.
-si on appuie sur "Menu principal", ça ne nous demande pas notre nom une deuxième fois et passe direct à create game et join pin
+cliquer sur "Join Room". Entrer le pin de la room. Une fois fait, entrer son nom. Et ENSUITE ça envoie au serveur les deux infos !
+on ne peut pas voter pour sa réponse (grisé)
+lors du choix de la réponse, toujours mettre en évidence le choix fait avec le bg foncé, meme si on clique dehors (sinon les gens vont mal voter)
+compteur sur la page de game 5, 4, 3, 2, 1, puis on affiche la question. Mettre ensuite un compteur de 60 secondes au dessus pour voter. Si la personne n'a pas voté à temps, que se passe t-il ?
+lors des votes, afficher le nom de la personne et le nombre de points gagnés
+lors de l'affichage des réponses, mélanger l'ordre des réponses
+lors du vote, mélanger l'ordre des réponses ou remettre l'ordre d'affichage ?
+Timers courts pour tester! 
 
-
-compteur sur la page de game 5, 4, 3, 2, 1, puis on affiche la question
-
-Mettre une infobulle si on entre un "name" vide 
+gérer les déconnexions: mettre une alerte si la personne veut quitter la page: "Attention vous risquez de quitter la game"
 le retour en arrière sur la page d'accueil fait planter l'appli...
-bouton de reload sur la page ?
-sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter
-faire le menu des options en modal ?
-remplissage tu tableau (9 max, configurable)
-en 3x3
-
-mettre le chrono en haut à gauche de la page de vote/réponse ou en haut sur l'écran de jeu ?
-
-quand je clique sur "Create Game", le bouton pour joindre une partie est accessible ?
-quand je clique sur "Join Room", le bouton create Game est accessible ?
-sinon on fait un bouton avec une petite flèche vers la gauche pour réafficher les boutons à l'origine...
+sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter => bouton rejouer. on annule les scores mais on garde la room. par contre si on clique sur menu principal, on détruit la game.
 si on crée la game, on ne peut pas rejoindre sa propre game
-description du jeu ? 
-faire une vérification quand on clique sur "Play". s'il y a moins de 3 joueurs, la partie ne peut pas se lancer. il faut stocker en session le nombre de joueurs
+description du jeu
 
-2 boutons:
-create game
-join a room
 
-Si on clique sur create game, ça affiche le pin
-si on clique sur join, on doit rentrer son nom, puis le pin de la room. Le souci c'est que la game est créée comme ça; donc on changera à la fin...
+fait:
+faire un grand affichage pour l'écran de jeu "game.html" car on est senser jouer sur TV
+lors du passage au vote, on efface la dernière réponse
 
-utiliser les données en Session pour de pas avoir à réécrire le nom à chaque fois...
+
+
+BONUS:
+
+choisir des avatars
+mettre un eric cartman qui explique le jeu avec bulles des BD
+mettre un rick roll quelque part
+si on appuie sur "Menu principal", ça ne nous demande pas notre nom une deuxième fois et passe direct à create game et join pin
+Mettre une infobulle si on entre un "name" vide 
+bouton de reload sur la page ? sinon on fait un bouton avec une petite flèche vers la gauche pour réafficher les boutons à l'origine...
+faire le menu des options en modal ?
+remplissage tu tableau (9 max, configurable) en 3x3
+
+faire une vérification quand on clique sur "Play". s'il y a moins de 3 joueurs, la partie ne peut pas se lancer.
+
+
 
 
 
@@ -54,7 +58,8 @@ utiliser les données en Session pour de pas avoir à réécrire le nom à chaqu
 8) BONUS: mettre la BDD sur Cloud Mongo / AWS
 9) BONUS: Mettre les photos sur Flickr avec une api (soit en JS, soit en Java spring boot)
 10) BONUS: échapper les champs pour éviter les injections 
-
+faire une chaine CI CD
+le faire en Function as a service, sur le cloud comme ça j'allume le server uniquement quand je veux jouer.
 
 
 

@@ -11,7 +11,7 @@ window.onload = function () {
         data.forEach(element => {
             let answerBlock = document.createElement('div');
             answerBlock.id = data.indexOf(element);
-            answerBlock.className += "cursor-pointer h-10 min-w-max text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 hover:bg-indigo-500 checked:bg-indigo-500 checked:checked:bg-indigo-500";
+            answerBlock.className += " cursor-pointer text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 hover:bg-indigo-500 checked:bg-indigo-500 max-w-lg";
             answerBlock.textContent = element.textAnswer;
 
             let answer = document.createElement('input');
@@ -19,7 +19,7 @@ window.onload = function () {
             answer.id = element.playerName;
             answer.value = element.textAnswer;
             answer.name = 'answer';
-            answer.className += "invisible";
+            answer.className += "invisible w-0";
 
             let label = document.createElement('label');
             label.setAttribute("for", answer.id);
@@ -55,3 +55,12 @@ window.onload = function () {
             // redirect to new URL
             window.location = newGameURL;
     });
+
+    let answers = document.getElementsByName("answer");
+
+    for (let i=0; i < answers.length; i++) {
+        answers[i].onclick = function() {
+            let target = document.getElementById("label-" + i);
+            target.style.backgroundColor = "bg-amber-100";
+        }
+    }

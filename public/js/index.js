@@ -102,35 +102,38 @@
 			// 	document.getElementById("room-pin").value="";
 			// 	}
 		}
-		socket.on("joined", function (data) {
-			if (user) {
-				if (data) {
-					let joined = document.createElement("div");
-					joined.textContent =
-						"Vous avez rejoint la game avec le pin " + data.game.pin;
-					document.body.append(joined);
-				}
-			}
-		});
+		// socket.on("joined", function (data) {
+		// 	if (user) {
+		// 		if (data) {
+		// 			let joined = document.createElement("div");
+		// 			joined.textContent =
+		// 				"Vous avez rejoint la game avec le pin " + data.game.pin;
+		// 			document.body.append(joined);
+		// 		}
+		// 	}
+		// });
 		socket.on("newJoiner", function (data) {
-			console.log(data);
 			if (user) {
 				if (data) {
-					document
-						.getElementById("table-players-row")
-						.classList.remove("invisible");
-					let tableRef = document.getElementById("players-table");
 
-                    if(playerNumero == 1 || playerNumero == 2 || playerNumero == 3) {
-
-                    }
-
-					let newRow = tableRef.insertRow(-1);
-					let newCell = newRow.insertCell(0);
-					let newText = document.createTextNode(data);
-					newCell.appendChild(newText);
-                    newCell.className += "rounded bg-indigo-400 text-gray-300 m-2 p-2";
+                    let player = document.createElement("div");
+                    player.textContent = data;
+                    player.className = "flex items-stretch rounded bg-indigo-400 text-gray-300 m-2 p-2";
+                    document.getElementById("players").append(player);
                     nbOfPlayers  += 1;
+					// document
+					// 	.getElementById("table-players-row")
+					// 	.classList.remove("invisible");
+					// let tableRef = document.getElementById("players-table");
+
+                  
+
+					// let newRow = tableRef.insertRow(-1);
+					// let newCell = newRow.insertCell(0);
+					// let newText = document.createTextNode(data);
+					// newCell.appendChild(newText);
+                    // newCell.className += "rounded bg-indigo-400 text-gray-300 m-2 p-2";
+                    // nbOfPlayers  += 1;
                     // sessionStorage.setItem("nbOfPlayers", nbOfPlayers);
 				}
 			}

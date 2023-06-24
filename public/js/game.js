@@ -24,17 +24,24 @@ const socket = io();
 			//montrer toutes les réponses une à une de manière aléatoire (pas dans l'ordre d'arrivée des réponses)
 			// let randomAnswers = shuffle(data.game.answers);
 			let index = 1;
+            
 			data.forEach((element) => {
 				setTimeout(() => {
 					document.getElementById("answer").textContent = element.textAnswer;
+                    document.getElementById("answer").classList.remove("invisible");
 				}, 5000 * index);
 				index++;
 			});
 
+           
+
 			setTimeout(function () {
 				// document.getElementById('answer').remove();
 				socket.emit("getVotes", { punchlinePin: punchlinePin });
+                document.getElementById("answer").classList.add("invisible");
 			}, data.length * 5000 + 5000);
+
+           
 
 			//faire un emit "getVote" qui renvoie les joeurs sur la page de vote
 
@@ -51,20 +58,21 @@ const socket = io();
 			answers.forEach((element) => {
 				if (element.votes > 0)
 					setTimeout(() => {
-						document.getElementById("answer").textContent =
-							element.textAnswer +
-							" et " +
-							element.votes +
-							" points pour " +
-							element.playerName;
+                        document.getElementById("answer").classList.remove("invisible");
+						document.getElementById("answer").textContent = element.textAnswer;
+                        document.getElementById("player").classList.remove("invisible");
+                        document.getElementById("player").textContent = element.playerName;
+                        document.getElementById("points").classList.remove("invisible");
+                        document.getElementById("points").textContent = "+ " + element.votes ;
+					                           
 					}, 5000 * index);
 				index++;
 			});
 
-			setTimeout(function () {
-				// document.getElementById('answer').remove();
-				socket.emit("getQuestion", { punchlinePin: punchlinePin });
-			}, answers.length * 5000 + 5000);
+			// setTimeout(function () {
+			// 	// document.getElementById('answer').remove();
+			// 	socket.emit("getQuestion", { punchlinePin: punchlinePin });
+			// }, answers.length * 5000 + 5000);
 
 			//faire le vote pour chaque réponse le cas échéant
 			//si un joueur / réponse a un ou plusieurs votes, afficher la réponse et le nombre de votes

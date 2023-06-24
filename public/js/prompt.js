@@ -13,9 +13,11 @@ socket.on('redirect', newGameURL => {
     });
 
 function sendAnswer() {
-    
-    socket.emit('answer', { answer: document.getElementById('answer').value, punchlinePin: punchlinePin, playerName: playerName });
-    document.getElementById('button').setAttribute('disabled', 'disabled');
+    if (document.getElementById('answer').value.length > 0) {
+        socket.emit('answer', { answer: document.getElementById('answer').value, punchlinePin: punchlinePin, playerName: playerName });
+        document.getElementById('button').setAttribute('disabled', 'disabled');
+    }
+   
 }
 
 socket.on('redirect', newGameURL => {
