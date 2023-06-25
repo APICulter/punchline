@@ -3,9 +3,9 @@
 
 IMPORTANT:
 
+Rajouter "Punchline partout"
 cliquer sur "Join Room". Entrer le pin de la room. Une fois fait, entrer son nom. Et ENSUITE ça envoie au serveur les deux infos !
 on ne peut pas voter pour sa réponse (grisé)
-lors du choix de la réponse, toujours mettre en évidence le choix fait avec le bg foncé, meme si on clique dehors (sinon les gens vont mal voter) (en attendant, hover:bg-indigo-500 sur le input)
 compteur sur la page de game 5, 4, 3, 2, 1, puis on affiche la question. Mettre ensuite un compteur de 60 secondes au dessus pour voter. Si la personne n'a pas voté à temps, que se passe t-il ?
 
 lors de l'affichage des réponses, mélanger l'ordre des réponses
@@ -18,7 +18,7 @@ sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour év
 si on crée la game, on ne peut pas rejoindre sa propre game
 description du jeu
 
-échapper les caractères spéciaux genre " et '
+échapper les caractères spéciaux genre " et ' pour éviter de casser les "id" dans la page de Voteprompt? ou Alors changer les ids...
 
 
 
@@ -46,7 +46,7 @@ faire une vérification quand on clique sur "Play". s'il y a moins de 3 joueurs,
 5) faire le menu avec les options
 	faire des themes, catégories
 6) dockeriser
-7) internationaliser ? car on doit faire le contenu en plus ... On peut faire appel à une IA pour la traduction 
+
 
 *******
 5) BONUS: réaliser le truc avec les différentes rooms
@@ -57,7 +57,7 @@ faire une vérification quand on clique sur "Play". s'il y a moins de 3 joueurs,
 10) BONUS: échapper les champs pour éviter les injections 
 faire une chaine CI CD
 le faire en Function as a service, sur le cloud comme ça j'allume le server uniquement quand je veux jouer.
-
+faire une page admin pour rajouter du contenu (texte et images)
 
 
 
