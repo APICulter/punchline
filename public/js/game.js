@@ -69,10 +69,10 @@ const socket = io();
 				index++;
 			});
 
-			// setTimeout(function () {
-			// 	// document.getElementById('answer').remove();
-			// 	socket.emit("getQuestion", { punchlinePin: punchlinePin });
-			// }, answers.length * 5000 + 5000);
+			setTimeout(function () {
+				// document.getElementById('answer').remove();
+				socket.emit("getQuestion", { punchlinePin: punchlinePin });
+			}, answers.length * 5000 + 5000);
 
 			//faire le vote pour chaque réponse le cas échéant
 			//si un joueur / réponse a un ou plusieurs votes, afficher la réponse et le nombre de votes

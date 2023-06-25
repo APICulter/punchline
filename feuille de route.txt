@@ -3,13 +3,12 @@
 
 IMPORTANT:
 
-Rajouter "Punchline partout"
+Rajouter "Punchline partout" => faire une insertion HTML identique pour toutes les pages ?
 cliquer sur "Join Room". Entrer le pin de la room. Une fois fait, entrer son nom. Et ENSUITE ça envoie au serveur les deux infos !
-on ne peut pas voter pour sa réponse (grisé)
 compteur sur la page de game 5, 4, 3, 2, 1, puis on affiche la question. Mettre ensuite un compteur de 60 secondes au dessus pour voter. Si la personne n'a pas voté à temps, que se passe t-il ?
 
 lors de l'affichage des réponses, mélanger l'ordre des réponses
-lors du vote, mélanger l'ordre des réponses ou remettre l'ordre d'affichage ?
+lors du vote remettre l'ordre d'affichage ?
 Timers courts pour tester! 
 
 gérer les déconnexions: mettre une alerte si la personne veut quitter la page: "Attention vous risquez de quitter la game"
@@ -21,6 +20,8 @@ description du jeu
 échapper les caractères spéciaux genre " et ' pour éviter de casser les "id" dans la page de Voteprompt? ou Alors changer les ids...
 
 
+
+utiliser le session storage pour garder le nom de la personne et éviter de retaper son nom ?
 
 BONUS:
 

@@ -162,7 +162,7 @@ io.on("connection", function (socket) {
 	socket.on("getAnswers", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		//mettre une condition pour éviter de faire planter si on revient sur la tab
-		socket.emit("postAnswers", game.answers);
+			socket.emit("postAnswers", game.answers);
 	});
 
 	socket.on("vote", function (playerName, pin) {
@@ -197,14 +197,14 @@ io.on("connection", function (socket) {
 
 	socket.on("endGame", function (pin) {
 		let game = games.find((game) => game.pin === Number(pin.punchlinePin));
-		game.players.forEach((player) => {
-			let onLinePlayer = players.find(
-				(onLinePlayer) => onLinePlayer.id === player.id
-			);
-			// onLinePlayer.game = undefined;
-			players.splice(players.indexOf(onLinePlayer), 1);
-		});
-		games.splice(games.indexOf(game), 1);
+			game.players.forEach((player) => {
+				let onLinePlayer = players.find(
+					(onLinePlayer) => onLinePlayer.id === player.id
+				);
+				// onLinePlayer.game = undefined;
+				players.splice(players.indexOf(onLinePlayer), 1);
+			});
+			games.splice(games.indexOf(game), 1);
 		socket.broadcast.emit("redirect", "/html/index.html", "clear");
 	});
 
