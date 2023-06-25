@@ -3,16 +3,17 @@
 
 IMPORTANT:
 
-Rajouter "Punchline partout" => faire une insertion HTML identique pour toutes les pages ?
-cliquer sur "Join Room". Entrer le pin de la room. Une fois fait, entrer son nom. Et ENSUITE ça envoie au serveur les deux infos !
-compteur sur la page de game 5, 4, 3, 2, 1, puis on affiche la question. Mettre ensuite un compteur de 60 secondes au dessus pour voter. Si la personne n'a pas voté à temps, que se passe t-il ?
+compteur sur la page de game 5, 4, 3, 2, 1, puis on affiche la question. Mettre ensuite un compteur de 60 secondes au dessus pour voter. Si la personne n'a pas voté à temps, que se passe t-il ? Elle perde un point 
+si personne ne vote, on passe directement à la question d'après (et tout le monde perd un point)
 
-lors de l'affichage des réponses, mélanger l'ordre des réponses
-lors du vote remettre l'ordre d'affichage ?
 Timers courts pour tester! 
 
+cliquer sur "Join Room". Entrer le pin de la room. Une fois fait, entrer son nom. Et ENSUITE ça envoie au serveur les deux infos !
+sur l'écran de jeu, mettre le Punchline en vraiment GROS lorsque la taille de l'écran est large
+
+
 gérer les déconnexions: mettre une alerte si la personne veut quitter la page: "Attention vous risquez de quitter la game"
-le retour en arrière sur la page d'accueil fait planter l'appli...
+le retour en arrière sur la page d'accueil fait planter l'appli... Voir le routage avec express. Voir aussi pour masquer le nom des pages html
 sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter => bouton rejouer. on annule les scores mais on garde la room. par contre si on clique sur menu principal, on détruit la game.
 si on crée la game, on ne peut pas rejoindre sa propre game
 description du jeu
@@ -21,6 +22,8 @@ description du jeu
 
 
 
+
+Rajouter "Punchline partout" => faire une insertion HTML identique pour toutes les pages ?
 utiliser le session storage pour garder le nom de la personne et éviter de retaper son nom ?
 
 BONUS:
@@ -43,7 +46,7 @@ faire une vérification quand on clique sur "Play". s'il y a moins de 3 joueurs,
 
 
 3) faire la connexion avec la BDD
-4) cleaner le code pour le rendre plus pro/ efficace
+4) cleaner le code pour le rendre plus pro/ efficace: faire des classes custo css pour alléger les html. Revoir les fonctions, factoriser
 5) faire le menu avec les options
 	faire des themes, catégories
 6) dockeriser

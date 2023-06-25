@@ -144,7 +144,7 @@ io.on("connection", function (socket) {
 				// io.to(game.hostSocketId).emit("displayAnswers", game.answers);
 
 				//à changer pour que émette uniquement vers la room
-				io.emit("displayAnswers", game.answers);
+				io.emit("displayAnswers", shuffle(game.answers));
 			}
 		}
 		// else {
@@ -152,6 +152,33 @@ io.on("connection", function (socket) {
 		// 	// io.to(game.hostSocketId).emit("newJoiner", data.user);
 		// }
 	});
+
+	socket.on("timeIsUp", function (data) {
+		let game = games.find((game) => game.pin === Number(data.punchlinePin));
+		io.emit("displayAnswers", shuffle(game.answers));
+	});
+
+	
+
+	function shuffle(array) {
+		let counter = array.length;
+	
+		// While there are elements in the array
+		while (counter > 0) {
+			// Pick a random index
+			let index = Math.floor(Math.random() * counter);
+	
+			// Decrease counter by 1
+			counter--;
+	
+			// And swap the last element with it
+			let temp = array[counter];
+			array[counter] = array[index];
+			array[index] = temp;
+		}
+	
+		return array;
+	}
 
 	socket.on("getVotes", function (data) {
 		// let game = games.find((game) => game.pin === Number(data.punchlinePin));

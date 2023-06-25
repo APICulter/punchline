@@ -7,7 +7,55 @@ const socket = io();
 			playerName = sessionStorage.getItem("playerName");
 			punchlinePin = sessionStorage.getItem("punchlinePin");
 			getQuestion(numberQuestion);
+			startCountdown();
 		};
+
+		// Function to start the countdown
+		function startCountdown() {
+			var countdownElement = document.getElementById("countdown");
+			var count = 5;
+		
+			// Update the countdown every second
+			var countdownInterval = setInterval(function() {
+			count--;
+			countdownElement.innerText = count;
+		
+			// Check if countdown has reached 0
+			if (count === 0) {
+				clearInterval(countdownInterval);
+				// countdownElement.innerText = "Done!";
+				document.getElementById("game-zone").classList.remove("invisible");
+				document.getElementById("countdown").remove();
+				startCountDownQuestion();
+				
+			}
+			}, 1000);
+		}
+
+		function startCountDownQuestion() {
+			var countdownElement = document.getElementById("time");
+			var count = 10;
+
+			var countdownInterval = setInterval(function() {
+				count--;
+				countdownElement.innerText = count;
+			
+				// Check if countdown has reached 0
+				if (count === 0) {
+					clearInterval(countdownInterval);
+					document.getElementById("time").classList.add("invisible");
+					// countdownElement.innerText = "Done!";
+					// document.getElementById("game-zone").classList.add("invisible");
+					// document.getElementById("countdown").remove();
+
+					 socket.emit("timeIsUp", { punchlinePin: punchlinePin });
+					
+				}
+				}, 1000);
+		}
+		
+ 
+  
 
 		function getQuestion(numberQuestion) {
 			socket.emit("getQuestion", {
@@ -17,7 +65,7 @@ const socket = io();
 		}
 
 		socket.on("question", function (data) {
-			document.getElementById("question").textContent = data.question;
+				document.getElementById("question").textContent = data.question;
 		});
 
 		socket.on("displayAnswers", function (data) {
