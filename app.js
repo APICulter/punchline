@@ -116,12 +116,17 @@ io.on("connection", function (socket) {
 			game.answers = [];
 			game.maxAnswers = 0;
 			game.maxVotes = 0;
-			socket.broadcast.emit("redirect", "/html/prompt.html");
+			// socket.broadcast.emit("redirect", "/html/prompt.html");
 			socket.emit("question", question);
 		} else {
 			socket.broadcast.emit("redirect", "/html/waiting.html");
 			socket.emit("redirect", "/html/scores.html");
 		}
+	});
+
+	socket.on("startPrompt", function (data) {
+		let game = games.find((game) => game.pin === Number(data.punchlinePin));
+		socket.broadcast.emit("redirect", "/html/prompt.html");
 	});
 
 	socket.on("answer", function (data) {
@@ -153,10 +158,17 @@ io.on("connection", function (socket) {
 		// }
 	});
 
-	socket.on("timeIsUp", function (data) {
+	socket.on("timeIsUpToAnswer", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		io.emit("displayAnswers", shuffle(game.answers));
+		socket.broadcast.emit("redirect", "/html/waiting.html");
+		// io.emit("displayAnswers", shuffle(game.answers));
 	});
+
+	// socket.on("timeIsUpToVote", function (data) {
+	// 	let game = games.find((game) => game.pin === Number(data.punchlinePin));
+	// 	socket.broadcast.emit("redirect", "/html/waiting.html");
+	// 	io.emit("displayVotes", game.answers);
+	// });
 
 	
 

@@ -1,8 +1,24 @@
+
+
+scénario:
+
+
+si personne ne répond: le vote est cassé car aucune réponse
+
+si les deux répondent avant la fin du timer, ça fonctionne.
+
+
+si les deux répondent avant la fin du countdon: ça affiche les réponses trop tot et ça renvoie la page de vote => envoyer la page de prompt après le countdown
+
+
+si un seul sur deux répond au bon moment (cas particulier: un des deux ne peut pas voter (car sa propre réponse). Dans ce cas,  
 ------------------
 
 
 IMPORTANT:
 
+si personne n'a rentré de réponse, ça passe à la question suivante
+pas temps limite pour voter ?
 compteur sur la page de game 5, 4, 3, 2, 1, puis on affiche la question. Mettre ensuite un compteur de 60 secondes au dessus pour voter. Si la personne n'a pas voté à temps, que se passe t-il ? Elle perde un point 
 si personne ne vote, on passe directement à la question d'après (et tout le monde perd un point)
 
@@ -64,7 +80,8 @@ le faire en Function as a service, sur le cloud comme ça j'allume le server uni
 faire une page admin pour rajouter du contenu (texte et images)
 
 
-
+si mode normal => ChatGPT
+si mode hardcore => DAN 
 
 
 

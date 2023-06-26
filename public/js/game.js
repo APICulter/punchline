@@ -3,6 +3,8 @@ const socket = io();
 		let playerName;
 		let numberQuestion = 0;
 
+		var countdownIntervalQuestion;
+
 		window.onload = function () {
 			playerName = sessionStorage.getItem("playerName");
 			punchlinePin = sessionStorage.getItem("punchlinePin");
@@ -13,7 +15,7 @@ const socket = io();
 		// Function to start the countdown
 		function startCountdown() {
 			var countdownElement = document.getElementById("countdown");
-			var count = 5;
+			var count = 6;
 		
 			// Update the countdown every second
 			var countdownInterval = setInterval(function() {
@@ -26,13 +28,36 @@ const socket = io();
 				// countdownElement.innerText = "Done!";
 				document.getElementById("game-zone").classList.remove("invisible");
 				document.getElementById("countdown").remove();
+				socket.emit("startPrompt", { punchlinePin: punchlinePin });
 				startCountDownQuestion();
-				
+
 			}
 			}, 1000);
 		}
 
 		function startCountDownQuestion() {
+			var countdownElement = document.getElementById("time");
+			var count = 11;
+
+			countdownIntervalQuestion = setInterval(function() {
+				count--;
+				countdownElement.innerText = count;
+			
+				// Check if countdown has reached 0
+				if (count === 0) {
+					clearInterval(countdownIntervalQuestion);
+					// document.getElementById("time").classList.add("invisible");
+					// countdownElement.innerText = "Done!";
+					// document.getElementById("game-zone").classList.add("invisible");
+					// document.getElementById("countdown").remove();
+
+					 socket.emit("timeIsUpToAnswer", { punchlinePin: punchlinePin });
+					
+				}
+				}, 1000);
+		}
+
+		function startCountDownVote() {
 			var countdownElement = document.getElementById("time");
 			var count = 10;
 
@@ -48,7 +73,7 @@ const socket = io();
 					// document.getElementById("game-zone").classList.add("invisible");
 					// document.getElementById("countdown").remove();
 
-					 socket.emit("timeIsUp", { punchlinePin: punchlinePin });
+					 socket.emit("timeIsUpToVote", { punchlinePin: punchlinePin });
 					
 				}
 				}, 1000);
@@ -71,6 +96,9 @@ const socket = io();
 		socket.on("displayAnswers", function (data) {
 			//montrer toutes les réponses une à une de manière aléatoire (pas dans l'ordre d'arrivée des réponses)
 			// let randomAnswers = shuffle(data.game.answers);
+			clearInterval(countdownIntervalQuestion);
+			document.getElementById("time").classList.add("invisible");
+			
 			let index = 1;
             
 			data.forEach((element) => {
@@ -89,7 +117,7 @@ const socket = io();
                 document.getElementById("answer").classList.add("invisible");
 			}, data.length * 5000 + 5000);
 
-           
+            // startCountDownVote();
 
 			//faire un emit "getVote" qui renvoie les joeurs sur la page de vote
 
