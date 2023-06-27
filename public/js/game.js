@@ -21,6 +21,7 @@ const socket = io();
 			var countdownInterval = setInterval(function() {
 			count--;
 			countdownElement.innerText = count;
+			document.getElementById("countdown").classList.remove("invisible");
 		
 			// Check if countdown has reached 0
 			if (count === 0) {
@@ -89,12 +90,21 @@ const socket = io();
 			});
 		}
 
-		socket.on("nextQuestion", (data) => {
+		socket.on("skipVoteQuestion", (data) => {
+			// document.getElementById("game-zone").classList.add("invisible");
+			// document.getElementById("time").classList.remove("invisible");
+			// document.getElementById("countdown").classList.remove("invisible");
 			getQuestion(data);
 		});
 
 		socket.on("question", function (data) {
-				document.getElementById("question").textContent = data.question;
+			document.getElementById("question").textContent = data.question;
+			document.getElementById("answer").classList.add("invisible");
+			document.getElementById("points").classList.add("invisible");
+			document.getElementById("player").classList.add("invisible");
+			document.getElementById("game-zone").classList.add("invisible");
+			document.getElementById("time").classList.remove("invisible");
+			document.getElementById("countdown").classList.remove("invisible");
 				startCountdown(6, 11);
 		});
 
@@ -134,6 +144,8 @@ const socket = io();
 			window.location = newGameURL;
 		});
 
+	
+
 		socket.on("displayVotes", function (answers) {
 			let index = 1;
 			answers.forEach((element) => {
@@ -153,12 +165,7 @@ const socket = io();
 			setTimeout(function () {
 				// document.getElementById('answer').remove();
 				socket.emit("getQuestion", { punchlinePin: punchlinePin, numberQuestion: numberQuestion });
-			document.getElementById("answer").classList.add("invisible");
-			document.getElementById("points").classList.add("invisible");
-			document.getElementById("player").classList.add("invisible");
-			document.getElementById("game-zone").classList.add("invisible");
-			document.getElementById("time").classList.remove("invisible");
-			document.getElementById("countdown").classList.remove("invisible");
+			
 			
 			}, answers.length * 5000 + 5000);
 

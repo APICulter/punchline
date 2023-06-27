@@ -162,7 +162,7 @@ io.on("connection", function (socket) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		socket.broadcast.emit("redirect", "/html/waiting.html");
 		if(game.answers.length <= 1) {
-			io.emit("nextQuestion", game.question);
+			io.emit("skipVoteQuestion", game.question);
 		} else {
 			io.emit("displayAnswers", shuffle(game.answers));
 		}
