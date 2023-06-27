@@ -64,7 +64,7 @@ const socket = io();
 			var countdownInterval = setInterval(function() {
 				count--;
 				countdownElement.innerText = count;
-			
+				
 				// Check if countdown has reached 0
 				if (count === 0) {
 					clearInterval(countdownInterval);
@@ -153,9 +153,12 @@ const socket = io();
 			setTimeout(function () {
 				// document.getElementById('answer').remove();
 				socket.emit("getQuestion", { punchlinePin: punchlinePin, numberQuestion: numberQuestion });
-				document.getElementById("answer").classList.add("invisible");
+			document.getElementById("answer").classList.add("invisible");
 			document.getElementById("points").classList.add("invisible");
 			document.getElementById("player").classList.add("invisible");
+			document.getElementById("game-zone").classList.add("invisible");
+			document.getElementById("time").classList.remove("invisible");
+			document.getElementById("countdown").classList.remove("invisible");
 			
 			}, answers.length * 5000 + 5000);
 
