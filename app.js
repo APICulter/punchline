@@ -161,7 +161,11 @@ io.on("connection", function (socket) {
 	socket.on("timeIsUpToAnswer", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		socket.broadcast.emit("redirect", "/html/waiting.html");
-		// io.emit("displayAnswers", shuffle(game.answers));
+		if(game.answers.length <= 1) {
+			io.emit("nextQuestion", game.question);
+		} else {
+			io.emit("displayAnswers", shuffle(game.answers));
+		}
 	});
 
 	// socket.on("timeIsUpToVote", function (data) {
@@ -260,6 +264,7 @@ io.on("connection", function (socket) {
 		// 	}
 		// }
 		game.questions.push({ id: 1, question: "de quelle couleur est le ciel ?" });
+		game.questions.push({ id: 2, question: "pourquoi les poulets ?" });
 	}
 });
 

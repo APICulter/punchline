@@ -9,13 +9,13 @@ const socket = io();
 			playerName = sessionStorage.getItem("playerName");
 			punchlinePin = sessionStorage.getItem("punchlinePin");
 			getQuestion(numberQuestion);
-			startCountdown();
+			
 		};
 
 		// Function to start the countdown
-		function startCountdown() {
+		function startCountdown(count, questionCount) {
 			var countdownElement = document.getElementById("countdown");
-			var count = 6;
+			// var count = 6;
 		
 			// Update the countdown every second
 			var countdownInterval = setInterval(function() {
@@ -27,17 +27,17 @@ const socket = io();
 				clearInterval(countdownInterval);
 				// countdownElement.innerText = "Done!";
 				document.getElementById("game-zone").classList.remove("invisible");
-				document.getElementById("countdown").remove();
+				document.getElementById("countdown").classList.add("invisible");
 				socket.emit("startPrompt", { punchlinePin: punchlinePin });
-				startCountDownQuestion();
+				startCountDownQuestion(questionCount);
 
 			}
 			}, 1000);
 		}
 
-		function startCountDownQuestion() {
+		function startCountDownQuestion(count) {
 			var countdownElement = document.getElementById("time");
-			var count = 11;
+			// var count = 11;
 
 			countdownIntervalQuestion = setInterval(function() {
 				count--;
@@ -89,8 +89,13 @@ const socket = io();
 			});
 		}
 
+		socket.on("nextQuestion", (data) => {
+			getQuestion(data);
+		});
+
 		socket.on("question", function (data) {
 				document.getElementById("question").textContent = data.question;
+				startCountdown(6, 11);
 		});
 
 		socket.on("displayAnswers", function (data) {
@@ -98,7 +103,7 @@ const socket = io();
 			// let randomAnswers = shuffle(data.game.answers);
 			clearInterval(countdownIntervalQuestion);
 			document.getElementById("time").classList.add("invisible");
-			
+
 			let index = 1;
             
 			data.forEach((element) => {
@@ -147,8 +152,14 @@ const socket = io();
 
 			setTimeout(function () {
 				// document.getElementById('answer').remove();
-				socket.emit("getQuestion", { punchlinePin: punchlinePin });
+				socket.emit("getQuestion", { punchlinePin: punchlinePin, numberQuestion: numberQuestion });
+				document.getElementById("answer").classList.add("invisible");
+			document.getElementById("points").classList.add("invisible");
+			document.getElementById("player").classList.add("invisible");
+			
 			}, answers.length * 5000 + 5000);
+
+			
 
 			//faire le vote pour chaque réponse le cas échéant
 			//si un joueur / réponse a un ou plusieurs votes, afficher la réponse et le nombre de votes

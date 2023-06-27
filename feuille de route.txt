@@ -3,30 +3,20 @@
 scénario:
 
 
-si personne ne répond: le vote est cassé car aucune réponse
+si personne ne répond ou si une seule personne répond= > passer à la question suivante
 
-si les deux répondent avant la fin du timer, ça fonctionne.
-
-
-si les deux répondent avant la fin du countdon: ça affiche les réponses trop tot et ça renvoie la page de vote => envoyer la page de prompt après le countdown
+si les deux répondent avant la fin du timer, ça fonctionne. => ça interromp le timer et passer à l'affichages des réponses: OK
 
 
-si un seul sur deux répond au bon moment (cas particulier: un des deux ne peut pas voter (car sa propre réponse). Dans ce cas,  
+faire une fonction dans game qui englobe tout la cinématique pour passer d'une question à l'autre ?
+ 
 ------------------
 
 
 IMPORTANT:
 
-si personne n'a rentré de réponse, ça passe à la question suivante
-pas temps limite pour voter ?
-compteur sur la page de game 5, 4, 3, 2, 1, puis on affiche la question. Mettre ensuite un compteur de 60 secondes au dessus pour voter. Si la personne n'a pas voté à temps, que se passe t-il ? Elle perde un point 
-si personne ne vote, on passe directement à la question d'après (et tout le monde perd un point)
-
-Timers courts pour tester! 
-
+changer le titre des pages de "Hello world" en "Punchline"
 cliquer sur "Join Room". Entrer le pin de la room. Une fois fait, entrer son nom. Et ENSUITE ça envoie au serveur les deux infos !
-sur l'écran de jeu, mettre le Punchline en vraiment GROS lorsque la taille de l'écran est large
-
 
 gérer les déconnexions: mettre une alerte si la personne veut quitter la page: "Attention vous risquez de quitter la game"
 le retour en arrière sur la page d'accueil fait planter l'appli... Voir le routage avec express. Voir aussi pour masquer le nom des pages html
