@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+    /* Add style rules here */
+    input[type="radio"]:checked + label div {
+        /* CSS properties for the checked radio button */
+        /* Example styles: */
+        background-color: rgb(99 102 241);
+    }

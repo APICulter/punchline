@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/style.css" />
+    <title>Waiting</title>
+</head>
+<script src="/socket.io/socket.io.js"></script>
+<body class="bg-amber-600 ">
+    <h1 class=" mx-auto text-center text-6xl m-8 font-extrabold tracking-tight sm:text-4xl">
+        Punchline
+    </h1>
+    <div class="h-screen  flex flex-col items-center justify-center">
+        <!-- <h1 class="text-center text-6xl m-8 font-extrabold tracking-tight sm:text-4xl mb-auto">
+            Punchline
+        </h1> -->
+        
+        <button type="button" class=" m-auto align-middle inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm rounded-md text-white  transition ease-in-out duration-150 cursor-default border-none">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Please wait...
+          </button>
+       </p>
+       </p>
+</body>
+
+
+<script>
+var socket = io();
+// socket.on('redirect', (newGameURL, gamePin) => {
+//    			 // redirect to new URL
+//    			 window.location = newGameURL;
+//              if(gamePin) {
+//                 sessionStorage.setItem('punchlinePin', gamePin);
+//              }
+           
+// 		});
+        socket.on('redirect', (newGameURL, clear) => {
+   			 // redirect to new URL
+   			 window.location = newGameURL;
+             if(clear === 'clear') {
+                sessionStorage.clear();
+             }
+		});
+
+
+
+</script>
+</html>

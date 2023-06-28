@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" class="my-0 mx-auto">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/style.css" />
+    
+    <title>Prompt</title>
+</head>
+
+<script src="/socket.io/socket.io.js"></script>
+<body class="bg-amber-600">
+   
+    <section class="h-screen flex flex-col  justify-center">
+        <div>
+            
+        </div>
+        <h1 class="text-center text-6xl m-8  font-extrabold tracking-tight sm:text-4xl ">
+            Punchline
+        </h1>
+        
+        <div id="answer-box" class="flex flex-col justify-center mb-20 mt-auto mx-auto">
+           
+            <textarea class=" p-4 rounded-lg sm:max-w-xs bg-gray-300 focus:outline-none shadow-lg resize-none" name="answer" id="answer" cols="30" rows="7" placeholder="Your answer..."></textarea>
+            <button type="submit" id="button" class=" bg-amber-400 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400"
+            onclick="sendAnswer()">Enter</button>
+        </div>
+    </section>
+		
+        
+            
+</body>
+
+<script src="../js/prompt.js"></script>
+
+</html>

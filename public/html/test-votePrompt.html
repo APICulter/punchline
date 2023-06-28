@@ -1,0 +1,31 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/style.css">
+    <title>Vote</title>
+<script src="/socket.io/socket.io.js"></script></head>
+
+<body class="bg-amber-600">
+
+  
+        <section class="h-screen  flex flex-col items-center justify-center">
+            <div class="flex flex-col bg-amber-500 shadow-xl p-8 rounded-lg mx-10 my-auto max-w-2xl  w-80">
+                <div id="answers" class="flex flex-col basis-2/4">
+                <input type="radio" id="sdf" value="dfgdfg" name="answer" class="invisible w-0"><label for="sdf" id="label-0">
+                    <div id="0" class=" cursor-pointer text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 hover:bg-indigo-500 checked:bg-indigo-500 max-w-lg">dfgdfg</div></label><input type="radio" id="Hjk" value="Pkkjhilklkkj" name="answer" class="invisible w-0"><label for="Hjk" id="label-1">
+                    <div id="1" class=" cursor-pointer text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 hover:bg-indigo-500 checked:bg-indigo-500 max-w-lg">Pkkjhilklkkj</div></label></div>
+                <div id="vote-box" class="flex">
+                    <button id="vote" type="button" name="button" class=" flex-auto bg-amber-400 rounded-md shadow-xl mx-4 py-2 mt-10 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400">
+                        Vote</button>
+                </div>
+            </div>
+            
+        </section>
+        
+
+    
+
+
+<script src="../js/votePrompt.js"></script>
+</body></html>
