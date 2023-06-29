@@ -27,14 +27,17 @@ io.on("connection", function (socket) {
 	const ID = socket.id;
 
 	socket.on("setUsername", function (data) {
-		//à corriger car on peut mettre deux fois le même nom...
-		let exist = players.find((player) => player.name === data);
+		//à changer car on doit aussi regarder dans quelle game on se trouve
+		let game =  games.find((game) => game.pin === Number(data.pin));
+		let exist = game.players.find((player) => player.name === data.playerName);
 		if (typeof exist === "undefined") {
 			let id = playerIds + 1;
 			playerIds++;
-			let player = new Player(id, data, ID);
-			players.push(player);
-			socket.emit("userSet", { username: data });
+			let player = new Player(id, data.playerName, ID);
+			game.players.push(player);
+			socket.emit("userSet",  data, "/html/waiting.html");
+			io.to(game.hostSocketId).emit("newJoiner", {user: data.playerName, pin: game.pin});
+			// socket.emit("redirect", "/html/waiting.html", data.pin);
 		} else {
 			socket.emit("userExists", "Ce nom est déjà pris");
 		}
@@ -57,10 +60,19 @@ io.on("connection", function (socket) {
 			game.pin = pin;
 			game.hostSocketId = ID;
 			games.push(game);
-			socket.emit("new pin", pin);
+			socket.emit("newGame", pin);
 		} else {
 			socket.emit("game already exists", game.pin);
 		}
+	});
+
+	
+    // does the pin (game) exist ?
+	socket.on("findRoomById", function (data) {
+	let game = games.find((game) => game.pin === Number(data.pin));
+	if (typeof game !== "undefined") {
+		socket.emit("gamePinFound");
+	}
 	});
 
 	//A player joins a room if pin exists
@@ -73,7 +85,7 @@ io.on("connection", function (socket) {
 				let onlinePlayer = players.find((player) => player.name === data.user);
 				onlinePlayer.game = game.pin;
 				// io.to(game.hostSocketId).emit('redirect', '/html/settings.html');
-				io.to(game.hostSocketId).emit("newJoiner", data.user);
+				io.to(game.hostSocketId).emit("newJoiner", {user: data.user, pin: game.pin});
 				socket.emit("redirect", "/html/waiting.html", data.pin);
 			} else {
 				//utile?
@@ -81,7 +93,7 @@ io.on("connection", function (socket) {
 			}
 		} else {
 			//utile ?
-			io.sockets.emit("no game found");
+			io.sockets.emit("noGameFound");
 		}
 	});
 

@@ -1,21 +1,12 @@
 
 
-scénario:
-
-
-si personne ne répond ou si une seule personne répond= > passer à la question suivante
-
-si les deux répondent avant la fin du timer, ça fonctionne. => ça interromp le timer et passer à l'affichages des réponses: OK
-
-
-faire une fonction dans game qui englobe tout la cinématique pour passer d'une question à l'autre ?
- 
 ------------------
 
 
 IMPORTANT:
 
-changer le titre des pages de "Hello world" en "Punchline"
+vérifier que le nom n'est pas déjà pris dans cette game
+
 cliquer sur "Join Room". Entrer le pin de la room. Une fois fait, entrer son nom. Et ENSUITE ça envoie au serveur les deux infos !
 
 gérer les déconnexions: mettre une alerte si la personne veut quitter la page: "Attention vous risquez de quitter la game"
@@ -25,12 +16,13 @@ si on crée la game, on ne peut pas rejoindre sa propre game
 description du jeu
 
 échapper les caractères spéciaux genre " et ' pour éviter de casser les "id" dans la page de Voteprompt? ou Alors changer les ids...
-
-
-
-
-Rajouter "Punchline partout" => faire une insertion HTML identique pour toutes les pages ?
 utiliser le session storage pour garder le nom de la personne et éviter de retaper son nom ?
+
+reconnection: utiliser le LocalStorage au lieu du Session storage ? par contre comment nettoyer...
+si on entre son nom et qu'on fait précédent, on peut se connecter à nouveau avec un nouveau. à la connexion, faire un appel pour utiliser session storage ?
+faire un weakSet pour les games => objet game, clé unique = pin...
+
+classe player: virer game et gameCreator
 
 BONUS:
 

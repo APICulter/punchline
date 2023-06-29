@@ -1,12 +1,12 @@
 const socket = io();
 		let punchlinePin;
-		let playerName;
+		// let playerName;
 		let numberQuestion = 0;
 
 		var countdownIntervalQuestion;
 
 		window.onload = function () {
-			playerName = sessionStorage.getItem("playerName");
+			// playerName = sessionStorage.getItem("playerName");
 			punchlinePin = sessionStorage.getItem("punchlinePin");
 			getQuestion(numberQuestion);
 			

@@ -20,7 +20,7 @@
 
 		<div class="container mx-auto">
 			<div class="flex flex-col items-center mt-8">
-				<div id="name" class="max-w-2xl mx-auto flex flex-col sm:flex-row">
+				<div id="name" class=" invisible max-w-2xl mx-auto flex flex-col sm:flex-row">
 					<div id="nameInput" class="">
 						<input
 							id="player-name"
@@ -44,7 +44,7 @@
 				</div>
 
 				<div class="w-200">
-					<div id="choice" class=" text-center max-w-xl mx-auto flex flex-col invisible">
+					<div id="choice" class=" text-center max-w-xl mx-auto flex flex-col">
 						<div id="create-div" class="text-4xl m-8 ">
 							<button
 								id="createGame"
@@ -55,9 +55,12 @@
 							>
 								Create Game
 							</button>
+							<div id="pin">
+
+							</div>
 						</div>
 
-						<div id="join" class="invisible flex-wrap">
+						<div id="join" class="flex-wrap">
 							<input
 								id="room-pin"
 								type="text"
