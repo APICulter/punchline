@@ -13,7 +13,7 @@
 				socket.emit(
 					"setUsername", {
 					playerName	: document.getElementById("player-name").value,
-					pin: document.getElementById("room-pin").value
+					pin: document.getElementById("pin").value
 					}
 					
 				);
@@ -44,6 +44,9 @@
 		function createGame() {
 			socket.emit("createGame");
 			document.getElementById("startGame").classList.remove("invisible");
+			document.getElementById("join").classList.add("invisible");
+			document.getElementById("createGame").classList.remove("hover:cursor-pointer");
+
 		}
 
 		socket.on("newGame", function (data) {
@@ -89,7 +92,35 @@
 
 		socket.on("gamePinFound", function (data) {
 			//make the name div appear in order to enter player name
+			document.querySelector('#pin').setAttribute("value", data);
+			document.querySelector("#choice").remove();
 			document.querySelector("#name").classList.remove("invisible");
+			
+			let nameInput = document.createElement('div');
+			document.querySelector('#name').append(nameInput);
+			
+
+			let playerName = document.createElement('input');
+			document.querySelector('#name').append(playerName);
+			playerName.id = "player-name";
+			playerName.type = "text";
+			playerName.name = "name";
+			playerName.value = "";
+			playerName.placeholder = "Name";
+			playerName.className = "w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-slate-100 focus:outline-none";
+			
+			let nameButton = document.createElement('button');
+			document.querySelector('#name').append(nameButton);
+			nameButton.id = "name-button";
+			nameButton.type = "button";
+			nameButton.name = "button";
+			nameButton.innerText = "Go";
+			nameButton.setAttribute("onclick", "setUsername()");
+			nameButton.className = "w-full sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400"
+
+			let errorContainer = document.createElement('div');
+			document.querySelector('#name').append(errorContainer);
+			errorContainer.id = "error-container";
 		});
 
 	
@@ -99,7 +130,7 @@
 
                     let player = document.createElement("div");
                     player.textContent = data.user;
-                    player.className = "flex items-stretch rounded bg-indigo-400 text-gray-300 m-2 p-2";
+                    player.className = "flex items-stretch rounded bg-gray-900 text-gray-300 m-2 p-2";
                     document.getElementById("players").append(player);
                     nbOfPlayers  += 1;
 					// document

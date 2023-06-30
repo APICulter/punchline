@@ -29,18 +29,22 @@ io.on("connection", function (socket) {
 	socket.on("setUsername", function (data) {
 		//à changer car on doit aussi regarder dans quelle game on se trouve
 		let game =  games.find((game) => game.pin === Number(data.pin));
-		let exist = game.players.find((player) => player.name === data.playerName);
-		if (typeof exist === "undefined") {
-			let id = playerIds + 1;
-			playerIds++;
-			let player = new Player(id, data.playerName, ID);
-			game.players.push(player);
-			socket.emit("userSet",  data, "/html/waiting.html");
-			io.to(game.hostSocketId).emit("newJoiner", {user: data.playerName, pin: game.pin});
-			// socket.emit("redirect", "/html/waiting.html", data.pin);
-		} else {
-			socket.emit("userExists", "Ce nom est déjà pris");
+		if (typeof game !== "undefined") {
+			let exist = game.players.find((player) => player.name === data.playerName);
+			if (typeof exist === "undefined") {
+				let id = playerIds + 1;
+				playerIds++;
+				let player = new Player(id, data.playerName, ID);
+				game.players.push(player);
+				socket.emit("userSet",  data, "/html/waiting.html");
+				io.to(game.hostSocketId).emit("newJoiner", {user: data.playerName, pin: game.pin});
+				// socket.emit("redirect", "/html/waiting.html", data.pin);
+			} else {
+				socket.emit("userExists", "Ce nom est déjà pris");
+			}
 		}
+		
+		
 	});
 
 	//Send message to everyone
@@ -71,7 +75,7 @@ io.on("connection", function (socket) {
 	socket.on("findRoomById", function (data) {
 	let game = games.find((game) => game.pin === Number(data.pin));
 	if (typeof game !== "undefined") {
-		socket.emit("gamePinFound");
+		socket.emit("gamePinFound", game.pin);
 	}
 	});
 

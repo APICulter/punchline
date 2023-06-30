@@ -1,17 +1,39 @@
-
+<div id="name" class=" invisible max-w-2xl mx-auto flex flex-col sm:flex-row">
+					<div id="nameInput" class="">
+						<input
+							id="player-name"
+							type="text"
+							name="name"
+							value=""
+							placeholder="Name"
+							class="w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-slate-100 focus:outline-none"
+						/>
+						<button
+							id="name-button"
+							type="button"
+							name="button"
+							onclick="setUsername()"
+							class="w-full sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400"
+						>
+							Go
+						</button>
+						<div id="error-container"></div>
+					</div>
+				</div>
 
 ------------------
 
 
 IMPORTANT:
 
-vérifier que le nom n'est pas déjà pris dans cette game
 
-cliquer sur "Join Room". Entrer le pin de la room. Une fois fait, entrer son nom. Et ENSUITE ça envoie au serveur les deux infos !
+2) si on se connecte sur le lobby et qu'on a des choses dans le session storage, alors on est redirigé vers la waiting room pour ne pas re rentrer de nom et avoir une connexion orpheline (casse le vote). Sauf si on pas de playerName, auquel cas on est le host de la game. Si on crée un nouvelle game, ça détruit l'ancienne et les autres sont redirigés vers le lobby à neuf (sans session storage)
+3) refaire le placement: quand on écrit son nom, ça doit se trouver à la place du carré "choice"
+bouton de refresh: qui remet la page dans son état initial. Si c'est l'écran qui a créé la game, détruit la game. Si c'est un joueur qui a déja rentré son nom, il sensé être sur l'écran de "waiting". Que se passe-t'il s'il fait un retour arrière ? on peut vérifier ce qu'il y a dans le session storagep
 
 gérer les déconnexions: mettre une alerte si la personne veut quitter la page: "Attention vous risquez de quitter la game"
 le retour en arrière sur la page d'accueil fait planter l'appli... Voir le routage avec express. Voir aussi pour masquer le nom des pages html
-sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter => bouton rejouer. on annule les scores mais on garde la room. par contre si on clique sur menu principal, on détruit la game.
+sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter => bouton rejouer. on annule les scores mais on garde la room. par contre si on clique sur menu principal, on détruit la game et on vide la session storage pour tous les gens de la room
 si on crée la game, on ne peut pas rejoindre sa propre game
 description du jeu
 
