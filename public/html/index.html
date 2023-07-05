@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Hello world</title>
+		<title>Punchline</title>
 		<meta charset="UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,37 +14,21 @@
 	<script src="/socket.io/socket.io.js"></script>
 
 	<body class="bg-amber-600">
-		<h1 class="text-center text-6xl m-8 font-extrabold tracking-tight sm:text-4xl">
-			Punchline
-		</h1>
+		
 
-		<div class="container mx-auto">
-			<div class="flex flex-col items-center mt-8">
-				<div id="name" class="max-w-2xl mx-auto flex flex-col sm:flex-row">
-					<div id="nameInput" class="">
-						<input
-							id="player-name"
-							type="text"
-							name="name"
-							value=""
-							placeholder="Name"
-							class="w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-slate-100 focus:outline-none"
-						/>
-						<button
-							id="name-button"
-							type="button"
-							name="button"
-							onclick="setUsername()"
-							class="w-full sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400"
-						>
-							Go
-						</button>
-						<div id="error-container"></div>
+		<section class="h-screen grid grid-cols-1 justify-center">
+			<h1 class=" self-start text-center text-6xl m-8 font-extrabold tracking-tight">
+				Punchline
+			</h1>
+			<div class="flex flex-col items-center">
+				<div id="name" class=" invisible max-w-2xl mx-auto flex flex-col">
+					<div id="nameInput">
+						
 					</div>
 				</div>
 
 				<div class="w-200">
-					<div id="choice" class=" text-center max-w-xl mx-auto flex flex-col invisible">
+					<div id="choice" class=" text-center max-w-xl mx-auto flex flex-col">
 						<div id="create-div" class="text-4xl m-8 ">
 							<button
 								id="createGame"
@@ -55,9 +39,21 @@
 							>
 								Create Game
 							</button>
+							<div>
+								<button
+									id="startGame"
+									type="button"
+									name="startGame"
+									onclick="startGame()"
+									class=" mt-8 invisible text-4xl bg-indigo-500 w-full rounded-full w-90 flex-none shadow-xl p-4 hover:cursor-pointer ease-in-out duration-300 transition hover:scale-110 active:scale-90"
+								>
+									Play
+								</button>
+							</div>
+							
 						</div>
 
-						<div id="join" class="invisible flex-wrap">
+						<div id="join" class="flex-wrap">
 							<input
 								id="room-pin"
 								type="text"
@@ -96,8 +92,9 @@
 						</tr>
 					</tbody>
 				</table> -->
+				<input id="pin" class="invisible" value="" type="text">
 
-				<div id="players" class="flex flex-row mt-20">
+				<div id="players" class="flex flex-col">
 
 				</div>
 <!-- 
@@ -128,19 +125,9 @@
 					<!-- </tbody>
 				</table> -->
 
-				<div>
-					<button
-						id="startGame"
-						type="button"
-						name="startGame"
-						onclick="startGame()"
-						class=" mt-8 invisible text-4xl bg-indigo-500 w-full rounded-full w-90 flex-none shadow-xl p-4 hover:cursor-pointer ease-in-out duration-300 transition hover:scale-110 active:scale-90"
-					>
-						Play
-					</button>
-				</div>
+				
 			</div>
-		</div>
+		</section>
 	</body>
 
 	<script src="../js/index.js"></script>

@@ -11,8 +11,11 @@
 		function setUsername() {
 			if (document.getElementById("player-name").value.length !== 0) {
 				socket.emit(
-					"setUsername",
-					document.getElementById("player-name").value
+					"setUsername", {
+					playerName	: document.getElementById("player-name").value,
+					pin: document.getElementById("pin").value
+					}
+					
 				);
 			}
 		}
@@ -21,24 +24,12 @@
 		socket.on("userExists", function (data) {
 			document.getElementById("error-container").innerHTML = data;
 		});
-		socket.on("userSet", function (data) {
-			user = data.username;
-			let finalName = document.createElement("div");
-			finalName.id = "userName";
-			sessionStorage.setItem("playerName", user);
-			finalName.textContent = user;
-			finalName.classList.add("text-4xl");
-			// document.getElementById("table-name").append(finalName);
-			// document.getElementById("table-name-row").classList.remove("invisible");
-			// document.getElementById("nameInput").classList.add("text-left");
-			// document.getElementById("nameInput").classList.add("text-xl");
-			// document.getElementById("nameInput").classList.remove("flew-row");
-			document.getElementById("player-name").remove();
-			document.getElementById("name-button").remove();
-			document.getElementById("error-container").innerHTML = "";
+		socket.on("userSet", function (data, newGameURL) {
 
-			document.getElementById("choice").classList.remove("invisible");
-			document.getElementById("join").classList.remove("invisible");
+			sessionStorage.setItem("playerName", data.playerName);
+			sessionStorage.setItem("punchlinePin", data.pin);
+			window.location = newGameURL;
+			
 		});
 
 		//choix du nom en validant avec la touche "Entrée"
@@ -51,12 +42,15 @@
 
 		/**choix du game **/
 		function createGame() {
-			socket.emit("createGame", { user: user });
+			socket.emit("createGame");
 			document.getElementById("startGame").classList.remove("invisible");
+			document.getElementById("join").classList.add("invisible");
+			document.getElementById("createGame").classList.remove("hover:cursor-pointer");
+
 		}
 
-		socket.on("new pin", function (data) {
-			if (user) {
+		socket.on("newGame", function (data) {
+			// if (user) {
 				let pinCreated = document.createElement("div");
 				pinCreated.textContent = data;
 				pinCreated.classList.add("text-4xl");
@@ -64,10 +58,11 @@
 				document.getElementById("createGame").className += " rounded-full";
 				document.getElementById("createGame").className += " animate-pulse";
 				document.getElementById("createGame").classList.replace("bg-amber-500", "bg-amber-400");
-
-			}
+				
+				sessionStorage.setItem("punchlinePin", data);
+			// }
 		});
-		socket.on("game already exists", function (data) {
+		socket.on("gameExists", function (data) {
 			if (user) {
 				document.getElementById("createGame").setAttribute("disabled", "");
 			}
@@ -75,50 +70,67 @@
 
 		//rejoindre une room
 
-		function displayJoinRoom() {
-			document.getElementById("display-join-room-button").remove();
-			document.getElementById("join").classList.remove("invisible");
-		}
 
 		function joinRoom() {
-			//faire une vérif que c'est pas vide et que c'est bien un nombre
 			if (
 				document.getElementById("room-pin").value.length > 0 &&
 				!isNaN(document.getElementById("room-pin").value)
 			) {
-				socket.emit("joinRoom", {
-					pin: document.getElementById("room-pin").value,
-					user: user,
+				socket.emit("findRoomById", {
+					pin: document.getElementById("room-pin").value
+				
 				});
 			} else {
 				document.getElementById("room-pin").value = "";
 			}
 
-			// 	if(!document.getElementById("errorJoinPin")) {
-			// 		let errorMessage = document.createElement("p");
-			// 	errorMessage.textContent = "Ne peut pas être vide et doit contenir uniquement des chiffres";
-			// 	errorMessage.id="errorJoinPin";
-			// 	document.getElementById("join").append(errorMessage);
-			// 	document.getElementById("room-pin").value="";
-			// 	}
 		}
-		// socket.on("joined", function (data) {
-		// 	if (user) {
-		// 		if (data) {
-		// 			let joined = document.createElement("div");
-		// 			joined.textContent =
-		// 				"Vous avez rejoint la game avec le pin " + data.game.pin;
-		// 			document.body.append(joined);
-		// 		}
-		// 	}
-		// });
+
+		socket.on("noGameFound", function (data) {
+			//display a message "the game of pin XYZ does not exist"
+		});
+
+		socket.on("gamePinFound", function (data) {
+			//make the name div appear in order to enter player name
+			document.querySelector('#pin').setAttribute("value", data);
+			document.querySelector("#choice").remove();
+			document.querySelector("#name").classList.remove("invisible");
+			
+			let nameInput = document.createElement('div');
+			document.querySelector('#name').append(nameInput);
+			
+
+			let playerName = document.createElement('input');
+			document.querySelector('#name').append(playerName);
+			playerName.id = "player-name";
+			playerName.type = "text";
+			playerName.name = "name";
+			playerName.value = "";
+			playerName.placeholder = "Name";
+			playerName.className = "w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-slate-100 focus:outline-none";
+			
+			let nameButton = document.createElement('button');
+			document.querySelector('#name').append(nameButton);
+			nameButton.id = "name-button";
+			nameButton.type = "button";
+			nameButton.name = "button";
+			nameButton.innerText = "Go";
+			nameButton.setAttribute("onclick", "setUsername()");
+			nameButton.className = "w-full sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400"
+
+			let errorContainer = document.createElement('div');
+			document.querySelector('#name').append(errorContainer);
+			errorContainer.id = "error-container";
+		});
+
+	
 		socket.on("newJoiner", function (data) {
-			if (user) {
+			// if (user) {
 				if (data) {
 
                     let player = document.createElement("div");
-                    player.textContent = data;
-                    player.className = "flex items-stretch rounded bg-indigo-400 text-gray-300 m-2 p-2";
+                    player.textContent = data.user;
+                    player.className = "flex items-stretch rounded bg-gray-900 text-gray-300 m-2 p-2";
                     document.getElementById("players").append(player);
                     nbOfPlayers  += 1;
 					// document
@@ -136,13 +148,14 @@
                     // nbOfPlayers  += 1;
                     // sessionStorage.setItem("nbOfPlayers", nbOfPlayers);
 				}
-			}
+			// }
+			sessionStorage.setItem("punchlinePin", date.pin);
 		});
 
 		socket.on("redirect", (newGameURL, gamePin) => {
 			// redirect to new URL
 			window.location = newGameURL;
-			sessionStorage.setItem("punchlinePin", gamePin);
+			// sessionStorage.setItem("punchlinePin", gamePin);
 		});
 
 		//début du jeu
@@ -151,6 +164,7 @@
             if (nbOfPlayers < 1 ) {
 
             } else {
+
                 socket.emit("startGame", {
                     pin: document.getElementById("createGame").textContent,
                 });

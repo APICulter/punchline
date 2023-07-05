@@ -1,36 +1,42 @@
-
-
-scénario:
-
-
-si personne ne répond ou si une seule personne répond= > passer à la question suivante
-
-si les deux répondent avant la fin du timer, ça fonctionne. => ça interromp le timer et passer à l'affichages des réponses: OK
-
-
-faire une fonction dans game qui englobe tout la cinématique pour passer d'une question à l'autre ?
- 
 ------------------
 
 
 IMPORTANT:
 
-changer le titre des pages de "Hello world" en "Punchline"
-cliquer sur "Join Room". Entrer le pin de la room. Une fois fait, entrer son nom. Et ENSUITE ça envoie au serveur les deux infos !
+gérer la room avec les disconnect
+https://stackoverflow.com/questions/18240512/stay-connected-to-socket-io-while-switching-pages
+
+mutualiser joinRoom et setUserName
+=> dès que l'on arrive sur une page, on fait une requete générique pour re-rentrer dans la room ? demander à ChatGPT
+
+deux fonctions différentes: 
+JoinRoom pour quand le user a déjà été créé et souhaite se reconnecter => en fonction de l'état du jeu. boolean pour permettre de rejoindre à un moment donné
+SetUserName pour quand le user se connecte à la room pour la première fois
+
+gérer deux parties en même temps => revoir les appels socket io pour ne targer que la room concernée
+gérer la déconnexion des joueurs
+gérer la déconnexion du host => détruit la game et renvoie les joueurs vers la lobby avec la partie perdue ?
+
+1) afficher le pin du game sur l'écran de jeu pour permettre la reconnexion 
+2) si on se connecte sur le lobby et qu'on a des choses dans le session storage, alors on est redirigé vers la waiting room pour ne pas re rentrer de nom et avoir une connexion orpheline (casse le vote). Sauf si on pas de playerName, auquel cas on est le host de la game. Si on crée un nouvelle game, ça détruit l'ancienne et les autres sont redirigés vers le lobby à neuf (sans session storage)
+3) refaire le placement: quand on écrit son nom, ça doit se trouver à la place du carré "choice"
+bouton de refresh: qui remet la page dans son état initial. Si c'est l'écran qui a créé la game, détruit la game. Si c'est un joueur qui a déja rentré son nom, il sensé être sur l'écran de "waiting". Que se passe-t'il s'il fait un retour arrière ? on peut vérifier ce qu'il y a dans le session storagep
+mettre un chrono pour le vote: car si un joueur se déconnecte, il ne vote pas et on ne passe jamais au vote suivant. Ou alors on attend la reco ?
 
 gérer les déconnexions: mettre une alerte si la personne veut quitter la page: "Attention vous risquez de quitter la game"
 le retour en arrière sur la page d'accueil fait planter l'appli... Voir le routage avec express. Voir aussi pour masquer le nom des pages html
-sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter => bouton rejouer. on annule les scores mais on garde la room. par contre si on clique sur menu principal, on détruit la game.
+sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter => bouton rejouer. on annule les scores mais on garde la room. par contre si on clique sur menu principal, on détruit la game et on vide la session storage pour tous les gens de la room
 si on crée la game, on ne peut pas rejoindre sa propre game
 description du jeu
 
 échapper les caractères spéciaux genre " et ' pour éviter de casser les "id" dans la page de Voteprompt? ou Alors changer les ids...
-
-
-
-
-Rajouter "Punchline partout" => faire une insertion HTML identique pour toutes les pages ?
 utiliser le session storage pour garder le nom de la personne et éviter de retaper son nom ?
+
+reconnection: utiliser le LocalStorage au lieu du Session storage ? par contre comment nettoyer...
+si on entre son nom et qu'on fait précédent, on peut se connecter à nouveau avec un nouveau. à la connexion, faire un appel pour utiliser session storage ?
+faire un weakSet pour les games => objet game, clé unique = pin...
+
+classe player: virer game et gameCreator
 
 BONUS:
 

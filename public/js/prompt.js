@@ -5,6 +5,8 @@ let playerName;
 window.onload = function () {
     playerName = sessionStorage.getItem('playerName');
     punchlinePin = sessionStorage.getItem('punchlinePin');
+
+    socket.emit('joinRoom', punchlinePin);
 }
 
 socket.on('redirect', newGameURL => {

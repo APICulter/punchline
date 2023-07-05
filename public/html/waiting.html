@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../css/style.css" />
-    <title>Waiting</title>
+    <title>Punchline</title>
 </head>
 <script src="/socket.io/socket.io.js"></script>
 <body class="bg-amber-600 ">
@@ -30,15 +30,17 @@
 
 
 <script>
-var socket = io();
-// socket.on('redirect', (newGameURL, gamePin) => {
-//    			 // redirect to new URL
-//    			 window.location = newGameURL;
-//              if(gamePin) {
-//                 sessionStorage.setItem('punchlinePin', gamePin);
-//              }
-           
-// 		});
+const socket = io();
+let punchlinePin;
+let playerName;
+
+window.onload = function () {
+    playerName = sessionStorage.getItem('playerName');
+    punchlinePin = sessionStorage.getItem('punchlinePin');
+
+    socket.emit('joinRoom', punchlinePin);
+}
+
         socket.on('redirect', (newGameURL, clear) => {
    			 // redirect to new URL
    			 window.location = newGameURL;
