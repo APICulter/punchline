@@ -30,9 +30,142 @@ var games = [];
 // Room object to store room information
 const rooms = {};
 
+// Generate a random 4-digit PIN
+function generatePIN() {
+	return Math.floor(1000 + Math.random() * 9000);
+  }
+
 io.on("connection", function (socket) {
 	// console.log('A user connected');
 	const ID = socket.id;
+
+	// Handler for creating a new room
+	socket.on('createGame', () => {
+		const roomName = `room-${socket.id}`;
+		const pin = generatePIN();
+		
+		if (!rooms[roomName]) {
+		  rooms[roomName] = {
+			pin: pin,
+			sockets: [],
+		  };
+		  socket.join(roomName);
+		  rooms[roomName].sockets.push(socket);
+		  socket.emit('newGame', pin);
+
+		  //Creation of the game linked to the room
+		  let game = new Game();
+		  game.pin = pin;
+		  game.hostSocketId = ID;
+		  games.push(game);
+
+		} else {
+		  // Retry if the generated room name already exists (highly unlikely)
+		  socket.emit('gameExists');
+		}
+	  });
+
+	  //Sends the pin game only to the creator of the game
+	//for now, the hostSocketId is used to now how is hosting the game, but the case of disconnect has not been made
+	//Does the socket id change if the client reconnects ?
+	// socket.on("createGame", function () {
+	// 	let game = games.find((game) => game.hostSocketId === ID);
+	// 	if (typeof game === "undefined") {
+	// 		let game = new Game();
+	// 		//must check if pin already exist. important otherwise can be 2 games with same id !!!
+	// 		let pin = Math.floor(Math.random() * 100);
+	// 		game.pin = pin;
+	// 		game.hostSocketId = ID;
+	// 		games.push(game);
+	// 		socket.emit("newGame", pin);
+	// 	} else {
+	// 		socket.emit("game already exists", game.pin);
+	// 	}
+	// });
+
+	// does the pin (game) exist ?
+	socket.on("findRoomById", function (data) {
+		let game = games.find((game) => game.pin === Number(data.pin));
+		if (typeof game !== "undefined") {
+			socket.emit("gamePinFound", game.pin);
+		}
+		});
+	
+	  // Handler for joining a room
+	  socket.on('joinRoom', (pin) => {
+		let roomName = null;
+		for (const name in rooms) {
+		  if (rooms[name].pin === pin) {
+			roomName = name;
+			break;
+		  }
+		}
+		
+		if (roomName) {
+
+			let player = game.players.find((player) => player.name === data.user);
+			if (typeof player === "undefined") {
+				game.players.push(players.find((player) => player.name === data.user));
+				let onlinePlayer = players.find((player) => player.name === data.user);
+				onlinePlayer.game = game.pin;
+				// io.to(game.hostSocketId).emit('redirect', '/html/settings.html');
+				io.to(game.hostSocketId).emit("newJoiner", {user: data.user, pin: game.pin});
+				socket.emit("redirect", "/html/waiting.html", data.pin);
+				
+				socket.join(roomName);
+		  		rooms[roomName].sockets.push(socket);
+			} else {
+				//utile?
+				io.sockets.emit("player already joined");
+			}
+		//   socket.emit('roomJoined', roomName);
+		} else {
+		  socket.emit('invalidPIN');
+		}
+	  });
+
+	  //A player joins a room if pin exists
+	// socket.on("joinRoom", function (data) {
+	// 	let game = games.find((game) => game.pin === Number(data.pin));
+	// 	if (typeof game !== "undefined") {
+	// 		let player = game.players.find((player) => player.name === data.user);
+	// 		if (typeof player === "undefined") {
+	// 			game.players.push(players.find((player) => player.name === data.user));
+	// 			let onlinePlayer = players.find((player) => player.name === data.user);
+	// 			onlinePlayer.game = game.pin;
+	// 			// io.to(game.hostSocketId).emit('redirect', '/html/settings.html');
+	// 			io.to(game.hostSocketId).emit("newJoiner", {user: data.user, pin: game.pin});
+	// 			socket.emit("redirect", "/html/waiting.html", data.pin);
+	// 		} else {
+	// 			//utile?
+	// 			io.sockets.emit("player already joined");
+	// 		}
+	// 	} else {
+	// 		//utile ?
+	// 		io.sockets.emit("noGameFound");
+	// 	}
+	// });
+
+
+		// // Handler for leaving a room
+		// socket.on('leaveRoom', roomName => {
+		// 	const room = rooms[roomName];
+		// 	if (room) {
+		// 	socket.leave(roomName);
+		// 	room.sockets = room.sockets.filter(s => s !== socket);
+		// 	}
+		// });
+
+	// Handler for disconnecting from the server
+	socket.on('disconnect', () => {
+		// Remove the socket from all rooms
+		for (const roomName in rooms) {
+		  const room = rooms[roomName];
+		  room.sockets = room.sockets.filter(s => s !== socket);
+		}
+	  });
+	
+
 
 	socket.on("setUsername", function (data) {
 		//à changer car on doit aussi regarder dans quelle game on se trouve
@@ -60,54 +193,12 @@ io.on("connection", function (socket) {
 		io.sockets.emit("newmsg", data);
 	});
 
-	//Sends the pin game only to the creator of the game
-	//for now, the hostSocketId is used to now how is hosting the game, but the case of disconnect has not been made
-	//Does the socket id change if the client reconnects ?
-	socket.on("createGame", function () {
-		let game = games.find((game) => game.hostSocketId === ID);
-		if (typeof game === "undefined") {
-			let game = new Game();
-			//must check if pin already exist. important otherwise can be 2 games with same id !!!
-			let pin = Math.floor(Math.random() * 100);
-			game.pin = pin;
-			game.hostSocketId = ID;
-			games.push(game);
-			socket.emit("newGame", pin);
-		} else {
-			socket.emit("game already exists", game.pin);
-		}
-	});
+	
 
 	
-    // does the pin (game) exist ?
-	socket.on("findRoomById", function (data) {
-	let game = games.find((game) => game.pin === Number(data.pin));
-	if (typeof game !== "undefined") {
-		socket.emit("gamePinFound", game.pin);
-	}
-	});
+    
 
-	//A player joins a room if pin exists
-	socket.on("joinRoom", function (data) {
-		let game = games.find((game) => game.pin === Number(data.pin));
-		if (typeof game !== "undefined") {
-			let player = game.players.find((player) => player.name === data.user);
-			if (typeof player === "undefined") {
-				game.players.push(players.find((player) => player.name === data.user));
-				let onlinePlayer = players.find((player) => player.name === data.user);
-				onlinePlayer.game = game.pin;
-				// io.to(game.hostSocketId).emit('redirect', '/html/settings.html');
-				io.to(game.hostSocketId).emit("newJoiner", {user: data.user, pin: game.pin});
-				socket.emit("redirect", "/html/waiting.html", data.pin);
-			} else {
-				//utile?
-				io.sockets.emit("player already joined");
-			}
-		} else {
-			//utile ?
-			io.sockets.emit("noGameFound");
-		}
-	});
+	
 
 	socket.on("startGame", function (data) {
 		//lance la game pour tous les joueurs dans la room
@@ -291,9 +382,10 @@ io.on("connection", function (socket) {
 		game.questions.push({ id: 2, question: "pourquoi les poulets ?" });
 	}
 });
+
 const port = 3000;
 server.listen(port, () => {
 	console.log(`Server is running on http://localhost:${port}`);
   });
 
-//peut être mettre cette fonction à l'intérieur du  io.on("connection", function (socket) {
+

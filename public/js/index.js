@@ -62,7 +62,7 @@
 				sessionStorage.setItem("punchlinePin", data);
 			// }
 		});
-		socket.on("game already exists", function (data) {
+		socket.on("gameExists", function (data) {
 			if (user) {
 				document.getElementById("createGame").setAttribute("disabled", "");
 			}

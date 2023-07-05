@@ -3,6 +3,9 @@
 
 IMPORTANT:
 
+
+gérer deux parties en même temps => revoir les appels socket io pour ne targer que la room concernée
+
 1) afficher le pin du game sur l'écran de jeu pour permettre la reconnexion 
 2) si on se connecte sur le lobby et qu'on a des choses dans le session storage, alors on est redirigé vers la waiting room pour ne pas re rentrer de nom et avoir une connexion orpheline (casse le vote). Sauf si on pas de playerName, auquel cas on est le host de la game. Si on crée un nouvelle game, ça détruit l'ancienne et les autres sont redirigés vers le lobby à neuf (sans session storage)
 3) refaire le placement: quand on écrit son nom, ça doit se trouver à la place du carré "choice"
