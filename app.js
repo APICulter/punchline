@@ -1,13 +1,18 @@
-var express = require("express");
-var path = require("path");
-var app = express();
-var http = require("http").Server(app);
-var io = require("socket.io")(http);
-// import 'animate.css';
+// Import required modules
+const express = require('express');
+const http = require('http');
+const socketIO = require('socket.io');
+
+// Create the Express app
+const app = express();
+const server = http.createServer(app);
+const io = socketIO(server);
+
 
 const { Game } = require("./classes/game");
 const { Player } = require("./classes/player");
 
+var path = require("path");
 const publicPath = path.join(__dirname, "public");
 app.get("/", function (req, res) {
 	res.sendFile(__dirname + "/public/html/index.html");
@@ -15,12 +20,15 @@ app.get("/", function (req, res) {
 
 app.use(express.static(publicPath));
 
-rooms = [];
-pins = [];
+
+
 playerIds = 0;
 
 var players = [];
 var games = [];
+
+// Room object to store room information
+const rooms = {};
 
 io.on("connection", function (socket) {
 	// console.log('A user connected');
@@ -283,9 +291,9 @@ io.on("connection", function (socket) {
 		game.questions.push({ id: 2, question: "pourquoi les poulets ?" });
 	}
 });
-
-http.listen(3000, function () {
-	console.log("listening on localhost:3000");
-});
+const port = 3000;
+server.listen(port, () => {
+	console.log(`Server is running on http://localhost:${port}`);
+  });
 
 //peut être mettre cette fonction à l'intérieur du  io.on("connection", function (socket) {
