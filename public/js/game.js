@@ -8,6 +8,7 @@ const socket = io();
 		window.onload = function () {
 			// playerName = sessionStorage.getItem("playerName");
 			punchlinePin = sessionStorage.getItem("punchlinePin");
+			socket.emit('joinRoom', punchlinePin);
 			getQuestion(numberQuestion);
 			
 		};

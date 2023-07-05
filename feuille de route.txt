@@ -3,8 +3,19 @@
 
 IMPORTANT:
 
+gérer la room avec les disconnect
+https://stackoverflow.com/questions/18240512/stay-connected-to-socket-io-while-switching-pages
+
+mutualiser joinRoom et setUserName
+=> dès que l'on arrive sur une page, on fait une requete générique pour re-rentrer dans la room ? demander à ChatGPT
+
+deux fonctions différentes: 
+JoinRoom pour quand le user a déjà été créé et souhaite se reconnecter => en fonction de l'état du jeu. boolean pour permettre de rejoindre à un moment donné
+SetUserName pour quand le user se connecte à la room pour la première fois
 
 gérer deux parties en même temps => revoir les appels socket io pour ne targer que la room concernée
+gérer la déconnexion des joueurs
+gérer la déconnexion du host => détruit la game et renvoie les joueurs vers la lobby avec la partie perdue ?
 
 1) afficher le pin du game sur l'écran de jeu pour permettre la reconnexion 
 2) si on se connecte sur le lobby et qu'on a des choses dans le session storage, alors on est redirigé vers la waiting room pour ne pas re rentrer de nom et avoir une connexion orpheline (casse le vote). Sauf si on pas de playerName, auquel cas on est le host de la game. Si on crée un nouvelle game, ça détruit l'ancienne et les autres sont redirigés vers le lobby à neuf (sans session storage)

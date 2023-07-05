@@ -51,13 +51,15 @@ io.on("connection", function (socket) {
 		  };
 		  socket.join(roomName);
 		  rooms[roomName].sockets.push(socket);
-		  socket.emit('newGame', pin);
+		 
 
 		  //Creation of the game linked to the room
 		  let game = new Game();
 		  game.pin = pin;
 		  game.hostSocketId = ID;
 		  games.push(game);
+
+		  socket.emit('newGame', pin);
 
 		} else {
 		  // Retry if the generated room name already exists (highly unlikely)
@@ -95,34 +97,58 @@ io.on("connection", function (socket) {
 	  socket.on('joinRoom', (pin) => {
 		let roomName = null;
 		for (const name in rooms) {
-		  if (rooms[name].pin === pin) {
+		  if (rooms[name].pin == pin) {
 			roomName = name;
 			break;
 		  }
 		}
 		
 		if (roomName) {
-
-			let player = game.players.find((player) => player.name === data.user);
-			if (typeof player === "undefined") {
-				game.players.push(players.find((player) => player.name === data.user));
-				let onlinePlayer = players.find((player) => player.name === data.user);
-				onlinePlayer.game = game.pin;
-				// io.to(game.hostSocketId).emit('redirect', '/html/settings.html');
-				io.to(game.hostSocketId).emit("newJoiner", {user: data.user, pin: game.pin});
-				socket.emit("redirect", "/html/waiting.html", data.pin);
-				
 				socket.join(roomName);
 		  		rooms[roomName].sockets.push(socket);
-			} else {
-				//utile?
-				io.sockets.emit("player already joined");
-			}
-		//   socket.emit('roomJoined', roomName);
 		} else {
 		  socket.emit('invalidPIN');
 		}
+
 	  });
+
+
+	  socket.on("setUsername", function (data) {
+		//à changer car on doit aussi regarder dans quelle game on se trouve
+		let game =  games.find((game) => game.pin === Number(data.pin));
+		let roomName = null;
+		for (const name in rooms) {
+			if (rooms[name].pin == data.pin) {
+				roomName = name;
+				break;
+			}
+		}
+
+		if (roomName) {
+			if (typeof game !== "undefined") {
+				let exist = game.players.find((player) => player.name === data.playerName);
+				if (typeof exist === "undefined") {
+					let id = playerIds + 1;
+					playerIds++;
+					let player = new Player(id, data.playerName, ID);
+					game.players.push(player);
+
+					socket.join(roomName);
+					rooms[roomName].sockets.push(socket);
+					io.to(game.hostSocketId).emit("newJoiner", {user: data.playerName, pin: game.pin});
+					socket.emit("userSet",  data, "/html/waiting.html");
+					
+					// socket.emit("redirect", "/html/waiting.html", data.pin);
+				} else {
+					socket.emit("userExists", "Ce nom est déjà pris");
+				}
+			}
+		}
+
+		
+		
+		
+	});
 
 	  //A player joins a room if pin exists
 	// socket.on("joinRoom", function (data) {
@@ -147,14 +173,14 @@ io.on("connection", function (socket) {
 	// });
 
 
-		// // Handler for leaving a room
-		// socket.on('leaveRoom', roomName => {
-		// 	const room = rooms[roomName];
-		// 	if (room) {
-		// 	socket.leave(roomName);
-		// 	room.sockets = room.sockets.filter(s => s !== socket);
-		// 	}
-		// });
+		// Handler for leaving a room
+		socket.on('leaveRoom', roomName => {
+			const room = rooms[roomName];
+			if (room) {
+			socket.leave(roomName);
+			room.sockets = room.sockets.filter(s => s !== socket);
+			}
+		});
 
 	// Handler for disconnecting from the server
 	socket.on('disconnect', () => {
@@ -167,31 +193,9 @@ io.on("connection", function (socket) {
 	
 
 
-	socket.on("setUsername", function (data) {
-		//à changer car on doit aussi regarder dans quelle game on se trouve
-		let game =  games.find((game) => game.pin === Number(data.pin));
-		if (typeof game !== "undefined") {
-			let exist = game.players.find((player) => player.name === data.playerName);
-			if (typeof exist === "undefined") {
-				let id = playerIds + 1;
-				playerIds++;
-				let player = new Player(id, data.playerName, ID);
-				game.players.push(player);
-				socket.emit("userSet",  data, "/html/waiting.html");
-				io.to(game.hostSocketId).emit("newJoiner", {user: data.playerName, pin: game.pin});
-				// socket.emit("redirect", "/html/waiting.html", data.pin);
-			} else {
-				socket.emit("userExists", "Ce nom est déjà pris");
-			}
-		}
-		
-		
-	});
 
-	//Send message to everyone
-	socket.on("msg", function (data) {
-		io.sockets.emit("newmsg", data);
-	});
+
+
 
 	
 
@@ -234,14 +238,56 @@ io.on("connection", function (socket) {
 			// socket.broadcast.emit("redirect", "/html/prompt.html");
 			socket.emit("question", question);
 		} else {
-			socket.broadcast.emit("redirect", "/html/waiting.html");
+
+			let roomName = null;
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
+				}
+			}
+			socket.to(roomName).emit("redirect", "/html/waiting.html");
 			socket.emit("redirect", "/html/scores.html");
 		}
 	});
 
+	// //à changer car on devrait pouvoir faire la séquence de questions de manière générique, et avec un meilleur nom
+	// socket.on("getQuestion", function (data) {
+	// 	let game = games.find((game) => game.pin === Number(data.punchlinePin));
+	// 	//condition pour checker s'il reste une question, sinon afficher le tableau de bord
+	// 	game.question++;
+	// 	if (game.question <= game.questions.length) {
+	// 		let question = game.questions[Number(game.question - 1)];
+	// 		game.answers = [];
+	// 		game.maxAnswers = 0;
+	// 		game.maxVotes = 0;
+	// 		// socket.broadcast.emit("redirect", "/html/prompt.html");
+	// 		socket.emit("question", question);
+	// 	} else {
+
+	// 		let roomName = null;
+	// 		for (const name in rooms) {
+	// 			if (rooms[name].pin === pin) {
+	// 				roomName = name;
+	// 				break;
+	// 			}
+	// 		}
+	// 		socket.to("roomName").emit("redirect", "/html/waiting.html");
+	// 		socket.emit("redirect", "/html/scores.html");
+	// 	}
+	// });
+
 	socket.on("startPrompt", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		socket.broadcast.emit("redirect", "/html/prompt.html");
+		let roomName = null;
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
+				}
+			}
+		socket.to(roomName).emit("redirect", "/html/prompt.html");
+		
 	});
 
 	socket.on("answer", function (data) {
@@ -264,7 +310,15 @@ io.on("connection", function (socket) {
 				// io.to(game.hostSocketId).emit("displayAnswers", game.answers);
 
 				//à changer pour que émette uniquement vers la room
-				io.emit("displayAnswers", shuffle(game.answers));
+				// io.emit("displayAnswers", shuffle(game.answers));
+				let roomName = null;
+				for (const name in rooms) {
+					if (rooms[name].pin == data.punchlinePin) {
+						roomName = name;
+						break;
+					}
+				}
+				io.in(roomName).emit("displayAnswers", shuffle(game.answers));
 			}
 		}
 		// else {
@@ -275,11 +329,22 @@ io.on("connection", function (socket) {
 
 	socket.on("timeIsUpToAnswer", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		socket.broadcast.emit("redirect", "/html/waiting.html");
-		if(game.answers.length <= 1) {
-			io.emit("skipVoteQuestion", game.question);
+		let roomName = null;
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
+				}
+			}
+		socket.to(roomName).emit("redirect", "/html/waiting.html");
+
+		// socket.broadcast.emit("redirect", "/html/waiting.html");
+		if (game.answers.length <= 1) {
+			io.in(roomName).emit("skipVoteQuestion", game.question);
+			// io.emit("skipVoteQuestion", game.question);
 		} else {
-			io.emit("displayAnswers", shuffle(game.answers));
+			io.in(roomName).emit("displayAnswers", shuffle(game.answers));
+			// io.emit("displayAnswers", shuffle(game.answers));
 		}
 	});
 
@@ -313,14 +378,22 @@ io.on("connection", function (socket) {
 
 	socket.on("getVotes", function (data) {
 		// let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		socket.broadcast.emit("redirect", "/html/votePrompt.html");
+		let roomName = null;
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
+				}
+			}
+		socket.to(roomName).emit("redirect", "/html/votePrompt.html");	
+		// socket.broadcast.emit("redirect", "/html/votePrompt.html");
 		// socket.emit('redirect', '/html/votes.html');
 	});
 
 	socket.on("getAnswers", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		//mettre une condition pour éviter de faire planter si on revient sur la tab
-			socket.emit("postAnswers", game.answers);
+		socket.emit("postAnswers", game.answers);
 	});
 
 	socket.on("vote", function (playerName, pin) {
@@ -335,7 +408,15 @@ io.on("connection", function (socket) {
 		game.maxVotes++;
 		socket.emit("redirect", "/html/waiting.html");
 		if (game.maxVotes == game.nbOfPlayers) {
-			io.emit("displayVotes", game.answers);
+			let roomName = null;
+			for (const name in rooms) {
+				if (rooms[name].pin == pin) {
+					roomName = name;
+					break;
+				}
+			}
+			io.in(roomName).emit("displayVotes", game.answers);
+			// io.emit("displayVotes", game.answers);
 			//mettre les votes dans game.answers
 		}
 	});
@@ -355,15 +436,29 @@ io.on("connection", function (socket) {
 
 	socket.on("endGame", function (pin) {
 		let game = games.find((game) => game.pin === Number(pin.punchlinePin));
-			game.players.forEach((player) => {
-				let onLinePlayer = players.find(
-					(onLinePlayer) => onLinePlayer.id === player.id
-				);
-				// onLinePlayer.game = undefined;
-				players.splice(players.indexOf(onLinePlayer), 1);
-			});
+			// game.players.forEach((player) => {
+			// 	let onLinePlayer = players.find(
+			// 		(onLinePlayer) => onLinePlayer.id === player.id
+			// 	);
+			// 	// onLinePlayer.game = undefined;
+			// 	players.splice(players.indexOf(onLinePlayer), 1);
+			// });
 			games.splice(games.indexOf(game), 1);
-		socket.broadcast.emit("redirect", "/html/index.html", "clear");
+		// if (game.maxVotes == game.nbOfPlayers) {
+			let roomName = null;
+			for (const name in rooms) {
+				if (rooms[name].pin == pin.punchlinePin) {
+					roomName = name;
+					break;
+				}
+			}
+		// }
+		
+			socket.to(roomName).emit("redirect", "/html/index.html", "clear");
+			delete rooms[roomName];
+			
+
+			// socket.broadcast.emit("redirect", "/html/index.html", "clear");
 	});
 
 	//Cherche les questions en BDD et les ajoute à la game

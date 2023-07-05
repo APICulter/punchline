@@ -30,15 +30,17 @@
 
 
 <script>
-var socket = io();
-// socket.on('redirect', (newGameURL, gamePin) => {
-//    			 // redirect to new URL
-//    			 window.location = newGameURL;
-//              if(gamePin) {
-//                 sessionStorage.setItem('punchlinePin', gamePin);
-//              }
-           
-// 		});
+const socket = io();
+let punchlinePin;
+let playerName;
+
+window.onload = function () {
+    playerName = sessionStorage.getItem('playerName');
+    punchlinePin = sessionStorage.getItem('punchlinePin');
+
+    socket.emit('joinRoom', punchlinePin);
+}
+
         socket.on('redirect', (newGameURL, clear) => {
    			 // redirect to new URL
    			 window.location = newGameURL;
