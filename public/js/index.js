@@ -90,38 +90,104 @@
 			//display a message "the game of pin XYZ does not exist"
 		});
 
-		socket.on("gamePinFound", function (data) {
+		socket.on("gamePinFound", function (pin, inGame, players) {
 			//make the name div appear in order to enter player name
-			document.querySelector('#pin').setAttribute("value", data);
+			document.querySelector('#pin').setAttribute("value", pin);
+			
 			document.querySelector("#choice").remove();
 			document.querySelector("#name").classList.remove("invisible");
-			
-			let nameInput = document.createElement('div');
-			document.querySelector('#name').append(nameInput);
-			
+			if(!inGame) {
+				
+				let nameInput = document.createElement('div');
+				document.querySelector('#name').append(nameInput);
+				
+				let playerName = document.createElement('input');
+				document.querySelector('#name').append(playerName);
+				playerName.id = "player-name";
+				playerName.type = "text";
+				playerName.name = "name";
+				playerName.value = "";
+				playerName.placeholder = "Name";
+				playerName.className = "w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-slate-100 focus:outline-none";
+				
+				let nameButton = document.createElement('button');
+				document.querySelector('#name').append(nameButton);
+				nameButton.id = "name-button";
+				nameButton.type = "button";
+				nameButton.name = "button";
+				nameButton.innerText = "Go";
+				nameButton.setAttribute("onclick", "setUsername()");
+				nameButton.className = "w-full sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400"
+	
+				let errorContainer = document.createElement('div');
+				document.querySelector('#name').append(errorContainer);
+				errorContainer.id = "error-container";
+			} else {
+				let nameChoice = document.createElement('div');
+				nameChoice.id = 'nameList';
+				document.querySelector('#name').append(nameChoice);
 
-			let playerName = document.createElement('input');
-			document.querySelector('#name').append(playerName);
-			playerName.id = "player-name";
-			playerName.type = "text";
-			playerName.name = "name";
-			playerName.value = "";
-			playerName.placeholder = "Name";
-			playerName.className = "w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-slate-100 focus:outline-none";
-			
-			let nameButton = document.createElement('button');
-			document.querySelector('#name').append(nameButton);
-			nameButton.id = "name-button";
-			nameButton.type = "button";
-			nameButton.name = "button";
-			nameButton.innerText = "Go";
-			nameButton.setAttribute("onclick", "setUsername()");
-			nameButton.className = "w-full sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400"
+				let availablePlayers = document.createElement('ul');
+				availablePlayers.id = "availablePlayers";
+				document.querySelector('#nameList').append(availablePlayers);
 
-			let errorContainer = document.createElement('div');
-			document.querySelector('#name').append(errorContainer);
-			errorContainer.id = "error-container";
+				// players.forEach(element => {
+				// 	let player = document.createElement('li');
+				// 	player.textContent = element.name;
+				// 	player.id = element.name;
+				// 	document.querySelector('#availablePlayers').append(player);
+					
+				// });
+
+				players.forEach(element => {
+					let player = document.createElement('input');
+					player.setAttribute("type", "radio");
+					player.id = element.name;
+					player.value = element.name;
+					player.name = 'player';
+					player.className += "invisible w-0";
+
+					let playerBlock = document.createElement('div');
+					playerBlock.id = players.indexOf(element);
+					playerBlock.className += " cursor-pointer text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 max-w-lg";
+					playerBlock.textContent = element.name;
+
+					let label = document.createElement('label');
+					label.setAttribute("for", player.id);
+					label.id = "label-" + players.indexOf(element);
+
+					document.getElementById('name').append(player);
+					document.getElementById('name').append(label);
+					document.getElementById(label.id).append(playerBlock);
+				});
+
+				let nameButton = document.createElement('button');
+				document.querySelector('#name').append(nameButton);
+				nameButton.id = "name-button";
+				nameButton.type = "button";
+				nameButton.name = "button";
+				nameButton.innerText = "Go";
+				// nameButton.setAttribute("onclick", "joinGame()");
+				nameButton.className = "w-full sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400"
+				
+				nameButton.addEventListener('click', function() {
+	
+					let playerName = document.querySelector('input[name=player]:checked').id;
+					socket.emit('joinGame', document.querySelector('#pin').value, playerName);
+					// window.location = "/html/waiting.html";
+					});
+			}
+			
 		});
+
+		
+		// const button = document.querySelector('#pickName');
+		// button.addEventListener('click', function() {
+	
+		// 	let player = document.querySelector('input[name=playerName]:checked').id;
+		// 	socket.emit('joinGame', punchlinePin, player);
+		// 	// window.location = "/html/waiting.html";
+		// 	});
 
 	
 		socket.on("newJoiner", function (data) {
@@ -149,11 +215,21 @@
                     // sessionStorage.setItem("nbOfPlayers", nbOfPlayers);
 				}
 			// }
-			sessionStorage.setItem("punchlinePin", date.pin);
+			// sessionStorage.setItem("punchlinePin", date.pin);
 		});
 
-		socket.on("redirect", (newGameURL, gamePin) => {
+		socket.on("redirect", (newGameURL, pin,  playerName) => {
 			// redirect to new URL
+			
+
+			if (pin) {
+				sessionStorage.setItem("punchlinePin", pin);
+			}
+
+			if (playerName) {
+				sessionStorage.setItem("playerName", playerName);
+			}
+
 			window.location = newGameURL;
 			// sessionStorage.setItem("punchlinePin", gamePin);
 		});

@@ -3,44 +3,27 @@
 
 IMPORTANT:
 
-gérer la room avec les disconnect
-https://stackoverflow.com/questions/18240512/stay-connected-to-socket-io-while-switching-pages
-
-mutualiser joinRoom et setUserName
-=> dès que l'on arrive sur une page, on fait une requete générique pour re-rentrer dans la room ? demander à ChatGPT
-
-deux fonctions différentes: 
-JoinRoom pour quand le user a déjà été créé et souhaite se reconnecter => en fonction de l'état du jeu. boolean pour permettre de rejoindre à un moment donné
-SetUserName pour quand le user se connecte à la room pour la première fois
-
-gérer deux parties en même temps => revoir les appels socket io pour ne targer que la room concernée
-gérer la déconnexion des joueurs
+si jamais la socket de game se déco ou que la game est détruite, tous les gens de la room sont redirigés vers l'index.html 
 gérer la déconnexion du host => détruit la game et renvoie les joueurs vers la lobby avec la partie perdue ?
 
-1) afficher le pin du game sur l'écran de jeu pour permettre la reconnexion 
-2) si on se connecte sur le lobby et qu'on a des choses dans le session storage, alors on est redirigé vers la waiting room pour ne pas re rentrer de nom et avoir une connexion orpheline (casse le vote). Sauf si on pas de playerName, auquel cas on est le host de la game. Si on crée un nouvelle game, ça détruit l'ancienne et les autres sont redirigés vers le lobby à neuf (sans session storage)
-3) refaire le placement: quand on écrit son nom, ça doit se trouver à la place du carré "choice"
-bouton de refresh: qui remet la page dans son état initial. Si c'est l'écran qui a créé la game, détruit la game. Si c'est un joueur qui a déja rentré son nom, il sensé être sur l'écran de "waiting". Que se passe-t'il s'il fait un retour arrière ? on peut vérifier ce qu'il y a dans le session storagep
-mettre un chrono pour le vote: car si un joueur se déconnecte, il ne vote pas et on ne passe jamais au vote suivant. Ou alors on attend la reco ?
+empecher les gens de pouvoir aller sur les URLS en dur => redirection vers le lobby! attention de doit pas casser la cinématique de jeu
 
-gérer les déconnexions: mettre une alerte si la personne veut quitter la page: "Attention vous risquez de quitter la game"
+mettre un chrono pour le vote. mettre un chrono pour le vote: car si un joueur se déconnecte, il ne vote pas et on ne passe jamais au vote suivant. Ou alors on attend la reco ?
+
+bouton de refresh: qui remet la page dans son état initial. Si c'est l'écran qui a créé la game, détruit la game. Si c'est un joueur qui a déja rentré son nom, il sensé être sur l'écran de "waiting". Que se passe-t'il s'il fait un retour arrière ? on peut vérifier ce qu'il y a dans le session storagep
+
 le retour en arrière sur la page d'accueil fait planter l'appli... Voir le routage avec express. Voir aussi pour masquer le nom des pages html
 sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter => bouton rejouer. on annule les scores mais on garde la room. par contre si on clique sur menu principal, on détruit la game et on vide la session storage pour tous les gens de la room
-si on crée la game, on ne peut pas rejoindre sa propre game
 description du jeu
 
 échapper les caractères spéciaux genre " et ' pour éviter de casser les "id" dans la page de Voteprompt? ou Alors changer les ids...
 utiliser le session storage pour garder le nom de la personne et éviter de retaper son nom ?
 
-reconnection: utiliser le LocalStorage au lieu du Session storage ? par contre comment nettoyer...
-si on entre son nom et qu'on fait précédent, on peut se connecter à nouveau avec un nouveau. à la connexion, faire un appel pour utiliser session storage ?
-faire un weakSet pour les games => objet game, clé unique = pin...
 
 classe player: virer game et gameCreator
 
 BONUS:
 
-choisir des avatars
 mettre un eric cartman qui explique le jeu avec bulles des BD
 mettre un rick roll quelque part
 si on appuie sur "Menu principal", ça ne nous demande pas notre nom une deuxième fois et passe direct à create game et join pin

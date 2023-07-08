@@ -8,8 +8,10 @@ const socket = io();
 		window.onload = function () {
 			// playerName = sessionStorage.getItem("playerName");
 			punchlinePin = sessionStorage.getItem("punchlinePin");
-			socket.emit('joinRoom', punchlinePin);
+			playerName = sessionStorage.getItem('playerName');
+			socket.emit('joinRoom', punchlinePin, playerName);
 			getQuestion(numberQuestion);
+			document.querySelector("#punchlinePin").textContent = punchlinePin;
 			
 		};
 
@@ -106,7 +108,7 @@ const socket = io();
 			document.getElementById("game-zone").classList.add("invisible");
 			document.getElementById("time").classList.remove("invisible");
 			document.getElementById("countdown").classList.remove("invisible");
-				startCountdown(6, 11);
+				startCountdown(6, 111);
 		});
 
 		socket.on("displayAnswers", function (data) {

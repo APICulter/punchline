@@ -38,7 +38,7 @@ window.onload = function () {
     playerName = sessionStorage.getItem('playerName');
     punchlinePin = sessionStorage.getItem('punchlinePin');
 
-    socket.emit('joinRoom', punchlinePin);
+    socket.emit('joinRoom', punchlinePin, playerName);
 }
 
         socket.on('redirect', (newGameURL, clear) => {
