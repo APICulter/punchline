@@ -4,8 +4,15 @@ const socket = io();
 window.onload = function () {
         punchlinePin = sessionStorage.getItem("punchlinePin");
         playerName = sessionStorage.getItem('playerName');
-        socket.emit('joinRoom', punchlinePin, playerName);
-        socket.emit('getAnswers', { punchlinePin: punchlinePin });
+
+        if (playerName && punchlinePin) {
+            socket.emit('joinRoom', punchlinePin, playerName);
+            socket.emit('getAnswers', { punchlinePin: punchlinePin });
+        } else {
+            window.location = "/";
+        }
+
+        
     };
 
     socket.on('postAnswers', function (data) {

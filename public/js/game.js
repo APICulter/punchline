@@ -9,9 +9,18 @@ const socket = io();
 			// playerName = sessionStorage.getItem("playerName");
 			punchlinePin = sessionStorage.getItem("punchlinePin");
 			playerName = sessionStorage.getItem('playerName');
+			
+			if (punchlinePin && !playerName) {
 			socket.emit('joinRoom', punchlinePin, playerName);
 			getQuestion(numberQuestion);
 			document.querySelector("#punchlinePin").textContent = punchlinePin;
+			} else {
+				window.location = "/";
+				socket.emit("endGame", {
+					punchlinePin: punchlinePin,
+				});
+				sessionStorage.clear();
+			}
 			
 		};
 
@@ -180,3 +189,21 @@ const socket = io();
 			//renvoyer le nombre de points MAJ vers le back
 			//passer à la question suivante s'il en reste une, sinon passer au tableau de score final
 		});
+
+
+
+		// Function to be executed when the URL changes
+function handleLocationChange() {
+	// Add your code here to act upon the URL change
+	
+	socket.emit("endGame", {
+		punchlinePin: punchlinePin,
+	});
+	sessionStorage.clear();
+  }
+  
+  // Event listener for hash changes
+  window.onhashchange = handleLocationChange;
+  
+  // Event listener for popstate changes
+  window.onpopstate = handleLocationChange;

@@ -32,6 +32,20 @@ function generatePIN() {
 	return Math.floor(1000 + Math.random() * 9000);
 }
 
+// // Middleware to force redirection to the home page
+// app.use((req, res, next) => {
+// 	// Check if the request is not for the home page
+// 	if (req.url !== '/') {
+// 	  // Redirect to the home page
+// 	  return res.redirect('/');
+// 	}
+// 	next();
+//   });
+
+app.all("*", function (req, res) {
+	res.redirect("/");
+});
+
 io.on("connection", function (socket) {
 	// console.log('A user connected');
 	const ID = socket.id;
@@ -126,7 +140,9 @@ io.on("connection", function (socket) {
 				}
 			}
 		} else {
-			socket.emit("invalidPIN");
+			// socket.emit("invalidPIN");
+
+			socket.emit("redirect", "/html/index.html", "clear");
 		}
 	});
 
@@ -149,14 +165,12 @@ io.on("connection", function (socket) {
 				case "voting":
 					socket.emit("redirect", "/html/votePrompt.html", pin, playerName);
 					break;
-			
+
 				default:
 					socket.emit("redirect", "/html/waiting.html", pin, playerName);
 					break;
 			}
 		}
-
-		
 	});
 
 	socket.on("setUsername", function (data) {
@@ -231,6 +245,7 @@ io.on("connection", function (socket) {
 	// Handler for disconnecting from the server
 	socket.on("disconnect", () => {
 		//unlock the player of the game
+		//maybe user some "break to stop searching ?"
 		games.forEach((game) => {
 			game.players.forEach((player) => {
 				if (player.socketId == socket.id) {
@@ -346,8 +361,7 @@ io.on("connection", function (socket) {
 			socket.emit("redirect", "/html/waiting.html");
 
 			if (game.maxAnswers == game.nbOfPlayers) {
-
-				game.status = '' ;
+				game.status = "";
 				//faire en sorte que tout le monde soit redirigé. ici broadcast
 				// socket.broadcast.emit("redirect", "/html/waiting.html");
 				// io.to(game.hostSocketId).emit("displayAnswers", game.answers);
@@ -386,7 +400,7 @@ io.on("connection", function (socket) {
 			io.in(roomName).emit("skipVoteQuestion", game.question);
 			// io.emit("skipVoteQuestion", game.question);
 		} else {
-			game.status = '' ;
+			game.status = "";
 			io.in(roomName).emit("displayAnswers", shuffle(game.answers));
 			// io.emit("displayAnswers", shuffle(game.answers));
 		}
@@ -420,7 +434,7 @@ io.on("connection", function (socket) {
 
 	socket.on("getVotes", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		game.status = 'voting' ;
+		game.status = "voting";
 		let roomName = null;
 		for (const name in rooms) {
 			if (rooms[name].pin == data.punchlinePin) {
@@ -429,8 +443,6 @@ io.on("connection", function (socket) {
 			}
 		}
 		socket.to(roomName).emit("redirect", "/html/votePrompt.html");
-		// socket.broadcast.emit("redirect", "/html/votePrompt.html");
-		// socket.emit('redirect', '/html/votes.html');
 	});
 
 	socket.on("getAnswers", function (data) {
@@ -458,7 +470,7 @@ io.on("connection", function (socket) {
 					break;
 				}
 			}
-			game.status = '' ;
+			game.status = "";
 			io.in(roomName).emit("displayVotes", game.answers);
 			// io.emit("displayVotes", game.answers);
 			//mettre les votes dans game.answers

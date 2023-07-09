@@ -3,6 +3,28 @@
 
 IMPORTANT:
 
+idée pour checker la déconnexion du jeu: regarder si le jeu est in game: juste après avoir chargé les questions sur le premier getQuestions, et juste arpès avoir chargé la
+page de scores avec GetScores. cas aux limites: si la game n'a pas commencé, il faudra se reconnecter. Mettre un bouton "Home" sur les pages de waiting, vote et votePrompt?
+
+comment purger les games ? mettre une sorte chrono qui détruit la game après un certain temps (genre 1h) => purge les games abandonnées par erreur
+
+s'assurer que le Host socket id ne change pas au cours d'une game, sinon le rafraichir dans l'objet "game"
+
+si la jeu a planté, il faut que lorsque l'on tape une URL, si la game n'existe plus, on soit redirigé vers le lobby
+
+
+=> est-ce qu'on nettoie le session storage quand on arrive sur la page d'index ? ça permet de rediriger tout seul vers la game
+
+
+si jamais l'écran de jeu perd la session, le jeu doit se terminer et renvoyer tout le monde vers le lobby.
+
+
+si t'as un truc dans le session storage, tu es redirigé de la même manière que pour la reconnexion
+sinon direction Lobby.
++ protéger les URLS non définies
+
+=> penser au cas des joueurs et au cas du gameHost, différent
+
 si jamais la socket de game se déco ou que la game est détruite, tous les gens de la room sont redirigés vers l'index.html 
 gérer la déconnexion du host => détruit la game et renvoie les joueurs vers la lobby avec la partie perdue ?
 
