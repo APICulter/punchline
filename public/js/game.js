@@ -193,17 +193,17 @@ const socket = io();
 
 
 		// Function to be executed when the URL changes
-function handleLocationChange() {
-	// Add your code here to act upon the URL change
+// function handleLocationChange() {
+// 	// Add your code here to act upon the URL change
 	
-	socket.emit("endGame", {
-		punchlinePin: punchlinePin,
-	});
-	sessionStorage.clear();
-  }
+// 	socket.emit("endGame", {
+// 		punchlinePin: punchlinePin,
+// 	});
+// 	sessionStorage.clear();
+//   }
   
-  // Event listener for hash changes
-  window.onhashchange = handleLocationChange;
+//   // Event listener for hash changes
+//   window.onhashchange = handleLocationChange;
   
-  // Event listener for popstate changes
-  window.onpopstate = handleLocationChange;
+//   // Event listener for popstate changes
+//   window.onpopstate = handleLocationChange;

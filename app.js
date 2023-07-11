@@ -3,6 +3,12 @@ const express = require("express");
 const http = require("http");
 const socketIO = require("socket.io");
 
+const { MongoClient } = require('mongodb');
+const url = 'mongodb://0.0.0.0:27017';
+const dbName = 'punchline';
+const collectionName = 'questions';
+const numberOfElements = 2;
+
 // Create the Express app
 const app = express();
 const server = http.createServer(app);
@@ -41,6 +47,8 @@ function generatePIN() {
 // 	}
 // 	next();
 //   });
+
+
 
 app.all("*", function (req, res) {
 	res.redirect("/");
@@ -142,7 +150,7 @@ io.on("connection", function (socket) {
 		} else {
 			// socket.emit("invalidPIN");
 
-			socket.emit("redirect", "/html/index.html", "clear");
+			// socket.emit("redirect", "/html/index.html", "clear");
 		}
 	});
 
@@ -520,6 +528,31 @@ io.on("connection", function (socket) {
 
 	//Cherche les questions en BDD et les ajoute à la game
 	function initQuestions(game) {
+
+
+		MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
+			if (err) {
+			  console.error('Error connecting to MongoDB:', err);
+			  return;
+			}
+		  
+			const db = client.db(dbName);
+			const collection = db.collection(collectionName);
+		  
+			collection.aggregate([{ $sample: { size: numberOfElements } }])
+			  .toArray()
+			  .then((results) => {
+				console.log(results); // Array of randomly retrieved documents
+				// Continue with other operations
+			  })
+			  .catch((err) => {
+				console.error('Error retrieving random documents:', err);
+			  })
+			  .finally(() => {
+				client.close();
+			  });
+		  });
+
 		//boucle
 		// let goOn = true;
 		// let indexLoop = 1;
@@ -530,8 +563,8 @@ io.on("connection", function (socket) {
 		// 		goOn = false;
 		// 	}
 		// }
-		game.questions.push({ id: 1, question: "de quelle couleur est le ciel ?" });
-		game.questions.push({ id: 2, question: "pourquoi les poulets ?" });
+		// game.questions.push({ id: 1, question: "de quelle couleur est le ciel ?" });
+		// game.questions.push({ id: 2, question: "pourquoi les poulets ?" });
 	}
 });
 

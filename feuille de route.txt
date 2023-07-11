@@ -3,10 +3,17 @@
 
 IMPORTANT:
 
+script python pour créer les données d'import à destination de la base mongodb
+
+///
+
+bouton de reload sur les pages des joueurs (waiting, vote, votePromp). Si on clique et que la game est up, on ne bouge pas. Si la game est down retour case départ.
+Sinon, juste un bouton "Home ?"
+
 idée pour checker la déconnexion du jeu: regarder si le jeu est in game: juste après avoir chargé les questions sur le premier getQuestions, et juste arpès avoir chargé la
 page de scores avec GetScores. cas aux limites: si la game n'a pas commencé, il faudra se reconnecter. Mettre un bouton "Home" sur les pages de waiting, vote et votePrompt?
 
-comment purger les games ? mettre une sorte chrono qui détruit la game après un certain temps (genre 1h) => purge les games abandonnées par erreur
+comment purger les games ? mettre une sorte chrono qui détruit la game après un certain temps (genre 1h) => purge les games abandonnées par erreur car sinon la mémoire va exploser à un moment. Ou alors on fait un redémarrage du serveur toutes les semaines...
 
 s'assurer que le Host socket id ne change pas au cours d'une game, sinon le rafraichir dans l'objet "game"
 
