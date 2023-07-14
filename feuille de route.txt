@@ -1,6 +1,15 @@
 ------------------
 
 
+
+soit on récupère toute la base, puis on pioche dans le result en aléatoire pour chaque game
+soit on fait la connexion à chaque fois
+
+
+
+remettre la branche main correctement v.2.3 OK mais v.2.4 broken...
+
+
 IMPORTANT:
 
 script python pour créer les données d'import à destination de la base mongodb

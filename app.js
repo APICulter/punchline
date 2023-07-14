@@ -2,12 +2,36 @@
 const express = require("express");
 const http = require("http");
 const socketIO = require("socket.io");
+const mongoose = require('mongoose');
 
-const { MongoClient } = require('mongodb');
-const url = 'mongodb://0.0.0.0:27017';
-const dbName = 'punchline';
-const collectionName = 'questions';
-const numberOfElements = 2;
+//DB CONNECTION
+mongoose.connect('mongodb://127.0.0.1:27017/punchline', {
+			useNewUrlParser: true,
+			useUnifiedTopology: true
+		});
+
+let YourSchema;
+let YourModel;
+
+let db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', async function() {
+	console.log('Connected to MongoDB');
+
+	// Define your schema
+	YourSchema = new mongoose.Schema({
+	// Define your schema fields here
+	});
+
+	// Create a Mongoose model
+	YourModel = mongoose.model('Question', YourSchema, 'questions');
+
+	// Close the MongoDB connection
+	mongoose.connection.close();
+	
+});
+
+
 
 // Create the Express app
 const app = express();
@@ -529,42 +553,32 @@ io.on("connection", function (socket) {
 	//Cherche les questions en BDD et les ajoute à la game
 	function initQuestions(game) {
 
+		// Connect to MongoDB
+		mongoose.connect('mongodb://127.0.0.1:27017/punchline', {
+			useNewUrlParser: true,
+			useUnifiedTopology: true
+		});
 
-		MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
-			if (err) {
-			  console.error('Error connecting to MongoDB:', err);
-			  return;
+		let result = [];
+		
+		let db = mongoose.connection;
+		db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+		db.once('open', async function() {
+			console.log('Connected to MongoDB');
+		
+			try {
+			// Retrieve random objects from the collection
+			result = await YourModel.aggregate([{ $sample: { size: 2 } }]);
+			result.forEach( element => game.questions.push({ id: element.indexOf, question: element.text }));
+
+			console.log('Random objects:', result);
+			} catch (err) {
+			console.error('Failed to retrieve random objects:', err);
+			} finally {
+			// Close the MongoDB connection
+			mongoose.connection.close();
 			}
-		  
-			const db = client.db(dbName);
-			const collection = db.collection(collectionName);
-		  
-			collection.aggregate([{ $sample: { size: numberOfElements } }])
-			  .toArray()
-			  .then((results) => {
-				console.log(results); // Array of randomly retrieved documents
-				// Continue with other operations
-			  })
-			  .catch((err) => {
-				console.error('Error retrieving random documents:', err);
-			  })
-			  .finally(() => {
-				client.close();
-			  });
-		  });
-
-		//boucle
-		// let goOn = true;
-		// let indexLoop = 1;
-		// while (goOn) {
-		// 	game.questions.push({id: indexLoop, question: 'Pourquoi les poissons ?'});
-		// 	indexLoop++;
-		// 	if(indexLoop > 200) {
-		// 		goOn = false;
-		// 	}
-		// }
-		// game.questions.push({ id: 1, question: "de quelle couleur est le ciel ?" });
-		// game.questions.push({ id: 2, question: "pourquoi les poulets ?" });
+		});
 	}
 });
 
