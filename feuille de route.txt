@@ -2,8 +2,7 @@
 
 
 
-soit on récupère toute la base, puis on pioche dans le result en aléatoire pour chaque game
-soit on fait la connexion à chaque fois
+demander des questions à chatgpt pour chaque game ? on peut essayer, et si l'API ne répond pas, on pioche dans la DB. On peut même faire un mix 50/50. Voir le prix...
 
 
 

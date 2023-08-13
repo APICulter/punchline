@@ -2,3 +2,5 @@ node_modules/
 feuille_de_route.txt
 idees_UseYourWords.txt
 images ecran Use Your Words/
+db/example.csv
+db/env
