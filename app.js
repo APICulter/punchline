@@ -207,6 +207,11 @@ io.on("connection", function (socket) {
 
 	socket.on("setUsername", function (data) {
 		//à changer car on doit aussi regarder dans quelle game on se trouve
+		if (data.playerName.toLowerCase() == "bot") {
+			socket.emit("userExists", "Ce nom n'est pas autorisé");
+			return;
+		}
+
 		let game = games.find((game) => game.pin === Number(data.pin));
 		let roomName = null;
 		for (const name in rooms) {
@@ -303,6 +308,7 @@ io.on("connection", function (socket) {
 		socket.emit("redirect", "/html/game.html", data.pin);
 		//plus aucun nouveau joueur ne peut entrer dans la room
 		initQuestions(game);
+		initBot(game);
 		//ajouter la configuration => plus tard
 		// socket.emit('question', game.questions );
 
@@ -314,13 +320,25 @@ io.on("connection", function (socket) {
 		//appelle la fonction qui va s'occuper de l'algorithme principal du jeu
 	});
 
+	function initBot(game) {
+		let bot = new Player();
+		bot.id = -1;
+		bot.name = "Bot";
+		bot.points = 0;
+		bot.room = '';
+		bot.game = '';
+
+		game.players.push(bot);
+
+	}
+
 	//à changer car on devrait pouvoir faire la séquence de questions de manière générique, et avec un meilleur nom
 	socket.on("getQuestion", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		//condition pour checker s'il reste une question, sinon afficher le tableau de bord
 		game.question++;
-		if (game.question <= game.questions.length) {
-			let question = game.questions[Number(game.question - 1)];
+		if (game.question < game.questions.length) {
+			let question = game.questions[Number(game.question)];
 			game.answers = [];
 			game.maxAnswers = 0;
 			game.maxVotes = 0;
@@ -407,6 +425,7 @@ io.on("connection", function (socket) {
 						break;
 					}
 				}
+				addBotAnswer(game);
 				io.in(roomName).emit("displayAnswers", shuffle(game.answers));
 			}
 		}
@@ -433,6 +452,7 @@ io.on("connection", function (socket) {
 			// io.emit("skipVoteQuestion", game.question);
 		} else {
 			game.status = "";
+			addBotAnswer(game);
 			io.in(roomName).emit("displayAnswers", shuffle(game.answers));
 			// io.emit("displayAnswers", shuffle(game.answers));
 		}
@@ -444,10 +464,37 @@ io.on("connection", function (socket) {
 	// 	io.emit("displayVotes", game.answers);
 	// });
 
-	function shuffle(array) {
-		let counter = array.length;
+	function addBotAnswer(game) {
+		const keysToExclude = ["question", "id"];
 
-		// While there are elements in the array
+		// Filter the keys to exclude those in keysToExclude
+		// const availableKeys = Object.keys(game.questions[game.question]).filter(key => !keysToExclude.includes(key));
+		const numeroQuestion = game.questions.find((question) => question.id === Number(game.question)).id;
+
+		const availableKeys = Object.keys(game.questions[numeroQuestion]).filter(key => !keysToExclude.includes(key));
+
+		// Generate a random index between 0 and the number of available keys
+		const randomIndex = Math.floor(Math.random() * availableKeys.length);
+
+		// Use the random index to get a random key from availableKeys
+		const randomKey = availableKeys[randomIndex];
+
+		// Get the value corresponding to the random key
+		const randomValue = game.questions[game.question][randomKey];
+		
+		const botAnswer = {
+			 playerName: "Bot",
+			 textAnswer: randomValue ,
+			 votes: 0
+		};
+		game.answers.push(botAnswer);
+	}
+
+	function shuffle(answers) {
+		
+		let counter = answers.length;
+
+		// While there are elements in the array answers
 		while (counter > 0) {
 			// Pick a random index
 			let index = Math.floor(Math.random() * counter);
@@ -456,12 +503,12 @@ io.on("connection", function (socket) {
 			counter--;
 
 			// And swap the last element with it
-			let temp = array[counter];
-			array[counter] = array[index];
-			array[index] = temp;
+			let temp = answers[counter];
+			answers[counter] = answers[index];
+			answers[index] = temp;
 		}
 
-		return array;
+		return answers;
 	}
 
 	socket.on("getVotes", function (data) {
@@ -564,14 +611,20 @@ io.on("connection", function (socket) {
 		let db = mongoose.connection;
 		db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 		db.once('open', async function() {
-			console.log('Connected to MongoDB');
+			// console.log('Connected to MongoDB');
 		
 			try {
 			// Retrieve random objects from the collection
 			result = await YourModel.aggregate([{ $sample: { size: 2 } }]);
-			result.forEach( element => game.questions.push({ id: element.indexOf, question: element.text }));
+			result.forEach( (element, index) => game.questions.push({ 
+				id: index, 
+				question: element.question, 
+				reponse_1: element.reponse_1, 
+				reponse_2: element.reponse_2, 
+				reponse_3: element.reponse_3 
+			}));
 
-			console.log('Random objects:', result);
+			// console.log('Random objects:', result);
 			} catch (err) {
 			console.error('Failed to retrieve random objects:', err);
 			} finally {

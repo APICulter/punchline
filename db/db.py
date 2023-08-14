@@ -13,7 +13,7 @@ collection = db['questions']
 # Define the objects to be inserted. Insert from a csv file and dump everything that was in the db first ?
 objects = []
 with open("example.csv", "r", encoding='utf-8') as f:
-    reader = csv.DictReader(f, quoting=csv.QUOTE_NONE, fieldnames=['question'], delimiter='\n')
+    reader = csv.DictReader(f, quoting=csv.QUOTE_NONE, fieldnames=['question', 'reponse_1', 'reponse_2', 'reponse_3'], delimiter=';')
     for line in reader:
         objects.append(line)
 

@@ -206,8 +206,9 @@ a) rester sur la même page pour éviter les déconnexions et les changements d'
 
 
 
-
-
+=> créer un bot au lancement de la game pour qu'il ait des points lui aussi
+=> bouton home ou renvoyer à la page d'accueil si on reload et que la game n'est pas accessible.
+=> si le jeu plante, faire un deamon qui le relance... à défaut de catcher toutes les erreurs
 
 
 
