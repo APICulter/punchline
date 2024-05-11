@@ -1,109 +1,95 @@
-------------------
+*** Actions à faire pour terminer l'application ***
 
 
 
-demander des questions à chatgpt pour chaque game ? on peut essayer, et si l'API ne répond pas, on pioche dans la DB. On peut même faire un mix 50/50. Voir le prix...
 
-
-
-remettre la branche main correctement v.2.3 OK mais v.2.4 broken...
-
-
-IMPORTANT:
-
+rajouter les commandes de la ligne de commande dans le README (pour moi quand j'aurai oublié)
+nettoyer le github (branches pourries): le passer en privé ?
 script python pour créer les données d'import à destination de la base mongodb
-
-///
-
-bouton de reload sur les pages des joueurs (waiting, vote, votePromp). Si on clique et que la game est up, on ne bouge pas. Si la game est down retour case départ.
-Sinon, juste un bouton "Home ?"
-
+script python pour mettre à jour la base
+ajouter le booléen qui permet de filtrer sur les questions sensibles ou non pour la démonstration lors d'un entretien d'embauche
+Trier les questions sensibles
+bouton de reload sur les pages des joueurs (waiting, vote, votePromp). Si on clique et que la game est up, on ne bouge pas. Si la game est down retour case départ. Sinon, juste un bouton "Home ?"
 idée pour checker la déconnexion du jeu: regarder si le jeu est in game: juste après avoir chargé les questions sur le premier getQuestions, et juste arpès avoir chargé la
 page de scores avec GetScores. cas aux limites: si la game n'a pas commencé, il faudra se reconnecter. Mettre un bouton "Home" sur les pages de waiting, vote et votePrompt?
-
 comment purger les games ? mettre une sorte chrono qui détruit la game après un certain temps (genre 1h) => purge les games abandonnées par erreur car sinon la mémoire va exploser à un moment. Ou alors on fait un redémarrage du serveur toutes les semaines...
-
 s'assurer que le Host socket id ne change pas au cours d'une game, sinon le rafraichir dans l'objet "game"
-
 si la jeu a planté, il faut que lorsque l'on tape une URL, si la game n'existe plus, on soit redirigé vers le lobby
-
-
-=> est-ce qu'on nettoie le session storage quand on arrive sur la page d'index ? ça permet de rediriger tout seul vers la game
-
-
+est-ce qu'on nettoie le session storage quand on arrive sur la page d'index ? ça permet de rediriger tout seul vers la game
 si jamais l'écran de jeu perd la session, le jeu doit se terminer et renvoyer tout le monde vers le lobby.
-
-
 si t'as un truc dans le session storage, tu es redirigé de la même manière que pour la reconnexion
 sinon direction Lobby.
-+ protéger les URLS non définies
-
-=> penser au cas des joueurs et au cas du gameHost, différent
-
+protéger les URLS non définies
+penser au cas des joueurs et au cas du gameHost, différent
 si jamais la socket de game se déco ou que la game est détruite, tous les gens de la room sont redirigés vers l'index.html 
 gérer la déconnexion du host => détruit la game et renvoie les joueurs vers la lobby avec la partie perdue ?
-
 empecher les gens de pouvoir aller sur les URLS en dur => redirection vers le lobby! attention de doit pas casser la cinématique de jeu
-
 mettre un chrono pour le vote. mettre un chrono pour le vote: car si un joueur se déconnecte, il ne vote pas et on ne passe jamais au vote suivant. Ou alors on attend la reco ?
-
 bouton de refresh: qui remet la page dans son état initial. Si c'est l'écran qui a créé la game, détruit la game. Si c'est un joueur qui a déja rentré son nom, il sensé être sur l'écran de "waiting". Que se passe-t'il s'il fait un retour arrière ? on peut vérifier ce qu'il y a dans le session storagep
-
 le retour en arrière sur la page d'accueil fait planter l'appli... Voir le routage avec express. Voir aussi pour masquer le nom des pages html
 sur l'écran de fin ,proposer nouvelle game avec les gens dans la room (pour éviter de re rentrer les noms) ou quitter => bouton rejouer. on annule les scores mais on garde la room. par contre si on clique sur menu principal, on détruit la game et on vide la session storage pour tous les gens de la room
 description du jeu
-
 échapper les caractères spéciaux genre " et ' pour éviter de casser les "id" dans la page de Voteprompt? ou Alors changer les ids...
 utiliser le session storage pour garder le nom de la personne et éviter de retaper son nom ?
-
-
 classe player: virer game et gameCreator
-
-BONUS:
-
-mettre un eric cartman qui explique le jeu avec bulles des BD
-mettre un rick roll quelque part
 si on appuie sur "Menu principal", ça ne nous demande pas notre nom une deuxième fois et passe direct à create game et join pin
 Mettre une infobulle si on entre un "name" vide 
 bouton de reload sur la page ? sinon on fait un bouton avec une petite flèche vers la gauche pour réafficher les boutons à l'origine...
 faire le menu des options en modal ?
 remplissage tu tableau (9 max, configurable) en 3x3
-
 faire une vérification quand on clique sur "Play". s'il y a moins de 3 joueurs, la partie ne peut pas se lancer.
+si le jeu plante, faire un deamon qui le relance... à défaut de catcher toutes les erreurs
+d'abord le champ pour le nom, puis on fait apparaître le champ pour le pin de la game (CSS / JS)
+ne pas jouer en navigation privée ? à cause du sessionStorage. 
+rajouter des fonctions plutot que de réécrire du code
+nettoyer commentaires, mettre tout en anglais
+guillemets simples partout
+gestion des erreurs: blog error first, github kahoot...
+après que tout le monde ait voté: remettre les réponses à l'écran qui ont obtenu des votes et afficher le nombre de votes + mettre en bas de l'écran les noms des joueurs pour montrer les votes
+gérer la customisation des games (nombre de rounds, type de questions, explicit ou non, volume du jeu + mute ...)
+Détruire l'ancien pin dès qu'on participe à une nouvelle game ? tester 2 games de suite voir s'il est écrasé, le nom du joueur aussi
+faire un ssytème de room pour avoir plusieurs jeux qui tournent en même temps ? +> obligé car les emit all envoient à tout le monde, mieux pour le CV aussi => gérer le nb de connexions, sockets, room etc. 
+passer en localStorage pour éviter de tout perdre à chaque fois ?
+quand quelqu'un vote, afficher son nom et ses points  en bas de l'écran de jeu
+calculer le temps de mise à l'écran en fonction de la taille de la réponse ?
+rentrer un code secret pour avoir accès au contenu explicit ! ou double authent sur mon téléphone
+rajouter des timers si les joueurs n'ont pas voté ou joué 
+relire le code pour nettoyer les incohérences (const ou var pour io dans le front...)
+créer des fonctions propres pour éviter de répéter le code
+attention au double lien Host et Game
+réaliser le truc avec les différentes rooms: à retester à la fin
+
+cleaner le code pour le rendre plus pro/ efficace: faire des classes custo css pour alléger les html. Revoir les fonctions, factoriser
+faire le menu avec les options
+faire des themes, catégories
+dockeriser
+déployer sur OVH ? ou un autre fournisseur ? avec Github action? ou Gitlab ?
 
 
 
 
-
-
-
-3) faire la connexion avec la BDD
-4) cleaner le code pour le rendre plus pro/ efficace: faire des classes custo css pour alléger les html. Revoir les fonctions, factoriser
-5) faire le menu avec les options
-	faire des themes, catégories
-6) dockeriser
-
-
-*******
-5) BONUS: réaliser le truc avec les différentes rooms
-6) BONUS: CI /CD
-7) BONUS: authentification avec JWT
-8) BONUS: mettre la BDD sur Cloud Mongo / AWS
-9) BONUS: Mettre les photos sur Flickr avec une api (soit en JS, soit en Java spring boot)
-10) BONUS: échapper les champs pour éviter les injections 
-faire une chaine CI CD
-le faire en Function as a service, sur le cloud comme ça j'allume le server uniquement quand je veux jouer.
-faire une page admin pour rajouter du contenu (texte et images)
-
-
+*** Bonus ***
+ajouter le jeu au site web personnel
+demander des questions à chatgpt pour chaque game ? on peut essayer, et si l'API ne répond pas, on pioche dans la DB. On peut même faire un mix 50/50. Voir le prix...
+faire du CI / CD
+mettre un eric cartman qui explique le jeu avec bulles des BD et si on clique dessus il dit "suuuuper !!!" si jamais on joue à la version hard. Au tableau des scores le faire réapparaitre en disant "t'es nuuuuul"
+mettre un rick roll quelque part
+ CI /CD
+mettre la BDD sur Cloud Mongo / AWS
+ Mettre les photos sur Flickr avec une api (soit en JS, soit en Java spring boot)
+Sécurité: exemple: échapper les champs pour éviter les injections. demander à Antoine un pentest
+faire une page admin pour rajouter du contenu (texte et images) facilement et ne pas passer en base ? ou alors on fait tout par script
 si mode normal => ChatGPT
 si mode hardcore => DAN 
+- s'accorder sur la langue: anglais ou français pour l'affiche ? permettre de switcher avec un bouton ? voir l'internationalisation avec Tailwind
 
 
 
+Version majeure suivante (3?):
+vidéos en langue étrangère avec le subtitle à mettre ?
 
 
-
+---------------------------------------------------------------------------
 
 
 
@@ -115,67 +101,18 @@ tutorial pointz
 DEBUG:
 https://rethinkdb.com/blog/websocket-debugging/
 ---
-
 https://www.udemy.com/course/javascript-la-formation-ultime/learn/lecture/17195730#overview
 cookie?
 https?
 session storage
-
-
 redis ? https://www.youtube.com/watch?v=vJIgFQ5YBvc&ab_channel=LesterFernandez
-
 créer une room par game ?
 https://atinux.developpez.com/tutoriels/javascript/utiliser-socket-io/
-
 map, set, weak pour les anwers et les réponses?
-
+utliser des Set, des Maps? Changer les objets Players et faire plus de classes ?
 https://github.com/socketio/socket.io/blob/main/examples/express-session-example/index.js
-
 => utiliser io.emit, meme si ça envoie à tout le monde, au moins le host le reçoit !!! (on peut faire juste la room limite)
-
 => namespace pour le lobby ? https://stackoverflow.com/questions/56672050/how-can-i-redirect-all-clients-to-another-page-with-socket-io
-
-----
-- lors que le host crée la game, il crée une romm également. Quand quelqu'un rejoint la game, il rejoint la room également
-- attention au double lien Host et Game
-- d'abord le champ pour le nom, puis on fait apparaître le champ pour le pin de la game (CSS / JS)
-- on entrera son nom uniquement si on rejoint une game
-- BDD Mongo
-- CSS
-- randomiser les réponses
-- randomizer les votes
-- ordonner le tableau des scores pour mettre le max en haut
-- gérer la donnée (autre que le texte): images, videos
-
-- s'accorder sur la langue: anglais ou français pour l'affiche ? permettre de switcher avec un bouton ? voir l'internationalisation avec Tailwind
-ne pas jouer en navigation privée ? à cause du sessionStorage
-- ne pas pouvoir voter pour sois meme
-- jouer à 3 minimum ?
-- rajouter les commandes de la ligne de commande dans le README (pour moi quand j'aurai oublié)
-- utliser des Set, des Maps? Changer les objets Players et faire plus de classes ?
-- rajouter des fonctions plutot que de réécrire du code
-- nettoyer commentaires, mettre tout en anglais
-- guillemets simples partout
-- gestion des erreurs: blog error first, github kahoot...
-- après que tout le monde ait voté: remettre les réponses à l'écran qui ont obtenu des votes et afficher le nombre de votes + mettre en bas de l'écran les noms des joueurs pour montrer les votes
--  gérer la customisation des games (nombre de rounds, type de questions, explicit ou non, volume du jeu + mute ...)
-Détruire l'ancien pin dès qu'on participe à une nouvelle game ? tester 2 games de suite voir s'il est écrasé, le nom du joueur aussi
-faire un ssytème de room pour avoir plusieurs jeux qui tournent en même temps ? +> obligé car les emit all envoient à tout le monde, mieux pour le CV aussi => gérer le nb de connexions, sockets, room etc. 
-- passer en localStorage pour éviter de tout perdre à chaque fois ?
-- quand quelqu'un vote, afficher son nom et ses points  en bas de l'écran de jeu
-calculer le temps de mise à l'écran en fonction de la taille de la réponse ?
-=> rentrer un code secret pour avoir accès au contenu explicit ! ou double authent sur mon téléphone
-- rajouter des timers si les joueurs n'ont pas voté ou joué 
-- relire le code pour nettoyer les incohérences (const ou var pour io dans le front...)
--créer des fonctions propres pour éviter de répéter le code
-
-
---
-
-revoir attributs (game dans host et host dans game ?)
-
-
-
 https://socket.io/get-started/private-messaging-part-2/
 
 
@@ -195,23 +132,7 @@ You should now be able to refresh your tab without losing your session:
 
 1) création de la game, redirection vers createGame.html. Envoi du socket ID à la game / room
 2) quand quelqu'un join, envoi du nom du joueur vers le host
-
-a) rester sur la même page pour éviter les déconnexions et les changements d'ID
-
-
-
-
-
-
-
-
-
-=> créer un bot au lancement de la game pour qu'il ait des points lui aussi
-=> bouton home ou renvoyer à la page d'accueil si on reload et que la game n'est pas accessible.
-=> si le jeu plante, faire un deamon qui le relance... à défaut de catcher toutes les erreurs
-
-
-
+3) rester sur la même page pour éviter les déconnexions et les changements d'ID
 
 
 
