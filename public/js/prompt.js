@@ -34,3 +34,8 @@ socket.on('redirect', newGameURL => {
             window.location = newGameURL;
         //  sessionStorage.setItem('punchlinePin', gamePin);
     });
+
+
+    function home() {
+			window.location.href = '/';
+		}

@@ -416,7 +416,19 @@ io.on("connection", function (socket) {
 
 	socket.on("startPrompt", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		game.status = "answering";
+
+		if (typeof game === "undefined") {
+			let roomName = null;
+				for (const name in rooms) {
+					if (rooms[name].pin == data.punchlinePin) {
+						roomName = name;
+						break;
+					}
+				}
+			socket.to(roomName).emit("redirect", "/");
+			socket.emit("redirect", "/");
+		} else {
+			game.status = "answering";
 		let roomName = null;
 		for (const name in rooms) {
 			if (rooms[name].pin == data.punchlinePin) {
@@ -425,6 +437,8 @@ io.on("connection", function (socket) {
 			}
 		}
 		socket.to(roomName).emit("redirect", "/html/prompt.html");
+		}
+		
 	});
 
 	socket.on("answer", function (data) {
@@ -595,11 +609,26 @@ io.on("connection", function (socket) {
 		// });
 
 		//faire une méthode de classe statique ?
-		let playersRankedByPoints = game.players;
+
+		if (typeof game === "undefined") {
+			let roomName = null;
+				for (const name in rooms) {
+					if (rooms[name].pin == data.punchlinePin) {
+						roomName = name;
+						break;
+					}
+				}
+			socket.to(roomName).emit("redirect", "/");
+			socket.emit("redirect", "/");
+		} else {
+			let playersRankedByPoints = game.players;
 		playersRankedByPoints.sort(function (a, b) {
 			return parseFloat(b.points) - parseFloat(a.points);
 		});
 		socket.emit("scores", game.players);
+		}
+
+		
 	});
 
 	socket.on("endGame", function (pin) {

@@ -191,6 +191,15 @@ const socket = io();
 		});
 
 
+		function home() {
+			socket.emit("endGame", {
+				punchlinePin: punchlinePin,
+			});
+			sessionStorage.clear();
+			window.location.href = '/';
+		}
+
+
 
 		// Function to be executed when the URL changes
 // function handleLocationChange() {

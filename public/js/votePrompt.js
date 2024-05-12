@@ -104,4 +104,10 @@ window.onload = function () {
             window.location = newGameURL;
     });
 
+
+
+    function home() {
+        window.location.href = '/';
+    }
+
    
