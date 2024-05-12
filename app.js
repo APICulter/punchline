@@ -78,6 +78,19 @@ app.all("*", function (req, res) {
 	res.redirect("/");
 });
 
+// // Middleware pour intercepter les requêtes de navigation
+// app.use((req, res, next) => {
+//     // Redirection vers l'URL spécifique si c'est un retour arrière
+//     if (req.method === 'GET' && req.header('Referer')) {
+//         const refererUrl = new URL(req.header('Referer'));
+//         const desiredUrl = '/'; // URL vers laquelle rediriger
+//         if (refererUrl.origin !== desiredUrl) {
+//             return res.redirect(desiredUrl); // Redirection vers l'URL spécifique
+//         }
+//     }
+//     next(); // Passer au middleware suivant
+// });
+
 io.on("connection", function (socket) {
 	// console.log('A user connected');
 	const ID = socket.id;
@@ -335,8 +348,22 @@ io.on("connection", function (socket) {
 	//à changer car on devrait pouvoir faire la séquence de questions de manière générique, et avec un meilleur nom
 	socket.on("getQuestion", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		//condition pour checker s'il reste une question, sinon afficher le tableau de bord
-		game.question++;
+		
+		// si la game est undefined, alors on skippe, et on revient au menu principal
+		if (typeof game === "undefined") {
+			let roomName = null;
+				for (const name in rooms) {
+					if (rooms[name].pin == data.punchlinePin) {
+						roomName = name;
+						break;
+					}
+				}
+			socket.to(roomName).emit("redirect", "/");
+			socket.emit("redirect", "/");
+		} else {
+
+			//condition pour checker s'il reste une question, sinon afficher le tableau de bord
+			game.question++;
 		if (game.question < game.questions.length) {
 			let question = game.questions[Number(game.question)];
 			game.answers = [];
@@ -355,6 +382,10 @@ io.on("connection", function (socket) {
 			socket.to(roomName).emit("redirect", "/html/waiting.html");
 			socket.emit("redirect", "/html/scores.html");
 		}
+		}
+
+
+		
 	});
 
 	// //à changer car on devrait pouvoir faire la séquence de questions de manière générique, et avec un meilleur nom
