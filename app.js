@@ -606,7 +606,18 @@ io.on("connection", function (socket) {
 
 	socket.on("vote", function (playerName, pin) {
 		let game = games.find((game) => game.pin === Number(pin));
-		let answer = game.answers.find(
+		if (typeof game === "undefined") {
+			let roomName = null;
+				for (const name in rooms) {
+					if (rooms[name].pin == data.punchlinePin) {
+						roomName = name;
+						break;
+					}
+				}
+			socket.to(roomName).emit("redirect", "/");
+			socket.emit("redirect", "/");
+		} else {
+			let answer = game.answers.find(
 			(answer) => answer.playerName === playerName
 		);
 		answer.votes++;
@@ -628,6 +639,8 @@ io.on("connection", function (socket) {
 			// io.emit("displayVotes", game.answers);
 			//mettre les votes dans game.answers
 		}
+		}
+		
 	});
 
 	socket.on("getScores", function (pin) {
