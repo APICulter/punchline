@@ -443,46 +443,73 @@ io.on("connection", function (socket) {
 
 	socket.on("answer", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		let player = game.players.find((player) => player.name === data.playerName);
-		if (game.maxAnswers < game.nbOfPlayers) {
-			game.answers.push({
-				// playerSocketId: ID,
-				//a voir si la connexion est coupée...
-				playerName: player.name,
-				textAnswer: data.answer,
-				votes: 0,
-			});
-			game.maxAnswers++;
-			socket.emit("redirect", "/html/waiting.html");
-
-			if (game.maxAnswers == game.nbOfPlayers) {
-				game.status = "";
-				//faire en sorte que tout le monde soit redirigé. ici broadcast
-				// socket.broadcast.emit("redirect", "/html/waiting.html");
-				// io.to(game.hostSocketId).emit("displayAnswers", game.answers);
-
-				//à changer pour que émette uniquement vers la room
-				// io.emit("displayAnswers", shuffle(game.answers));
-				let roomName = null;
+		if (typeof game === "undefined") {
+			let roomName = null;
 				for (const name in rooms) {
 					if (rooms[name].pin == data.punchlinePin) {
 						roomName = name;
 						break;
 					}
 				}
-				addBotAnswer(game);
-				io.in(roomName).emit("displayAnswers", shuffle(game.answers));
+			socket.to(roomName).emit("redirect", "/");
+			socket.emit("redirect", "/");
+		} else {
+			let player = game.players.find((player) => player.name === data.playerName);
+			if (game.maxAnswers < game.nbOfPlayers) {
+				game.answers.push({
+					// playerSocketId: ID,
+					//a voir si la connexion est coupée...
+					playerName: player.name,
+					textAnswer: data.answer,
+					votes: 0,
+				});
+				game.maxAnswers++;
+				socket.emit("redirect", "/html/waiting.html");
+	
+				if (game.maxAnswers == game.nbOfPlayers) {
+					game.status = "";
+					//faire en sorte que tout le monde soit redirigé. ici broadcast
+					// socket.broadcast.emit("redirect", "/html/waiting.html");
+					// io.to(game.hostSocketId).emit("displayAnswers", game.answers);
+	
+					//à changer pour que émette uniquement vers la room
+					// io.emit("displayAnswers", shuffle(game.answers));
+					let roomName = null;
+					for (const name in rooms) {
+						if (rooms[name].pin == data.punchlinePin) {
+							roomName = name;
+							break;
+						}
+					}
+					addBotAnswer(game);
+					io.in(roomName).emit("displayAnswers", shuffle(game.answers));
+				}
 			}
+			// else {
+			// 	socket.broadcast.emit("redirect", "/html/waiting.html");
+			// 	// io.to(game.hostSocketId).emit("newJoiner", data.user);
+			// }
 		}
-		// else {
-		// 	socket.broadcast.emit("redirect", "/html/waiting.html");
-		// 	// io.to(game.hostSocketId).emit("newJoiner", data.user);
-		// }
+
+
+		
 	});
 
 	socket.on("timeIsUpToAnswer", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		let roomName = null;
+
+		if (typeof game === "undefined") {
+			let roomName = null;
+				for (const name in rooms) {
+					if (rooms[name].pin == data.punchlinePin) {
+						roomName = name;
+						break;
+					}
+				}
+			socket.to(roomName).emit("redirect", "/");
+			socket.emit("redirect", "/");
+		} else {
+			let roomName = null;
 		for (const name in rooms) {
 			if (rooms[name].pin == data.punchlinePin) {
 				roomName = name;
@@ -501,6 +528,8 @@ io.on("connection", function (socket) {
 			io.in(roomName).emit("displayAnswers", shuffle(game.answers));
 			// io.emit("displayAnswers", shuffle(game.answers));
 		}
+		}
+		
 	});
 
 	// socket.on("timeIsUpToVote", function (data) {
@@ -613,7 +642,7 @@ io.on("connection", function (socket) {
 		if (typeof game === "undefined") {
 			let roomName = null;
 				for (const name in rooms) {
-					if (rooms[name].pin == data.punchlinePin) {
+					if (rooms[name].pin == pin.punchlinePin) {
 						roomName = name;
 						break;
 					}
