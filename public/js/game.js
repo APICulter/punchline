@@ -117,7 +117,7 @@ const socket = io();
 			document.getElementById("game-zone").classList.add("invisible");
 			document.getElementById("time").classList.remove("invisible");
 			document.getElementById("countdown").classList.remove("invisible");
-				startCountdown(6, 111);
+				startCountdown(6, 11);
 		});
 
 		socket.on("displayAnswers", function (data) {

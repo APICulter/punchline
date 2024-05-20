@@ -316,6 +316,7 @@ io.on("connection", function (socket) {
 		let game = games.find((game) => game.pin === Number(data.pin));
 		game.nbOfPlayers = game.players.length;
 		game.inGame = true;
+		game.nbOfQuestions = data.nbOfQuestions;
 		// socket.broadcast.emit("redirect", "/html/prompt.html");
 		//emit ci dessous a deplacer dans la fonction de jeu
 		socket.emit("redirect", "/html/game.html", data.pin);
@@ -717,7 +718,7 @@ io.on("connection", function (socket) {
 		
 			try {
 			// Retrieve random objects from the collection
-			result = await YourModel.aggregate([{ $sample: { size: 2 } }]);
+			result = await YourModel.aggregate([{ $sample: { size: Number(game.nbOfQuestions) } }]);
 			result.forEach( (element, index) => game.questions.push({ 
 				id: index, 
 				question: element.question, 

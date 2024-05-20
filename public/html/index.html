@@ -47,6 +47,46 @@
 							>
 								Create Game
 							</button>
+							<div class="">
+								<!-- <div class=" mt-8 p-4 bg-amber-500 rounded-md">
+									<div>
+										<label for="nbOfPlayers">Nombre de joueurs</label>
+										<input type="range" id="nbOfPlayers" name="nbOfPlayers" min="2" max="8" value="2" oninput="this.nextElementSibling.value = this.value"> <output>2</output>
+									  </div>
+								</div> -->
+								<div class="mt-8 bg-amber-500 rounded-md shadow-xl p-4">
+									<div>
+										<label for="nbOfQuestions">Rounds</label>
+										<input class="bg-indigo-500" type="range" id="nbOfQuestions" name="nbOfQuestions" min="1" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
+										<output id="nbOfQuestionsValue">5</output>
+									  </div>
+								</div>
+								<div class="mt-8 bg-amber-500 rounded-md shadow-xl p-4">
+									<div>
+										
+									</div>
+									<div class="flex-wrap">
+										<input
+											id="secret-code"
+											type="text"
+											name="secret-code"
+											value=""
+											placeholder=""
+											class=" grow rounded-md px-4 placeholder-gray-500 p-2 bg-slate-100 focus:outline-none"
+										/>
+										<button
+										id="join-room-button"
+										type="button"
+										name="play"
+										onclick="joinRoom()"
+										class=" grow bg-amber-500 rounded-md shadow-xl p-2 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400 py-2 px-2"
+									>
+									Premium code
+									</button>
+									</div>
+									
+								</div>
+							</div>
 							<div>
 								<button
 									id="startGame"
