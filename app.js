@@ -53,6 +53,19 @@ playerIds = 0;
 
 var players = [];
 var games = [];
+var SECRET_CODE;
+
+
+// Get the premium code from external file for
+const fs = require('node:fs');
+fs.readFile(__dirname + '/premium.txt', 'utf8', (err, data) => {
+  if (err) {
+    console.error(err);
+    return;
+  }
+  SECRET_CODE = data;
+});
+
 
 // Room object to store room information
 const rooms = {};
@@ -317,6 +330,10 @@ io.on("connection", function (socket) {
 		game.nbOfPlayers = game.players.length;
 		game.inGame = true;
 		game.nbOfQuestions = data.nbOfQuestions;
+		if (data.secretCode == SECRET_CODE ) {
+			game.premium = true;
+		}
+		
 		// socket.broadcast.emit("redirect", "/html/prompt.html");
 		//emit ci dessous a deplacer dans la fonction de jeu
 		socket.emit("redirect", "/html/game.html", data.pin);
@@ -718,14 +735,22 @@ io.on("connection", function (socket) {
 		
 			try {
 			// Retrieve random objects from the collection
-			result = await YourModel.aggregate([{ $sample: { size: Number(game.nbOfQuestions) } }]);
+			if (game.premium) {
+				console.log("premium");
+				result = await YourModel.aggregate([{ $sample: { size: Number(game.nbOfQuestions) } }]);
+			} else {
+				console.log("not premium");
+				result = await YourModel.aggregate([{ $match: {'explicit': 'false'}}, {$sample: { size: Number(game.nbOfQuestions) } }]);
+			}
 			result.forEach( (element, index) => game.questions.push({ 
 				id: index, 
+				// explicit: element.explicit,
 				question: element.question, 
 				reponse_1: element.reponse_1, 
 				reponse_2: element.reponse_2, 
 				reponse_3: element.reponse_3 
 			}));
+			// console.log(game.questions);
 
 			// console.log('Random objects:', result);
 			} catch (err) {

@@ -243,7 +243,8 @@
 
                 socket.emit("startGame", {
                     pin: document.getElementById("createGame").textContent,
-					nbOfQuestions: document.getElementById("nbOfQuestionsValue").textContent
+					nbOfQuestions: document.getElementById("nbOfQuestionsValue").textContent,
+					secretCode: document.getElementById("secretCode").value
                 });
             }
 

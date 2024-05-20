@@ -1,5 +1,5 @@
 class Game {
-    constructor (pin, hostSocketId, players = [], settings = 'default', question = -1, questions = [], answers = [], maxAnswers = 0, nbOfPlayers, votes = [], maxVotes = 0, inGame = false, state, nbOfQuestions = 1) {
+    constructor (pin, hostSocketId, players = [], settings = 'default', question = -1, questions = [], answers = [], maxAnswers = 0, nbOfPlayers, votes = [], maxVotes = 0, inGame = false, state, nbOfQuestions = 1, premium = false) {
        this.pin = pin;
        this.hostSocketId = hostSocketId;
        this.players = players;
@@ -14,6 +14,7 @@ class Game {
        this.inGame = inGame;
        this.state = state;
        this.nbOfQuestions = nbOfQuestions;
+       this.premium = premium;
     }
 }
 
