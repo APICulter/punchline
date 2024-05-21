@@ -63,7 +63,9 @@ fs.readFile(__dirname + '/premium.txt', 'utf8', (err, data) => {
     console.error(err);
     return;
   }
-  SECRET_CODE = data;
+  if (data.length > 0) {
+	  SECRET_CODE = data;
+  }
 });
 
 
@@ -327,28 +329,41 @@ io.on("connection", function (socket) {
 	socket.on("startGame", function (data) {
 		//lance la game pour tous les joueurs dans la room
 		let game = games.find((game) => game.pin === Number(data.pin));
-		game.nbOfPlayers = game.players.length;
-		game.inGame = true;
-		game.nbOfQuestions = data.nbOfQuestions;
-		if (data.secretCode == SECRET_CODE ) {
-			game.premium = true;
+		if (typeof game === "undefined") {
+			let roomName = null;
+				for (const name in rooms) {
+					if (rooms[name].pin == data.punchlinePin) {
+						roomName = name;
+						break;
+					}
+				}
+			socket.to(roomName).emit("redirect", "/");
+			socket.emit("redirect", "/");
+		} else {
+			game.nbOfPlayers = game.players.length;
+			game.inGame = true;
+			game.nbOfQuestions = data.nbOfQuestions;
+			if (typeof SECRET_CODE !== "undefined" && data.secretCode == SECRET_CODE ) {
+				game.premium = true;
+			}
+			
+			// socket.broadcast.emit("redirect", "/html/prompt.html");
+			//emit ci dessous a deplacer dans la fonction de jeu
+			socket.emit("redirect", "/html/game.html", data.pin);
+			//plus aucun nouveau joueur ne peut entrer dans la room
+			initQuestions(game);
+			initBot(game);
+			//ajouter la configuration => plus tard
+			// socket.emit('question', game.questions );
+
+			//init des votes
+			// game.players.forEach((player) => {
+			// 	game.votes[player.name] = 0;
+			// });
+			//le client qui a créé la game n'est pas joeur et sort du pool
+			//appelle la fonction qui va s'occuper de l'algorithme principal du jeu
 		}
 		
-		// socket.broadcast.emit("redirect", "/html/prompt.html");
-		//emit ci dessous a deplacer dans la fonction de jeu
-		socket.emit("redirect", "/html/game.html", data.pin);
-		//plus aucun nouveau joueur ne peut entrer dans la room
-		initQuestions(game);
-		initBot(game);
-		//ajouter la configuration => plus tard
-		// socket.emit('question', game.questions );
-
-		//init des votes
-		// game.players.forEach((player) => {
-		// 	game.votes[player.name] = 0;
-		// });
-		//le client qui a créé la game n'est pas joeur et sort du pool
-		//appelle la fonction qui va s'occuper de l'algorithme principal du jeu
 	});
 
 	function initBot(game) {
