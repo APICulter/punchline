@@ -32,11 +32,19 @@
 			
 		});
 
-		//choix du nom en validant avec la touche "Entrée"
+		// choix du nom en validant avec la touche "Entrée"
 		document.getElementById("name").addEventListener("keyup", function (event) {
 			event.preventDefault();
 			if (event.keyCode === 13) {
 				setUsername();
+			}
+		});
+
+		// entrer PIN de la game en validant avec la touche "Entrée"
+		document.getElementById("room-pin").addEventListener("keyup", function (event) {
+			event.preventDefault();
+			if (event.keyCode === 13) {
+				joinRoom();
 			}
 		});
 
