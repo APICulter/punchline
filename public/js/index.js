@@ -32,7 +32,7 @@
 			
 		});
 
-		// choix du nom en validant avec la touche "Entrée"
+		// choisir le nom en validant avec la touche "Entrée"
 		document.getElementById("name").addEventListener("keyup", function (event) {
 			event.preventDefault();
 			if (event.keyCode === 13) {
@@ -47,6 +47,18 @@
 				joinRoom();
 			}
 		});
+
+
+		// // infobulle pour dire qu'il faut au moins 2 joueurs pour lancer la game
+		// document.getElementById('myButton').addEventListener('click', function() {
+		// 	var tooltip = document.getElementById('tooltip');
+		// 	tooltip.classList.add('tooltip-visible');
+		
+		// 	setTimeout(function() {
+		// 		tooltip.classList.remove('tooltip-visible');
+		// 	}, 2000); // 2000ms = 2 secondes
+		// });
+
 
 		/**choix du game **/
 		function createGame() {
@@ -246,6 +258,26 @@
 		function startGame() {
 
             if (nbOfPlayers < 1 ) {
+
+			var messageElement = document.getElementById('notEnoughPlayers');
+            // messageElement.style.display = 'inline'; // Afficher le texte
+			messageElement.classList.remove("invisible");
+            // Masquer le texte après 2 secondes
+            setTimeout(function() {
+                // messageElement.style.display = 'none';
+                messageElement.classList.add("invisible");
+            }, 1500);
+
+
+			// var button = document.getElementById('startGame');
+
+            // // Masquer le texte après 2 secondes
+            // setTimeout(function() {
+            //     button.value = 'none';
+            // }, 2000);
+
+
+
 
             } else {
 
