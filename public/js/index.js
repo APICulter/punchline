@@ -139,6 +139,7 @@
 				playerName.value = "";
 				playerName.placeholder = "Name";
 				playerName.className = "w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-slate-100 focus:outline-none";
+				document.getElementById("player-name").focus();
 				
 				let nameButton = document.createElement('button');
 				document.querySelector('#name').append(nameButton);
