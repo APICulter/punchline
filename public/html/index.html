@@ -14,7 +14,6 @@
 	<script src="/socket.io/socket.io.js"></script>
 
 	<body class="bg-amber-600">
-		
 
 		<section class="h-screen grid grid-cols-1 justify-center">
 			<button
@@ -28,6 +27,62 @@
 			<h1 class=" self-start text-center text-6xl m-8 font-extrabold tracking-tight">
 				Punchline
 			</h1>
+			<button
+				id="rules"
+				type="button"
+				name="rulesButton"
+				class="absolute right-0 bg-amber-500 w-300 rounded-md shadow-xl p-8 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-8"
+				
+			>	Rules			
+			</button>
+
+			<!-- The Modal -->
+			<!-- <div id="rulesModal" class="hidden bg-slate-400/70 w-full h-full fixed z-20 overflow-auto flex flex-col"> -->
+			<div id="rulesModal" class="hidden bg-slate-400/70 w-full h-full fixed z-20 overflow-auto flex flex-col items-center">
+
+				<div class="bg-slate-300 w-full sm:w-3/4 lg:w-1/2  m-auto shadow-xl rounded-md p-4 mx-10 ">
+					<div class="p-10">
+						<span id="closeRules" class="float-right hover:cursor-pointer">&times;</span>
+						<p class="text-center pb-8 text-xl font-bold">Rules of the game</p>
+						<div class="pb-6">
+							<p>First create a room. A PIN number will be generated. You can choose the options for the game as the following: </p>
+							<ul class="list-disc list-outside">
+								<li class="m-4 ml-6">From 1 to 10 rounds</li>
+								<li class="m-4 ml-6"><span class="underline underline-offset-4">Optional</span>: enter the premium code to have access to more content !</li>
+							</ul>
+						</div>
+						
+						<div class="py-4">
+							<p>Each participant connects to <a class="underline underline-offset-4 font-bold" href="http://localhost:3000">Punchline</a>  with their phone, enters the PIN code and picks a name tag. <br>
+									Click "Play" to start the game. It goes like this: </p>
+							<ul class="list-disc list-outside">
+								<li class="m-4 ml-6">A question is displayed on the screen</li>
+								<li class="m-4 ml-6">Everyone has 60 seconds to give an answer through their phone</li>
+								<li class="m-4 ml-6">Once everyone has voted, the answers are displayed anonymously on the phones</li>
+								<li class="m-4 ml-6">Everyone votes for the answer they like the most (expect their own, of course &#128521;)</li>
+								<li class="m-4 ml-6">Every time someone votes for you, you get 1 point</li>
+							</ul>
+							<p>That was one round. Repeat for each round until the end. <br>
+								The one with the highest number of points wins!</p>
+						</div>	
+							
+						<div class=" flex justify-center">
+							<button
+							id="rulesButton"
+							type="button"
+							name="rulesButton"
+							class="bg-indigo-600 rounded-md shadow-xl p-4 hover:cursor-pointer hover:bg-violet-500  "
+						>Got it !</button>			
+						</button>
+						</div>
+					</div>
+		
+					
+					
+				</div>
+  
+  			</div>
+
 			<div class="flex flex-col items-center">
 				<div id="name" class=" invisible max-w-2xl mx-auto flex flex-col">
 					<div id="nameInput">
