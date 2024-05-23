@@ -9,6 +9,7 @@
 
 		/** choix du nom **/
 		function setUsername() {
+
 			if (document.getElementById("player-name").value.length !== 0) {
 				socket.emit(
 					"setUsername", {
@@ -17,6 +18,15 @@
 					}
 					
 				);
+			} else {
+				var messageElement = document.getElementById('emptyName');
+				// messageElement.style.display = 'inline'; // Afficher le texte
+				messageElement.classList.remove("invisible");
+				// Masquer le texte après 2 secondes
+				setTimeout(function() {
+					// messageElement.style.display = 'none';
+					messageElement.classList.add("invisible");
+				}, 1500);
 			}
 		}
 
@@ -125,7 +135,7 @@
 				document.querySelector('#name').append(playerName);
 				playerName.id = "player-name";
 				playerName.type = "text";
-				playerName.name = "name";
+				playerName.name = "player-name";
 				playerName.value = "";
 				playerName.placeholder = "Name";
 				playerName.className = "w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-slate-100 focus:outline-none";
