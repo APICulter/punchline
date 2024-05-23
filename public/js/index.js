@@ -267,7 +267,7 @@
 		//début du jeu
 		function startGame() {
 
-            if (nbOfPlayers < 1 ) {
+            if (nbOfPlayers < 2 ) {
 
 			var messageElement = document.getElementById('notEnoughPlayers');
             // messageElement.style.display = 'inline'; // Afficher le texte
