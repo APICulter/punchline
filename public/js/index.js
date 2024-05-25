@@ -227,7 +227,7 @@
 
                     let player = document.createElement("div");
                     player.textContent = data.user;
-                    player.className = "flex items-stretch rounded bg-gray-900 text-gray-300 m-2 p-2";
+                    player.className = " w-full break-words rounded bg-gray-900 text-gray-300 m-2 p-2";
                     document.getElementById("players").append(player);
                     nbOfPlayers  += 1;
 					// document

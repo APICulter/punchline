@@ -115,9 +115,9 @@
 									<div class="flex flex-col">
 										<label for="nbOfQuestions">Rounds</label>
 										<div>
-										<input class="bg-indigo-500" type="range" id="nbOfQuestions" name="nbOfQuestions" min="1" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
+											<input class="bg-indigo-500" type="range" id="nbOfQuestions" name="nbOfQuestions" min="1" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
 										<output id="nbOfQuestionsValue">5</output>
-									  </div>
+										</div>
 								</div>
 								<div class="mt-8 bg-amber-500 rounded-md shadow-xl p-4">
 									<p>Mode</p>
@@ -140,6 +140,23 @@
 									</div>
 									
 								</div>
+
+
+								<div class="mt-8 bg-amber-500 rounded-md shadow-xl p-4">
+									<p>Players</p>
+										<div id="players" class="flex flex-row flex-wrap">
+
+										</div>
+									
+									
+
+										
+								</div>
+
+
+
+
+
 							</div>
 							<div>
 								<button
@@ -199,9 +216,7 @@
 				</table> -->
 				<input id="pin" class="invisible" value="" type="text">
 
-				<div id="players" class="flex flex-col">
-
-				</div>
+				
 <!-- 
 				<table
 					id="players-table"
