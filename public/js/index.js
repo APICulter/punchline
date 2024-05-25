@@ -340,3 +340,22 @@
 				modal.classList.add("hidden");
 			}
 		}
+
+
+		function changeMode() {
+			let radio = document.querySelector('input[name=modeSelection]:checked').value;
+			let secretCode = document.getElementById("secretCode");
+			if (radio == "premium") {
+				secretCode.classList.remove("invisible");
+				secretCode.focus();;
+			} else {
+				secretCode.classList.add("invisible");
+			}
+		}
+
+		// document.getElementById("room-pin").addEventListener("keyup", function (event) {
+		// 	event.preventDefault();
+		// 	if (event.keyCode === 13) {
+		// 		joinRoom();
+		// 	}
+		// });
