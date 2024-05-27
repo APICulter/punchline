@@ -162,13 +162,13 @@ io.on("connection", function (socket) {
 				socket.emit("errorRoomFull", "The room is full, max 8 players");
 				return;
 			} else {
-			socket.emit(
-				"gamePinFound",
-				game.pin,
-				game.inGame,
-				unlockedPlayers(game.players)
-			);
-		}
+				socket.emit(
+					"gamePinFound",
+					game.pin,
+					game.inGame,
+					unlockedPlayers(game.players)
+				);
+			}
 			
 		}
 	});
@@ -361,9 +361,6 @@ io.on("connection", function (socket) {
 			game.nbOfPlayers = game.players.length;
 			game.inGame = true;
 			game.nbOfQuestions = data.nbOfQuestions;
-			if (typeof SECRET_CODE !== "undefined" && data.secretCode == SECRET_CODE ) {
-				game.premium = true;
-			}
 			
 			// socket.broadcast.emit("redirect", "/html/prompt.html");
 			//emit ci dessous a deplacer dans la fonction de jeu

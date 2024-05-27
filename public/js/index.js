@@ -301,8 +301,8 @@
 					messageElement.classList.add("invisible");
 				}, 1500);
 
-
-            } else {
+            
+			} else {
 
                 socket.emit("startGame", {
                     pin: document.getElementById("createGame").textContent,
