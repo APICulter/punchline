@@ -122,7 +122,7 @@
 								<div class="mt-8 bg-amber-500 rounded-md shadow-xl p-4">
 									<p>Mode</p>
 									<div class="flex flex-row space-x-4 justify-center">
-										<input type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked>
+										<input type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked="yes">
 										<label for="normalMode">Classic</label><br>
 										<input type="radio" id="premiumMode" name="modeSelection" value="premium" onclick="changeMode()">
 										<label for="premiumMode">Premium</label><br>
@@ -169,6 +169,8 @@
 									Play
 								</button>
 								<div id="notEnoughPlayers" class="text-sm invisible z-10">You need at least 2 players</div>
+								<div id="noPremiumCode" class="text-sm invisible z-10">You need to enter the code for premium content</div>
+								<div id="premiumCodeError" class="text-sm invisible z-10">Invalid code</div>
 
 
 							</div>

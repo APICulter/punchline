@@ -287,7 +287,16 @@
             //     button.value = 'none';
             // }, 2000);
 
+		 	} else if (document.getElementById("secretCode").value.length == 0 && document.getElementById("premiumMode").getAttribute("checked") == "yes") {
 
+				var messageElement = document.getElementById('noPremiumCode');
+				// messageElement.style.display = 'inline'; // Afficher le texte
+				messageElement.classList.remove("invisible");
+				// Masquer le texte après 2 secondes
+				setTimeout(function() {
+					// messageElement.style.display = 'none';
+					messageElement.classList.add("invisible");
+				}, 1500);
 
 
             } else {
@@ -295,7 +304,8 @@
                 socket.emit("startGame", {
                     pin: document.getElementById("createGame").textContent,
 					nbOfQuestions: document.getElementById("nbOfQuestionsValue").textContent,
-					secretCode: document.getElementById("secretCode").value
+					secretCode: document.getElementById("secretCode").value, 
+					premiumMode: document.getElementById("premiumMode").getAttribute("checked") == "yes"
                 });
             }
 
@@ -346,9 +356,14 @@
 			let radio = document.querySelector('input[name=modeSelection]:checked').value;
 			let secretCode = document.getElementById("secretCode");
 			if (radio == "premium") {
+				document.getElementById("premiumMode").setAttribute("checked", "yes");
+				document.getElementById("normalMode").setAttribute("checked", "no");
+				
 				secretCode.classList.remove("invisible");
-				secretCode.focus();;
+				secretCode.focus();
 			} else {
+				document.getElementById("premiumMode").setAttribute("checked", "no");
+				document.getElementById("normalMode").setAttribute("checked", "yes");
 				secretCode.classList.add("invisible");
 			}
 		}
@@ -359,3 +374,14 @@
 		// 		joinRoom();
 		// 	}
 		// });
+
+		socket.on("premiumCodeError", function (data) {
+			let error = document.getElementById("premiumCodeError");
+			error.textContent = data;
+			error.classList.remove("invisible");
+            // Masquer le texte après 2 secondes
+            setTimeout(function() {
+                // messageElement.style.display = 'none';
+                error.classList.add("invisible");
+            }, 1500);
+		});
