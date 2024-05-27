@@ -111,13 +111,29 @@
 				
 				});
 			} else {
-				document.getElementById("room-pin").value = "";
+				// document.getElementById("room-pin").value = "";
+				let error = document.getElementById("invalidPIN");
+				error.textContent = "invalid PIN";
+				error.classList.remove("invisible");
+				// Masquer le texte après 2 secondes
+				setTimeout(function() {
+					// messageElement.style.display = 'none';
+					error.classList.add("invisible");
+				}, 1500);
 			}
 
 		}
 
 		socket.on("noGameFound", function (data) {
 			//display a message "the game of pin XYZ does not exist"
+			let error = document.getElementById("invalidPIN");
+			error.textContent = data;
+			error.classList.remove("invisible");
+            // Masquer le texte après 2 secondes
+            setTimeout(function() {
+                // messageElement.style.display = 'none';
+                error.classList.add("invisible");
+            }, 1500);
 		});
 
 		socket.on("gamePinFound", function (pin, inGame, players) {
