@@ -158,12 +158,18 @@ io.on("connection", function (socket) {
 	socket.on("findRoomById", function (data) {
 		let game = games.find((game) => game.pin === Number(data.pin));
 		if (typeof game !== "undefined") {
+			if (game.players.length == 8 ) {
+				socket.emit("errorRoomFull", "The room is full, max 8 players");
+				return;
+			} else {
 			socket.emit(
 				"gamePinFound",
 				game.pin,
 				game.inGame,
 				unlockedPlayers(game.players)
 			);
+		}
+			
 		}
 	});
 
@@ -340,6 +346,18 @@ io.on("connection", function (socket) {
 			socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
+
+			// si la game est premium 
+			if (data.premiumMode == true) {
+				if (typeof SECRET_CODE !== "undefined" && data.secretCode == SECRET_CODE ) {
+				game.premium = true;
+				} else {
+					let errorMessage = "invalid code";
+					socket.emit("premiumCodeError", errorMessage);
+					return;
+				}
+			}
+
 			game.nbOfPlayers = game.players.length;
 			game.inGame = true;
 			game.nbOfQuestions = data.nbOfQuestions;

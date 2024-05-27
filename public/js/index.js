@@ -153,6 +153,9 @@
 				let errorContainer = document.createElement('div');
 				document.querySelector('#name').append(errorContainer);
 				errorContainer.id = "error-container";
+				let errorRoomFull = document.createElement('div');
+				errorRoomFull.id = "errorRoomFull";
+				errorRoomFull.className = "text-sm invisible z-10";
 			} else {
 				let nameChoice = document.createElement('div');
 				nameChoice.id = 'nameList';
@@ -377,6 +380,18 @@
 
 		socket.on("premiumCodeError", function (data) {
 			let error = document.getElementById("premiumCodeError");
+			error.textContent = data;
+			error.classList.remove("invisible");
+            // Masquer le texte après 2 secondes
+            setTimeout(function() {
+                // messageElement.style.display = 'none';
+                error.classList.add("invisible");
+            }, 1500);
+		});
+
+
+		socket.on("errorRoomFull", function (data) {
+			let error = document.getElementById("maxNbOfPlayers");
 			error.textContent = data;
 			error.classList.remove("invisible");
             // Masquer le texte après 2 secondes
