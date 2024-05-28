@@ -3,7 +3,7 @@
 
         // sessionStorage.setItem("nbOfPlayers", 0);
         let nbOfPlayers = 0;
-        let playerNumero = 1;
+        let playerNumber = 0;
 
         sessionStorage.clear();
 
@@ -243,29 +243,42 @@
 		socket.on("newJoiner", function (data) {
 			// if (user) {
 				if (data) {
+					nbOfPlayers  += 1;
+					let playerBlock = document.createElement("div");
+					playerBlock.id = data.playerId;
+					playerBlock.className = "w-full flex flex-row rounded bg-gray-900 m-2 p-2";
+                    
+					let player = document.createElement("div");
+					playerBlock.append(player);
+                    player.textContent = data.playerName;
+                    player.className = " w-full break-words  text-gray-300 ";
+                    
+					let deleteButton = document.createElement("button");
+					deleteButton.className = "text-indigo-300 rounded-full p-2 ";
+					deleteButton.setAttribute("onclick", "deletePlayer(this)");
+					
+					let cross = document.createElement("p");
+					cross.innerText = "+";
+					cross.className = "rotate-45 text-red-600";
+					deleteButton.append(cross);
+					playerBlock.append(deleteButton);
 
-                    let player = document.createElement("div");
-                    player.textContent = data.user;
-                    player.className = " w-full break-words rounded bg-gray-900 text-gray-300 m-2 p-2";
-                    document.getElementById("players").append(player);
-                    nbOfPlayers  += 1;
-					// document
-					// 	.getElementById("table-players-row")
-					// 	.classList.remove("invisible");
-					// let tableRef = document.getElementById("players-table");
-
-                  
-
-					// let newRow = tableRef.insertRow(-1);
-					// let newCell = newRow.insertCell(0);
-					// let newText = document.createTextNode(data);
-					// newCell.appendChild(newText);
-                    // newCell.className += "rounded bg-indigo-400 text-gray-300 m-2 p-2";
-                    // nbOfPlayers  += 1;
-                    // sessionStorage.setItem("nbOfPlayers", nbOfPlayers);
+					document.getElementById("players").append(playerBlock);
+                
 				}
-			// }
-			// sessionStorage.setItem("punchlinePin", date.pin);
+		});
+
+		function deletePlayer(number) {
+			socket.emit("deletePlayer", {
+				pin: sessionStorage.getItem("punchlinePin"),
+				playerId: number.parentElement.getAttribute("id")				
+			});
+
+		}
+
+		socket.on("playerDeleted", function (data) {
+			document.getElementById(data).remove();
+			nbOfPlayers -=1;
 		});
 
 		socket.on("redirect", (newGameURL, pin,  playerName) => {

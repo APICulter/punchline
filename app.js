@@ -51,6 +51,9 @@ app.use(express.static(publicPath));
 
 playerIds = 0;
 
+// to generate a random UUID for a player
+const { v4: uuidv4 } = require('uuid');
+
 var players = [];
 var games = [];
 var SECRET_CODE;
@@ -257,30 +260,31 @@ io.on("connection", function (socket) {
 			}
 		}
 
-		if (roomName) {
-			if (typeof game !== "undefined") {
-				let exist = game.players.find(
-					(player) => player.name === data.playerName
-				);
-				if (typeof exist === "undefined") {
-					let id = playerIds + 1;
-					playerIds++;
-					let player = new Player(id, data.playerName, ID);
-					game.players.push(player);
+		// rajouter la condition de sortie si la game est undefined
 
-					socket.join(roomName);
-					rooms[roomName].sockets.push(socket);
-					io.to(game.hostSocketId).emit("newJoiner", {
-						user: data.playerName,
-						pin: game.pin,
-					});
-					socket.emit("userSet", data, "/html/waiting.html");
+		if (roomName && typeof game !== "undefined") {
 
-					// socket.emit("redirect", "/html/waiting.html", data.pin);
-				} else {
-					socket.emit("userExists", "Ce nom est déjà pris");
-				}
+			let exist = game.players.find(
+				(player) => player.name === data.playerName
+			);
+
+			if (typeof exist === "undefined") {
+				let id = uuidv4();
+				let player = new Player(id, data.playerName, ID);
+				game.players.push(player);
+
+				socket.join(roomName);
+				rooms[roomName].sockets.push(socket);
+				io.to(game.hostSocketId).emit("newJoiner", {
+					playerName: player.name,
+					playerId: player.id
+				});
+				socket.emit("userSet", data, "/html/waiting.html");
+
+			} else {
+				socket.emit("userExists", "Ce nom est déjà pris");
 			}
+			
 		}
 	});
 
@@ -463,6 +467,37 @@ io.on("connection", function (socket) {
 	// 		socket.emit("redirect", "/html/scores.html");
 	// 	}
 	// });
+
+	socket.on("deletePlayer", function (data) {
+		let game = games.find((game) => game.pin === Number(data.pin));
+
+		if (typeof game === "undefined") {
+			let roomName = null;
+				for (const name in rooms) {
+					if (rooms[name].pin == data.punchlinePin) {
+						roomName = name;
+						break;
+					}
+				}
+			// renvoyer un message d'erreur disant que la game n'a pas été trouvée
+			
+			// socket.to(roomName).emit("redirect", "/");
+			// socket.emit("redirect", "/");
+		} else {
+
+			// supprimer le joueur de la game
+			for (player of game.players) {
+				if (player.id == data.playerId) {
+					game.players.splice(game.players.indexOf(player), 1);
+					break;
+				}
+			};
+				
+
+			// mettre à jour le front
+			socket.emit("playerDeleted", data.playerId);
+		}
+	});
 
 	socket.on("startPrompt", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
