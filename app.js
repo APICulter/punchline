@@ -130,7 +130,7 @@ io.on("connection", function (socket) {
 	// Handler for checking if the game / room exists
 	socket.on("findRoomById", function (data) {
 		let game = games.find((game) => game.pin === Number(data.pin));
-		if (typeof game !== "undefined") {
+		if (game !== null) {
 			if (game.players.length == Number(maxNumberOfPlayers) ) {
 				socket.emit("errorRoomFull", errorRoomFullMessage);
 				return;
@@ -164,9 +164,9 @@ io.on("connection", function (socket) {
 			socket.join(roomName);
 			rooms[roomName].sockets.push(socket);
 			let game = games.find((game) => game.pin == pin);
-			if (typeof game !== "undefined") {
+			if (game !== null) {
 				let player = game.players.find((player) => player.name === playerName);
-				if (typeof player !== "undefined") {
+				if (player !== null) {
 					player.socketId = socket.id;
 					player.lock = true;
 				}
@@ -181,9 +181,9 @@ io.on("connection", function (socket) {
 	// Handler for joining or rejoigning a game after disconnexion
 	socket.on("joinGame", (pin, playerName) => {
 		let game = games.find((game) => game.pin == pin);
-		if (typeof game !== "undefined") {
+		if (game !== null) {
 			let player = game.players.find((player) => player.name === playerName);
-			if (typeof player !== "undefined") {
+			if (player !== null) {
 				player.socketId = socket.id;
 				player.lock = true;
 			}
@@ -221,13 +221,13 @@ io.on("connection", function (socket) {
 			}
 		}
 
-		if (roomName && typeof game !== "undefined") {
+		if (roomName && game !== null) {
 
 			let exist = game.players.find(
 				(player) => player.name === data.playerName
 			);
 
-			if (typeof exist === "undefined") {
+			if (exist == null) {
 				let id = uuidv4();
 				let player = new Player(id, data.playerName, ID);
 				game.players.push(player);
@@ -281,7 +281,7 @@ io.on("connection", function (socket) {
 	socket.on("startGame", function (data) {
 
 		let game = games.find((game) => game.pin === Number(data.pin));
-		if (typeof game === "undefined") {
+		if (game !== null) {
 			let roomName = null;
 				for (const name in rooms) {
 					if (rooms[name].pin == data.punchlinePin) {
@@ -296,7 +296,7 @@ io.on("connection", function (socket) {
 
 			// Is game premium ? 
 			if (data.premiumMode == true) {
-				if (typeof SECRET_CODE !== "undefined" && data.secretCode == SECRET_CODE ) {
+				if (SECRET_CODE !== null && data.secretCode == SECRET_CODE ) {
 				game.premium = true;
 				} else {
 					socket.emit("premiumCodeError", premiumCodeErrorMessage);
@@ -323,7 +323,7 @@ io.on("connection", function (socket) {
 	socket.on("getQuestion", function (data) {
 
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		if (typeof game === "undefined") {
+		if (game !== null) {
 			let roomName = null;
 				for (const name in rooms) {
 					if (rooms[name].pin == data.punchlinePin) {
@@ -364,7 +364,7 @@ io.on("connection", function (socket) {
 	socket.on("deletePlayer", function (data) {
 		let game = games.find((game) => game.pin === Number(data.pin));
 
-		if (typeof game === "undefined") {
+		if (game !== null) {
 			let roomName = null;
 				for (const name in rooms) {
 					if (rooms[name].pin == data.punchlinePin) {
@@ -391,7 +391,7 @@ io.on("connection", function (socket) {
 	socket.on("startPrompt", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 
-		if (typeof game === "undefined") {
+		if (game !== null) {
 			let roomName = null;
 				for (const name in rooms) {
 					if (rooms[name].pin == data.punchlinePin) {
@@ -418,7 +418,7 @@ io.on("connection", function (socket) {
 	// Handler to send the player's answer
 	socket.on("answer", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
-		if (typeof game === "undefined") {
+		if (game !== null) {
 			let roomName = null;
 				for (const name in rooms) {
 					if (rooms[name].pin == data.punchlinePin) {
@@ -466,7 +466,7 @@ io.on("connection", function (socket) {
 	socket.on("timeIsUpToAnswer", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 
-		if (typeof game === "undefined") {
+		if (game !== null) {
 			let roomName = null;
 				for (const name in rooms) {
 					if (rooms[name].pin == data.punchlinePin) {
@@ -532,7 +532,7 @@ io.on("connection", function (socket) {
 	// Handler to vote for a player
 	socket.on("vote", function (playerName, pin) {
 		let game = games.find((game) => game.pin === Number(pin));
-		if (typeof game === "undefined") {
+		if (game !== null) {
 			let roomName = null;
 				for (const name in rooms) {
 					if (rooms[name].pin == data.punchlinePin) {
@@ -578,7 +578,7 @@ io.on("connection", function (socket) {
 		// });
 
 
-		if (typeof game === "undefined") {
+		if (game !== null) {
 			let roomName = null;
 				for (const name in rooms) {
 					if (rooms[name].pin == pin.punchlinePin) {
