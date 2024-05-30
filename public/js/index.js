@@ -1,9 +1,8 @@
 
 		const socket = io();
 
-        // sessionStorage.setItem("nbOfPlayers", 0);
         let nbOfPlayers = 0;
-        let playerNumber = 0;
+		var minNbOfPlayers = 2;
 
         sessionStorage.clear();
 
@@ -22,7 +21,7 @@
 				var messageElement = document.getElementById('emptyName');
 				// messageElement.style.display = 'inline'; // Afficher le texte
 				messageElement.classList.remove("invisible");
-				// Masquer le texte après 2 secondes
+				// Masquer le texte après 1.5 secondes
 				setTimeout(function() {
 					// messageElement.style.display = 'none';
 					messageElement.classList.add("invisible");
@@ -42,7 +41,7 @@
 			
 		});
 
-		// choisir le nom en validant avec la touche "Entrée"
+		// choisir le nom en validant avec la touche "Entrée" => key 13
 		document.getElementById("name").addEventListener("keyup", function (event) {
 			event.preventDefault();
 			if (event.keyCode === 13) {
@@ -50,7 +49,7 @@
 			}
 		});
 
-		// entrer PIN de la game en validant avec la touche "Entrée"
+		// entrer PIN de la game en validant avec la touche "Entrée" => key 13
 		document.getElementById("room-pin").addEventListener("keyup", function (event) {
 			event.preventDefault();
 			if (event.keyCode === 13) {
@@ -59,18 +58,8 @@
 		});
 
 
-		// // infobulle pour dire qu'il faut au moins 2 joueurs pour lancer la game
-		// document.getElementById('myButton').addEventListener('click', function() {
-		// 	var tooltip = document.getElementById('tooltip');
-		// 	tooltip.classList.add('tooltip-visible');
-		
-		// 	setTimeout(function() {
-		// 		tooltip.classList.remove('tooltip-visible');
-		// 	}, 2000); // 2000ms = 2 secondes
-		// });
+		/** choix du game **/
 
-
-		/**choix du game **/
 		function createGame() {
 			socket.emit("createGame");
 			document.getElementById("startGame").classList.remove("invisible");
@@ -98,8 +87,7 @@
 			}
 		});
 
-		//rejoindre une room
-
+		// rejoindre une room
 
 		function joinRoom() {
 			if (
@@ -119,7 +107,7 @@
 				setTimeout(function() {
 					// messageElement.style.display = 'none';
 					error.classList.add("invisible");
-				}, 1500);
+				}, joinRoomInvalidPinErrorTimer);
 			}
 
 		}
@@ -181,14 +169,7 @@
 				availablePlayers.id = "availablePlayers";
 				document.querySelector('#nameList').append(availablePlayers);
 
-				// players.forEach(element => {
-				// 	let player = document.createElement('li');
-				// 	player.textContent = element.name;
-				// 	player.id = element.name;
-				// 	document.querySelector('#availablePlayers').append(player);
-					
-				// });
-
+				
 				players.forEach(element => {
 					let player = document.createElement('input');
 					player.setAttribute("type", "radio");
@@ -217,31 +198,19 @@
 				nameButton.type = "button";
 				nameButton.name = "button";
 				nameButton.innerText = "Go";
-				// nameButton.setAttribute("onclick", "joinGame()");
 				nameButton.className = "w-full sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400"
 				
 				nameButton.addEventListener('click', function() {
 	
 					let playerName = document.querySelector('input[name=player]:checked').id;
 					socket.emit('joinGame', document.querySelector('#pin').value, playerName);
-					// window.location = "/html/waiting.html";
 					});
 			}
 			
 		});
 
-		
-		// const button = document.querySelector('#pickName');
-		// button.addEventListener('click', function() {
-	
-		// 	let player = document.querySelector('input[name=playerName]:checked').id;
-		// 	socket.emit('joinGame', punchlinePin, player);
-		// 	// window.location = "/html/waiting.html";
-		// 	});
 
-	
 		socket.on("newJoiner", function (data) {
-			// if (user) {
 				if (data) {
 					nbOfPlayers  += 1;
 					let playerBlock = document.createElement("div");
@@ -297,10 +266,10 @@
 			// sessionStorage.setItem("punchlinePin", gamePin);
 		});
 
-		//début du jeu
+		// début du jeu
 		function startGame() {
 
-            if (nbOfPlayers < 2 ) {
+            if (nbOfPlayers < minNbOfPlayers ) {
 
 			var messageElement = document.getElementById('notEnoughPlayers');
             // messageElement.style.display = 'inline'; // Afficher le texte
@@ -420,7 +389,7 @@
 
 
 		socket.on("errorRoomFull", function (data) {
-			let error = document.getElementById("maxNbOfPlayers");
+			let error = document.getElementById("maxNbOfPlayersReached");
 			error.textContent = data;
 			error.classList.remove("invisible");
             // Masquer le texte après 2 secondes

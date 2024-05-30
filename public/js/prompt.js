@@ -15,7 +15,6 @@ window.onload = function () {
 }
 
 socket.on('redirect', newGameURL => {
-            // redirect to new URL
             window.location = newGameURL;
     });
 
@@ -28,12 +27,6 @@ function sendAnswer() {
     }
    
 }
-
-socket.on('redirect', newGameURL => {
-            // redirect to new URL
-            window.location = newGameURL;
-        //  sessionStorage.setItem('punchlinePin', gamePin);
-    });
 
 
     function home() {

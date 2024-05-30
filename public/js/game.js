@@ -1,4 +1,9 @@
 const socket = io();
+
+var questionCountDown = 61;
+var beforeQuestionCountDown = 6;
+var voteCountDown = 10;
+
 		let punchlinePin;
 		// let playerName;
 		let numberQuestion = 0;
@@ -72,7 +77,7 @@ const socket = io();
 
 		function startCountDownVote() {
 			var countdownElement = document.getElementById("time");
-			var count = 10;
+			var count = voteCountDown;
 
 			var countdownInterval = setInterval(function() {
 				count--;
@@ -117,7 +122,7 @@ const socket = io();
 			document.getElementById("game-zone").classList.add("invisible");
 			document.getElementById("time").classList.remove("invisible");
 			document.getElementById("countdown").classList.remove("invisible");
-				startCountdown(6, 11);
+				startCountdown(beforeQuestionCountDown, questionCountDown);
 		});
 
 		socket.on("displayAnswers", function (data) {
