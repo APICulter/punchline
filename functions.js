@@ -24,8 +24,8 @@ function initBot(game) {
     bot.id = -1;
     bot.name = "Bot";
     bot.points = 0;
-    bot.room = '';
-    bot.game = '';
+    bot.room = "";
+    bot.game = "";
 
     game.players.push(bot);
 
@@ -86,8 +86,8 @@ function initQuestions(mongoose, YourModel, game) {
     let result = [];
     
     let db = mongoose.connection;
-    db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-    db.once('open', async function() {
+    db.on("error", console.error.bind(console, "MongoDB connection error:"));
+    db.once("open", async function() {
     
         try {
         // Retrieve random objects from the collection
@@ -96,7 +96,7 @@ function initQuestions(mongoose, YourModel, game) {
             result = await YourModel.aggregate([{ $sample: { size: Number(game.nbOfQuestions) } }]);
         } else {
             console.log("not premium");
-            result = await YourModel.aggregate([{ $match: {'explicit': 'false'}}, {$sample: { size: Number(game.nbOfQuestions) } }]);
+            result = await YourModel.aggregate([{ $match: {"explicit": "false"}}, {$sample: { size: Number(game.nbOfQuestions) } }]);
         }
         result.forEach( (element, index) => game.questions.push({ 
             id: index, 
@@ -110,7 +110,7 @@ function initQuestions(mongoose, YourModel, game) {
 
         // console.log('Random objects:', result);
         } catch (err) {
-        console.error('Failed to retrieve random objects:', err);
+        console.error("Failed to retrieve random objects:", err);
         } finally {
         // Close the MongoDB connection
         mongoose.connection.close();
