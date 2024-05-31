@@ -4,6 +4,16 @@ let nbOfPlayers = 0;
 var minNbOfPlayers = 2;
 
 sessionStorage.clear();
+window.onload = function () {
+	socket.emit("getPunchlineURL");
+};
+
+// get Punchline URL
+socket.on("sendPunchlineURL", function(data) {
+	
+	document.getElementById("gameURL").setAttribute("href", data);
+
+});
 
 /** choix du nom **/
 function setUsername() {

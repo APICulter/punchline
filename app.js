@@ -84,6 +84,13 @@ io.on("connection", function (socket) {
 	// console.log('A user connected');
 	const ID = socket.id;
 
+	// Handler to get the game URL => Rules panel
+	socket.on("getPunchlineURL", () => {
+		socket.emit("sendPunchlineURL", punchlineURL);
+	});
+	
+
+
 	// Handler for creating a new room
 	socket.on("createGame", () => {
 		const roomName = `room-${socket.id}`;
