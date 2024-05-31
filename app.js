@@ -6,8 +6,7 @@
 const express = require("express");
 const http = require("http");
 const socketIO = require("socket.io");
-const mongoose = require('mongoose');
-
+const mongoose = require("mongoose");
 
 // Create and configure the Express app
 const app = express();
@@ -23,77 +22,63 @@ app.all("*", function (req, res) {
 	res.redirect("/");
 });
 
-
 // Define classes
 const { Game } = require("./classes/game");
 const { Player } = require("./classes/player");
-
 
 // Define global variables
 var games = [];
 var SECRET_CODE;
 
-
 // Read the configuration properties from external file and create global variables from it
-var propertiesReader = require('properties-reader');
-var properties = propertiesReader(__dirname +'/config.properties');
+var propertiesReader = require("properties-reader");
+var properties = propertiesReader(__dirname + "/config.properties");
 properties.each((key, value) => {
 	global[key] = value;
-  });
-
+});
 
 // Get the premium code
 if (premiumCode != null && premiumCode.length > 0) {
 	SECRET_CODE = premiumCode;
 }
 
-
 // Database connexion
 mongoose.connect(databaseUrl, {
-			useNewUrlParser: true,
-			useUnifiedTopology: true
-		});
+	useNewUrlParser: true,
+	useUnifiedTopology: true,
+});
 
 let YourSchema;
 let YourModel;
 let db = mongoose.connection;
 
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', async function() { 
-	console.log('Connected to MongoDB');
+db.on("error", console.error.bind(console, "MongoDB connection error:"));
+db.once("open", async function () {
+	console.log("Connected to MongoDB");
 	YourSchema = new mongoose.Schema({});
-	YourModel = mongoose.model('Question', YourSchema, 'questions');
+	YourModel = mongoose.model("Question", YourSchema, "questions");
 	mongoose.connection.close();
 });
-
 
 // Rooms dictionary
 const rooms = {};
 
-
 // Generates a random UUID for a player
-const { v4: uuidv4 } = require('uuid');
-
+const { v4: uuidv4 } = require("uuid");
 
 // Import custom functions from functions.js
-const { generatePIN, 
-	unlockedPlayers, 
+const {
+	generatePIN,
+	unlockedPlayers,
 	initBot,
-    addBotAnswer,
-    shuffle,
-    initQuestions
-} = require('./functions');
-
-
-
-
-
-
+	addBotAnswer,
+	shuffle,
+	initQuestions,
+} = require("./functions");
 
 /**  *****************************************************************************************
  ******************************** Main program *******************************************
  ***************************************************************************************** **/
-
 
 io.on("connection", function (socket) {
 	// console.log('A user connected');
@@ -125,13 +110,11 @@ io.on("connection", function (socket) {
 		}
 	});
 
-	
-
 	// Handler for checking if the game / room exists
 	socket.on("findRoomById", function (data) {
 		let game = games.find((game) => game.pin === Number(data.pin));
 		if (typeof game !== "undefined") {
-			if (game.players.length == Number(maxNumberOfPlayers) ) {
+			if (game.players.length == Number(maxNumberOfPlayers)) {
 				socket.emit("errorRoomFull", errorRoomFullMessage);
 				return;
 			} else {
@@ -142,13 +125,10 @@ io.on("connection", function (socket) {
 					unlockedPlayers(game.players)
 				);
 			}
-			
 		} else {
 			socket.emit("noGameFound", noGameFoundMessage);
 		}
 	});
-
-	
 
 	// Handler for joining a room (after entering PIN and before giving a name)
 	socket.on("joinRoom", (pin, playerName) => {
@@ -173,7 +153,6 @@ io.on("connection", function (socket) {
 			}
 		} else {
 			// socket.emit("invalidPIN");
-
 			// socket.emit("redirect", "/html/index.html", "clear");
 		}
 	});
@@ -222,7 +201,6 @@ io.on("connection", function (socket) {
 		}
 
 		if (roomName && typeof game !== "undefined") {
-
 			let exist = game.players.find(
 				(player) => player.name === data.playerName
 			);
@@ -236,21 +214,17 @@ io.on("connection", function (socket) {
 				rooms[roomName].sockets.push(socket);
 				io.to(game.hostSocketId).emit("newJoiner", {
 					playerName: player.name,
-					playerId: player.id
+					playerId: player.id,
 				});
 				socket.emit("userSet", data, "/html/waiting.html");
-
 			} else {
 				socket.emit("userExists", userExistsMessage);
 			}
-			
 		}
 	});
 
-	
 	// Handler for leaving a room
 	socket.on("leaveRoom", (roomName) => {
-
 		const room = rooms[roomName];
 		if (room) {
 			socket.leave(roomName);
@@ -279,25 +253,25 @@ io.on("connection", function (socket) {
 
 	// Starts the game for all players in the room
 	socket.on("startGame", function (data) {
-
 		let game = games.find((game) => game.pin === Number(data.pin));
 		if (typeof game === "undefined") {
 			let roomName = null;
-				for (const name in rooms) {
-					if (rooms[name].pin == data.punchlinePin) {
-						roomName = name;
-						break;
-					}
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
 				}
+			}
 			socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
-
 		} else {
-
-			// Is game premium ? 
+			// Is game premium ?
 			if (data.premiumMode == true) {
-				if (typeof SECRET_CODE !== "undefined" && data.secretCode == SECRET_CODE ) {
-				game.premium = true;
+				if (
+					typeof SECRET_CODE !== "undefined" &&
+					data.secretCode == SECRET_CODE
+				) {
+					game.premium = true;
 				} else {
 					socket.emit("premiumCodeError", premiumCodeErrorMessage);
 					return;
@@ -307,34 +281,28 @@ io.on("connection", function (socket) {
 			game.nbOfPlayers = game.players.length;
 			game.inGame = true;
 			game.nbOfQuestions = data.nbOfQuestions;
-			
-			initQuestions( mongoose, YourModel, game);
+
+			initQuestions(mongoose, YourModel, game);
 			initBot(game);
 
 			socket.emit("redirect", "/html/game.html", data.pin);
-			
 		}
-		
 	});
-
-	
 
 	// Handler for sending the next question in the pool
 	socket.on("getQuestion", function (data) {
-
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		if (typeof game === "undefined") {
 			let roomName = null;
-				for (const name in rooms) {
-					if (rooms[name].pin == data.punchlinePin) {
-						roomName = name;
-						break;
-					}
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
 				}
+			}
 			socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
-			
 			// Is there any question left ?
 			game.question++;
 			if (game.question < game.questions.length) {
@@ -355,9 +323,6 @@ io.on("connection", function (socket) {
 				socket.emit("redirect", "/html/scores.html");
 			}
 		}
-
-
-		
 	});
 
 	// Handler to remove a player from the room in the lobby
@@ -366,23 +331,21 @@ io.on("connection", function (socket) {
 
 		if (typeof game === "undefined") {
 			let roomName = null;
-				for (const name in rooms) {
-					if (rooms[name].pin == data.punchlinePin) {
-						roomName = name;
-						break;
-					}
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
 				}
-
+			}
 		} else {
-
 			// delete player
 			for (player of game.players) {
 				if (player.id == data.playerId) {
 					game.players.splice(game.players.indexOf(player), 1);
 					break;
 				}
-			};
-				
+			}
+
 			socket.emit("playerDeleted", data.playerId);
 		}
 	});
@@ -393,12 +356,12 @@ io.on("connection", function (socket) {
 
 		if (typeof game === "undefined") {
 			let roomName = null;
-				for (const name in rooms) {
-					if (rooms[name].pin == data.punchlinePin) {
-						roomName = name;
-						break;
-					}
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
 				}
+			}
 			socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
@@ -412,7 +375,6 @@ io.on("connection", function (socket) {
 			}
 			socket.to(roomName).emit("redirect", "/html/prompt.html");
 		}
-		
 	});
 
 	// Handler to send the player's answer
@@ -420,16 +382,18 @@ io.on("connection", function (socket) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		if (typeof game === "undefined") {
 			let roomName = null;
-				for (const name in rooms) {
-					if (rooms[name].pin == data.punchlinePin) {
-						roomName = name;
-						break;
-					}
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
 				}
+			}
 			socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
-			let player = game.players.find((player) => player.name === data.playerName);
+			let player = game.players.find(
+				(player) => player.name === data.playerName
+			);
 			if (game.maxAnswers < game.nbOfPlayers) {
 				game.answers.push({
 					// playerSocketId: ID,
@@ -440,10 +404,10 @@ io.on("connection", function (socket) {
 				});
 				game.maxAnswers++;
 				socket.emit("redirect", "/html/waiting.html");
-	
+
 				if (game.maxAnswers == game.nbOfPlayers) {
 					game.status = "";
-					
+
 					let roomName = null;
 					for (const name in rooms) {
 						if (rooms[name].pin == data.punchlinePin) {
@@ -455,11 +419,7 @@ io.on("connection", function (socket) {
 					io.in(roomName).emit("displayAnswers", shuffle(game.answers));
 				}
 			}
-			
 		}
-
-
-		
 	});
 
 	// Handler to end round when timer goes to 0 if there is still 1 player that did not vote
@@ -468,36 +428,35 @@ io.on("connection", function (socket) {
 
 		if (typeof game === "undefined") {
 			let roomName = null;
-				for (const name in rooms) {
-					if (rooms[name].pin == data.punchlinePin) {
-						roomName = name;
-						break;
-					}
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
 				}
+			}
 			socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
 			let roomName = null;
-		for (const name in rooms) {
-			if (rooms[name].pin == data.punchlinePin) {
-				roomName = name;
-				break;
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
+				}
+			}
+			socket.to(roomName).emit("redirect", "/html/waiting.html");
+
+			// socket.broadcast.emit("redirect", "/html/waiting.html");
+			if (game.answers.length <= 1) {
+				io.in(roomName).emit("skipVoteQuestion", game.question);
+				// io.emit("skipVoteQuestion", game.question);
+			} else {
+				game.status = "";
+				addBotAnswer(game);
+				io.in(roomName).emit("displayAnswers", shuffle(game.answers));
+				// io.emit("displayAnswers", shuffle(game.answers));
 			}
 		}
-		socket.to(roomName).emit("redirect", "/html/waiting.html");
-
-		// socket.broadcast.emit("redirect", "/html/waiting.html");
-		if (game.answers.length <= 1) {
-			io.in(roomName).emit("skipVoteQuestion", game.question);
-			// io.emit("skipVoteQuestion", game.question);
-		} else {
-			game.status = "";
-			addBotAnswer(game);
-			io.in(roomName).emit("displayAnswers", shuffle(game.answers));
-			// io.emit("displayAnswers", shuffle(game.answers));
-		}
-		}
-		
 	});
 
 	// socket.on("timeIsUpToVote", function (data) {
@@ -506,9 +465,6 @@ io.on("connection", function (socket) {
 	// 	io.emit("displayVotes", game.answers);
 	// });
 
-	
-
-	
 	// Handler to retrieve the votes and displau on UI
 	socket.on("getVotes", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
@@ -534,42 +490,41 @@ io.on("connection", function (socket) {
 		let game = games.find((game) => game.pin === Number(pin));
 		if (typeof game === "undefined") {
 			let roomName = null;
-				for (const name in rooms) {
-					if (rooms[name].pin == data.punchlinePin) {
-						roomName = name;
-						break;
-					}
-				}
-			socket.to(roomName).emit("redirect", "/");
-			socket.emit("redirect", "/");
-		} else {
-			let answer = game.answers.find(
-			(answer) => answer.playerName === playerName
-		);
-		answer.votes++;
-		game.answers[playerName]++;
-		let player = game.players.find((player) => player.name === playerName);
-		player.points++;
-		game.maxVotes++;
-		socket.emit("redirect", "/html/waiting.html");
-		if (game.maxVotes == game.nbOfPlayers) {
-			let roomName = null;
 			for (const name in rooms) {
-				if (rooms[name].pin == pin) {
+				if (rooms[name].pin == data.punchlinePin) {
 					roomName = name;
 					break;
 				}
 			}
-			game.status = "";
-			io.in(roomName).emit("displayVotes", game.answers);
-			// io.emit("displayVotes", game.answers);
-			//mettre les votes dans game.answers
+			socket.to(roomName).emit("redirect", "/");
+			socket.emit("redirect", "/");
+		} else {
+			let answer = game.answers.find(
+				(answer) => answer.playerName === playerName
+			);
+			answer.votes++;
+			game.answers[playerName]++;
+			let player = game.players.find((player) => player.name === playerName);
+			player.points++;
+			game.maxVotes++;
+			socket.emit("redirect", "/html/waiting.html");
+			if (game.maxVotes == game.nbOfPlayers) {
+				let roomName = null;
+				for (const name in rooms) {
+					if (rooms[name].pin == pin) {
+						roomName = name;
+						break;
+					}
+				}
+				game.status = "";
+				io.in(roomName).emit("displayVotes", game.answers);
+				// io.emit("displayVotes", game.answers);
+				//mettre les votes dans game.answers
+			}
 		}
-		}
-		
 	});
 
-	// Handler to get the ranking of players based on the number of points (final board) 
+	// Handler to get the ranking of players based on the number of points (final board)
 	socket.on("getScores", function (pin) {
 		let game = games.find((game) => game.pin === Number(pin.punchlinePin));
 		// let scores = [];
@@ -577,26 +532,23 @@ io.on("connection", function (socket) {
 		// 	scores[player.name] = player.points;
 		// });
 
-
 		if (typeof game === "undefined") {
 			let roomName = null;
-				for (const name in rooms) {
-					if (rooms[name].pin == pin.punchlinePin) {
-						roomName = name;
-						break;
-					}
+			for (const name in rooms) {
+				if (rooms[name].pin == pin.punchlinePin) {
+					roomName = name;
+					break;
 				}
+			}
 			socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
 			let playersRankedByPoints = game.players;
-		playersRankedByPoints.sort(function (a, b) {
-			return parseFloat(b.points) - parseFloat(a.points);
-		});
-		socket.emit("scores", game.players);
+			playersRankedByPoints.sort(function (a, b) {
+				return parseFloat(b.points) - parseFloat(a.points);
+			});
+			socket.emit("scores", game.players);
 		}
-
-		
 	});
 
 	// Handler to send everyone back to the lobby
@@ -625,11 +577,7 @@ io.on("connection", function (socket) {
 
 		// socket.broadcast.emit("redirect", "/html/index.html", "clear");
 	});
-
-	
 });
-
-
 
 const port = applicationPort;
 server.listen(port, () => {
