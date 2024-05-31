@@ -422,40 +422,33 @@ io.on("connection", function (socket) {
 		}
 	});
 
-	// Handler to end round when timer goes to 0 if there is still 1 player that did not vote
+	// Handler to end round when timer goes to 0 if there is still 1 player that did not answer
 	socket.on("timeIsUpToAnswer", function (data) {
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
+		let roomName = null;
+			for (const name in rooms) {
+				if (rooms[name].pin == data.punchlinePin) {
+					roomName = name;
+					break;
+				}
+			}
 
 		if (typeof game === "undefined") {
-			let roomName = null;
-			for (const name in rooms) {
-				if (rooms[name].pin == data.punchlinePin) {
-					roomName = name;
-					break;
-				}
-			}
+			
 			socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
+
 		} else {
-			let roomName = null;
-			for (const name in rooms) {
-				if (rooms[name].pin == data.punchlinePin) {
-					roomName = name;
-					break;
-				}
-			}
+			
 			socket.to(roomName).emit("redirect", "/html/waiting.html");
 
-			// socket.broadcast.emit("redirect", "/html/waiting.html");
-			if (game.answers.length <= 1) {
-				io.in(roomName).emit("skipVoteQuestion", game.question);
-				// io.emit("skipVoteQuestion", game.question);
-			} else {
+			// if (game.answers.length <= 1) {
+			// 	io.in(roomName).emit("skipVoteQuestion", game.question);
+			// } else {
 				game.status = "";
 				addBotAnswer(game);
 				io.in(roomName).emit("displayAnswers", shuffle(game.answers));
-				// io.emit("displayAnswers", shuffle(game.answers));
-			}
+			// }
 		}
 	});
 

@@ -1,6 +1,6 @@
 const socket = io();
 
-var questionCountDown = 61;
+var questionCountDown = 11;
 var beforeQuestionCountDown = 6;
 var voteCountDown = 10;
 
@@ -86,10 +86,11 @@ function getQuestion(numberQuestion) {
 	});
 }
 
-socket.on("skipVoteQuestion", (data) => {
-	getQuestion(data);
-});
+// socket.on("skipVoteQuestion", (data) => {
+// 	getQuestion(data);
+// });
 
+// prepares the game screen for the next question
 socket.on("question", function (data) {
 	document.getElementById("question").textContent = data.question;
 	document.getElementById("answer").classList.add("invisible");
