@@ -125,18 +125,23 @@ socket.on("displayAnswers", function (data) {
 		setTimeout(() => {
 			document.getElementById("answer").textContent = element.textAnswer;
 			document.getElementById("answer").classList.remove("invisible");
-		}, 5000 * index);
-		setTimeout(() => {
-			document.getElementById("answer").classList.add("invisible");
-		}, 5000 * index) + 2000;
+			
+			setTimeout(() => {
+				document.getElementById("answer").classList.add("invisible");
+			}, 6000);
+
+		}, 9000 * index);
+		
 		index++;
 	});
 
 	setTimeout(function () {
 		socket.emit("getVotes", { punchlinePin: punchlinePin });
 		document.getElementById("answer").classList.add("invisible");
-	}, data.length * 5000 + 5000);
+	}, data.length * 9000 + 2000);
 });
+
+
 
 socket.on("redirect", (newGameURL) => {
 	window.location = newGameURL;
@@ -153,7 +158,15 @@ socket.on("displayVotes", function (answers) {
 				document.getElementById("player").textContent = element.playerName;
 				document.getElementById("points").classList.remove("invisible");
 				document.getElementById("points").textContent = "+ " + element.votes;
-			}, 5000 * index);
+
+				setTimeout(() => {
+					document.getElementById("answer").classList.add("invisible");
+					document.getElementById("player").classList.add("invisible");
+					document.getElementById("points").classList.add("invisible");
+
+				}, 6000);
+
+			}, 9000 * index);
 		index++;
 	});
 
@@ -162,7 +175,7 @@ socket.on("displayVotes", function (answers) {
 			punchlinePin: punchlinePin,
 			numberQuestion: numberQuestion,
 		});
-	}, answers.length * 5000 + 5000);
+	}, answers.length * 9000 + 5000);
 });
 
 function home() {

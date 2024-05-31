@@ -95,7 +95,7 @@ function initQuestions(mongoose, YourModel, game) {
             console.log("premium");
             result = await YourModel.aggregate([{ $sample: { size: Number(game.nbOfQuestions) } }]);
         } else {
-            console.log("not premium");
+            // console.log("not premium");
             result = await YourModel.aggregate([{ $match: {"explicit": "false"}}, {$sample: { size: Number(game.nbOfQuestions) } }]);
         }
         result.forEach( (element, index) => game.questions.push({ 
