@@ -251,6 +251,20 @@ io.on("connection", function (socket) {
 		}
 	});
 
+
+	socket.on("getConfig", function () {
+			// get the different variables
+			let configurationVariables = [];
+			configurationVariables.push(questionCountDown);
+			configurationVariables.push(beforeQuestionCountDown);
+			configurationVariables.push(voteCountDown);
+
+			// emit to the sender
+			socket.emit("getConfigResponse", configurationVariables);
+
+	});
+
+
 	// Starts the game for all players in the room
 	socket.on("startGame", function (data) {
 		let game = games.find((game) => game.pin === Number(data.pin));

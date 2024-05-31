@@ -1,6 +1,7 @@
 const socket = io();
 
-var questionCountDown = 11;
+// default values in not loaded from config
+var questionCountDown = 61;
 var beforeQuestionCountDown = 6;
 var voteCountDown = 10;
 
@@ -15,6 +16,7 @@ window.onload = function () {
 
 	if (punchlinePin && !playerName) {
 		socket.emit("joinRoom", punchlinePin, playerName);
+		getConfig();
 		getQuestion(numberQuestion);
 		document.querySelector("#punchlinePin").textContent = punchlinePin;
 	} else {
@@ -62,22 +64,22 @@ function startCountDownQuestion(count) {
 	}, 1000);
 }
 
-function startCountDownVote() {
-	var countdownElement = document.getElementById("time");
-	var count = voteCountDown;
+// function startCountDownVote() {
+// 	var countdownElement = document.getElementById("time");
+// 	var count = voteCountDown;
 
-	var countdownInterval = setInterval(function () {
-		count--;
-		countdownElement.innerText = count;
+// 	var countdownInterval = setInterval(function () {
+// 		count--;
+// 		countdownElement.innerText = count;
 
-		// Check if countdown has reached 0
-		if (count === 0) {
-			clearInterval(countdownInterval);
-			document.getElementById("time").classList.add("invisible");
-			socket.emit("timeIsUpToVote", { punchlinePin: punchlinePin });
-		}
-	}, 1000);
-}
+// 		// Check if countdown has reached 0
+// 		if (count === 0) {
+// 			clearInterval(countdownInterval);
+// 			document.getElementById("time").classList.add("invisible");
+// 			socket.emit("timeIsUpToVote", { punchlinePin: punchlinePin });
+// 		}
+// 	}, 1000);
+// }
 
 function getQuestion(numberQuestion) {
 	socket.emit("getQuestion", {
@@ -85,6 +87,16 @@ function getQuestion(numberQuestion) {
 		numberQuestion: numberQuestion,
 	});
 }
+
+function getConfig(){
+	socket.emit("getConfig");
+}
+
+socket.on("getConfigResponse", function(data) {
+	questionCountDown = data[0];
+    beforeQuestionCountDown =data[1];
+    voteCountDown = data[2];
+});
 
 // socket.on("skipVoteQuestion", (data) => {
 // 	getQuestion(data);
@@ -114,6 +126,9 @@ socket.on("displayAnswers", function (data) {
 			document.getElementById("answer").textContent = element.textAnswer;
 			document.getElementById("answer").classList.remove("invisible");
 		}, 5000 * index);
+		setTimeout(() => {
+			document.getElementById("answer").classList.add("invisible");
+		}, 5000 * index) + 2000;
 		index++;
 	});
 

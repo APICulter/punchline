@@ -53,7 +53,9 @@ document.getElementById("room-pin").addEventListener("keyup", function (event) {
 function createGame() {
 	socket.emit("createGame");
 	document.getElementById("startGame").classList.remove("invisible");
-	document.getElementById("join").classList.add("invisible");
+	document.getElementById("join").classList.add("hidden");
+	document.getElementById("joinGameInit").classList.add("hidden");
+	document.getElementById("optionMenu").classList.remove("invisible");
 	document
 		.getElementById("createGame")
 		.classList.remove("hover:cursor-pointer");
@@ -72,6 +74,12 @@ socket.on("newGame", function (data) {
 
 	sessionStorage.setItem("punchlinePin", data);
 });
+
+function joinGameInit() {
+	document.getElementById("createGame").classList.add("invisible");
+	document.getElementById("joinGameInit").classList.add("invisible");
+	document.getElementById("join").classList.remove("invisible");
+}
 
 
 socket.on("gameExists", function (data) {
