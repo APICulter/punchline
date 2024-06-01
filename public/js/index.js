@@ -35,7 +35,7 @@ function setUsername() {
 
 var user;
 socket.on("userExists", function (data) {
-	document.getElementById("error-container").innerHTML = data;
+	document.getElementById("error-container").innerText = data;
 });
 socket.on("userSet", function (data, newGameURL) {
 	sessionStorage.setItem("playerName", data.playerName);
