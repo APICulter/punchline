@@ -1,6 +1,5 @@
 const socket = io();
-let punchlinePin;
-let playerName;
+
 
 window.onload = function () {
 	playerName = sessionStorage.getItem("playerName");

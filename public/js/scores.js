@@ -1,5 +1,5 @@
 var socket = io();
-let punchlinePin;
+
 
 window.onload = function () {
 	punchlinePin = sessionStorage.getItem("punchlinePin");
