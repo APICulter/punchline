@@ -9,81 +9,90 @@
 	</head>
 	<script src="/socket.io/socket.io.js"></script>
 
-	<body class="bg-amber-600">
+	<body class="bg-amber-600 min-h-screen overflow-y-auto overscroll-y-none">
+
+		<div id="rulesModal" class="hidden bg-slate-400/70 w-full h-full fixed z-20 overflow-auto flex flex-col items-center">
+
+			<div class="bg-slate-300 w-full sm:w-3/4 lg:w-1/2  m-auto shadow-xl rounded-md p-4 ">
+				<div class="p-4">
+					<span id="closeRules" class="float-right hover:cursor-pointer">&times;</span>
+					<p class="text-center pb-8 text-xl font-bold">Rules of the game</p>
+					<div class="pb-6">
+						<p>First create a room. A PIN number will be generated. You can choose the options for the game as the following: </p>
+						<ul class="list-disc list-outside">
+							<li class="m-4 ml-6">From 1 to 10 rounds</li>
+							<li class="m-4 ml-6"><span class="underline underline-offset-4">Optional</span>: enter the premium code to have access to more content !</li>
+						</ul>
+					</div>
+					
+					<div class="py-4">
+						<p>Each participant connects to <a id="gameURL" class="underline underline-offset-4 font-bold" href="">Punchline</a>  with their phone, enters the PIN code and picks a name tag. <br>
+								Click "Play" to start the game. It goes like this: </p>
+						<ul class="list-disc list-outside">
+							<li class="m-4 ml-6">A question is displayed on the screen</li>
+							<li class="m-4 ml-6">Everyone has 60 seconds to give an answer through their phone</li>
+							<li class="m-4 ml-6">Once everyone has voted, the answers are displayed anonymously on the phones</li>
+							<li class="m-4 ml-6">Everyone votes for the answer they like the most (expect their own, of course &#128521;)</li>
+							<li class="m-4 ml-6">Every time someone votes for you, you get 1 point</li>
+						</ul>
+						<p>That was one round. Repeat for each round until the end. <br>
+							The one with the highest number of points wins!</p>
+					</div>	
+						
+					<div class=" flex justify-center">
+						<button
+						id="rulesButton"
+						type="button"
+						name="rulesButton"
+						class="bg-indigo-600 rounded-md shadow-xl p-4 hover:cursor-pointer hover:bg-violet-500  "
+					>Got it !</button>			
+					</button>
+					</div>
+				</div>
+	
+				
+				
+			</div>
+
+		  </div>
+
+		<section class="flex flex-row w-full h-48 flex-wrap">
+			<div class="flex flex-col justify-center">
+			<button
+			id="home"
+			type="button"
+			name="homeButton"
+			class="flex items-center justify-center bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+			onclick="home()"
+			>				
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
+			</button>
+			<button
+				id="rules"
+				type="button"
+				name="rulesButton"
+				class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+				
+			>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
+			<button id="punchlinePin" type="button" name="punchlinePin" class="invisible bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"><span class="invisible">0000</span></button>
+			<!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
+
+		</div>
+		<div class="flex items-start  grow">
+			<h1 class="grow mt-10 text-center text-5xl font-extrabold tracking-tight ">
+			Punchline
+		</h1>
+		</div>
+		
+		</section>
 
 		<section class="h-screen grid grid-cols-1 justify-center">
-			<div class="flex flex-row w-full h-36">
-				<div class="flex flex-col justify-center">
-				<button
-				id="home"
-				type="button"
-				name="homeButton"
-				class=" bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-				onclick="home()"
-				>				
-			<svg class="text-center" xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
-				</button>
-				<button
-					id="rules"
-					type="button"
-					name="rulesButton"
-					class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-					
-				>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
-			</div>
 			
-			<h1 class=" text-center m-auto text-5xl font-extrabold tracking-tight ">
-				Punchline
-			</h1>
-			</div>
 			
 
 			<!-- The Modal -->
-			<div id="rulesModal" class="hidden bg-slate-400/70 w-full h-full fixed z-20 overflow-auto flex flex-col items-center">
-
-				<div class="bg-slate-300 w-full sm:w-3/4 lg:w-1/2  m-auto shadow-xl rounded-md p-4 ">
-					<div class="p-4">
-						<span id="closeRules" class="float-right hover:cursor-pointer">&times;</span>
-						<p class="text-center pb-8 text-xl font-bold">Rules of the game</p>
-						<div class="pb-6">
-							<p>First create a room. A PIN number will be generated. You can choose the options for the game as the following: </p>
-							<ul class="list-disc list-outside">
-								<li class="m-4 ml-6">From 1 to 10 rounds</li>
-								<li class="m-4 ml-6"><span class="underline underline-offset-4">Optional</span>: enter the premium code to have access to more content !</li>
-							</ul>
-						</div>
-						
-						<div class="py-4">
-							<p>Each participant connects to <a id="gameURL" class="underline underline-offset-4 font-bold" href="">Punchline</a>  with their phone, enters the PIN code and picks a name tag. <br>
-									Click "Play" to start the game. It goes like this: </p>
-							<ul class="list-disc list-outside">
-								<li class="m-4 ml-6">A question is displayed on the screen</li>
-								<li class="m-4 ml-6">Everyone has 60 seconds to give an answer through their phone</li>
-								<li class="m-4 ml-6">Once everyone has voted, the answers are displayed anonymously on the phones</li>
-								<li class="m-4 ml-6">Everyone votes for the answer they like the most (expect their own, of course &#128521;)</li>
-								<li class="m-4 ml-6">Every time someone votes for you, you get 1 point</li>
-							</ul>
-							<p>That was one round. Repeat for each round until the end. <br>
-								The one with the highest number of points wins!</p>
-						</div>	
-							
-						<div class=" flex justify-center">
-							<button
-							id="rulesButton"
-							type="button"
-							name="rulesButton"
-							class="bg-indigo-600 rounded-md shadow-xl p-4 hover:cursor-pointer hover:bg-violet-500  "
-						>Got it !</button>			
-						</button>
-						</div>
-					</div>
-		
-					
-					
-				</div>
-  
-  			</div>
+			
 
 			<div class="flex flex-col items-center">
 				<div id="name" class=" hidden max-w-2xl mx-auto flex flex-col">
@@ -209,7 +218,7 @@
 				</div>
 
 
-				<input id="pin" class="invisible" value="" type="text">
+				<input id="pin" class="hidden" value="" type="text">
 
 				
 
@@ -218,7 +227,7 @@
 			</div>
 		</section>
 	</body>
-
+	<script src="../js/common.js"></script>
 	<script src="../js/index.js"></script>
 	
 </html>

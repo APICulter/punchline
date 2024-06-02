@@ -73,14 +73,21 @@ function createGame() {
 
 socket.on("newGame", function (data) {
 	let pinCreated = document.createElement("div");
-	pinCreated.textContent = data;
-	pinCreated.classList.add("text-4xl");
-	document.getElementById("createGame").innerText = data;
-	document.getElementById("createGame").className += " rounded-full";
-	document.getElementById("createGame").className += " animate-pulse";
+	document.getElementById("punchlinePin").textContent = data;
+	document.getElementById("punchlinePin").classList.remove("invisible");
+	document.getElementById("punchlinePin").className += " animate-pulse";
 	document
-		.getElementById("createGame")
+		.getElementById("punchlinePin")
 		.classList.replace("bg-amber-500", "bg-amber-400");
+
+	pinCreated.classList.add("text-4xl");
+	// document.getElementById("createGame").innerText = data;
+	// document.getElementById("createGame").className += " rounded-full";
+	// document.getElementById("createGame").className += " animate-pulse";
+	document.getElementById("createGame").classList.add("hidden");
+	// document
+	// 	.getElementById("createGame")
+	// 	.classList.replace("bg-amber-500", "bg-amber-400");
 
 	sessionStorage.setItem("punchlinePin", data);
 });
@@ -320,7 +327,7 @@ function startGame() {
 		}, 1500);
 	} else {
 		socket.emit("startGame", {
-			pin: document.getElementById("createGame").textContent,
+			pin: document.getElementById("punchlinePin").textContent,
 			nbOfQuestions: document.getElementById("nbOfQuestionsValue").textContent,
 			secretCode: document.getElementById("secretCode").value,
 			premiumMode:
@@ -329,40 +336,9 @@ function startGame() {
 	}
 }
 
-// To go back to the lobby
-function home() {
-	window.location.href = "/";
-}
 
-// Rules var
-var modal = document.getElementById("rulesModal");
-var btn = document.getElementById("rules");
-var span = document.getElementById("closeRules");
-var btnRules = document.getElementById("rulesButton");
 
-// When the user clicks the button, open the modal
-btn.onclick = function () {
-	modal.classList.remove("hidden");
-};
 
-// When the user clicks on <span> (x), close the modal
-span.onclick = function () {
-	modal.classList.add("hidden");
-	window.scrollTo(0, 0);
-};
-
-btnRules.onclick = function () {
-	modal.classList.add("hidden");
-	window.scrollTo(0, 0);
-};
-
-// When the user clicks anywhere outside of the modal, close it
-window.onclick = function (event) {
-	if (event.target == modal) {
-		modal.classList.add("hidden");
-		window.scrollTo(0, 0);
-	}
-};
 
 // To change between classic mode and premium mode
 function changeMode() {

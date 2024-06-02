@@ -2,7 +2,7 @@
 const { Game } = require("./classes/game");
 const { Player } = require("./classes/player");
 
-// Generates a random 4-digit PIN for a room
+// Generates a random 4-digit PIN for a room between 1000 and 9999
 function generatePIN() {
 	return Math.floor(1000 + Math.random() * 9000);
 }

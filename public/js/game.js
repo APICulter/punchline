@@ -5,7 +5,7 @@ var questionCountDown = 61;
 var beforeQuestionCountDown = 6;
 var voteCountDown = 10;
 
-let punchlinePin;
+// let punchlinePin;
 let numberQuestion = 0;
 
 var countdownIntervalQuestion;
@@ -36,13 +36,13 @@ function startCountdown(count, questionCount) {
 	var countdownInterval = setInterval(function () {
 		count--;
 		countdownElement.innerText = count;
-		document.getElementById("countdown").classList.remove("invisible");
+		document.getElementById("countdown").classList.remove("hidden");
 
 		// Check if countdown has reached 0
 		if (count === 0) {
 			clearInterval(countdownInterval);
-			document.getElementById("game-zone").classList.remove("invisible");
-			document.getElementById("countdown").classList.add("invisible");
+			document.getElementById("game-zone").classList.remove("hidden");
+			document.getElementById("countdown").classList.add("hidden");
 			socket.emit("startPrompt", { punchlinePin: punchlinePin });
 			startCountDownQuestion(questionCount);
 		}
@@ -178,10 +178,4 @@ socket.on("displayVotes", function (answers) {
 	}, answers.length * 9000 + 5000);
 });
 
-function home() {
-	socket.emit("endGame", {
-		punchlinePin: punchlinePin,
-	});
-	sessionStorage.clear();
-	window.location.href = "/";
-}
+
