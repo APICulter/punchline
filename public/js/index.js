@@ -89,7 +89,16 @@ function joinGameInit() {
 	document.getElementById("createGame").classList.add("hidden");
 	document.getElementById("joinGameInit").classList.add("hidden");
 	document.getElementById("join").classList.remove("hidden");
+	document.getElementById("room-pin").focus();
 }
+
+
+let roomPin = document.getElementById("room-pin");
+// Ajoutez un écouteur d'événements pour le focus sur le champ input
+roomPin.addEventListener('focus', () => {
+	// Faites défiler la page jusqu'au champ input
+	document.getElementById("join-room-button").scrollIntoView({ behavior: 'smooth' });
+  });
 
 
 socket.on("gameExists", function (data) {
@@ -133,7 +142,7 @@ socket.on("noGameFound", function (data) {
 });
 
 
-// Displays the elements to enter the player's name once he/she has joined the room
+// Displays the elements to enter the player's name once he/she has joined the room or if he/she reconnects to the game
 socket.on("gamePinFound", function (pin, inGame, players) {
 	document.querySelector("#pin").setAttribute("value", pin);
 
@@ -152,7 +161,12 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		playerName.placeholder = "Name";
 		playerName.className =
 			"w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-slate-100 focus:outline-none";
-		document.getElementById("player-name").focus();
+		let playerNameButton = document.getElementById("player-name");
+		playerNameButton.focus();
+		playerNameButton.addEventListener('focus', () => {
+			// Faites défiler la page jusqu'au champ input
+			document.getElementById("name-button").scrollIntoView({ behavior: 'smooth' });
+		  });
 
 		let nameButton = document.createElement("button");
 		document.querySelector("#name").append(nameButton);
@@ -222,6 +236,9 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 // Displays the new player in the room with a delete button to remove him/her if needed
 socket.on("newJoiner", function (data) {
 	if (data) {
+		if (document.getElementById("players-table").classList.contains("hidden")) {
+			document.getElementById("players-table").classList.remove("hidden");
+		}
 		nbOfPlayers += 1;
 		let playerBlock = document.createElement("div");
 		playerBlock.id = data.playerId;
@@ -258,6 +275,9 @@ function deletePlayer(number) {
 socket.on("playerDeleted", function (data) {
 	document.getElementById(data).remove();
 	nbOfPlayers -= 1;
+	if (document.getElementById("players").childElementCount === 0) {
+		document.getElementById("players-table").classList.add("hidden");
+	}
 });
 
 // redirect the screen
@@ -378,10 +398,10 @@ socket.on("premiumCodeError", function (data) {
 socket.on("errorRoomFull", function (data) {
 	let error = document.getElementById("maxNbOfPlayersReached");
 	error.textContent = data;
-	error.classList.remove("invisible");
+	error.classList.remove("hidden");
 	// Masquer le texte après 2 secondes
 	setTimeout(function () {
 		// messageElement.style.display = 'none';
-		error.classList.add("invisible");
+		error.classList.add("hidden");
 	}, 1500);
 });

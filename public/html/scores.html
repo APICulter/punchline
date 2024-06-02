@@ -9,9 +9,31 @@
 	</head>
 	<script src="/socket.io/socket.io.js"></script>
 	<body class="bg-amber-600">
-		<h1 class=" mx-auto text-center text-6xl m-8 font-extrabold tracking-tight sm:text-4xl">
+		<div class="flex flex-row w-full h-36">
+			<div class="flex flex-col justify-center">
+			<button
+			id="home"
+			type="button"
+			name="homeButton"
+			class=" bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+			onclick="home()"
+			>				
+		<svg class="text-center" xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
+			</button>
+			<button
+				id="rules"
+				type="button"
+				name="rulesButton"
+				class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+				
+			>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
+		</div>
+		
+		<h1 class=" text-center m-auto text-5xl font-extrabold tracking-tight ">
 			Punchline
 		</h1>
+		</div>
 		
 		<section id="final-scores" class="h-screen  flex flex-col items-center justify-center">
 			
@@ -20,7 +42,7 @@
 			</div>
 
   <button id="home" class="animate-pulse mx-auto flex flex-col items-center  justify-center mb-20 bg-amber-400 rounded-md shadow-xl p-4 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400">
-            <a href="/html/index.html">Menu principal</a>
+            <a href="/html/index.html">Play again</a>
         </button>
 			
 		</div>

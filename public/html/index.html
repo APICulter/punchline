@@ -20,7 +20,7 @@
 				name="homeButton"
 				class=" bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
 				onclick="home()"
-			>				
+				>				
 			<svg class="text-center" xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
 				</button>
 				<button
@@ -97,6 +97,9 @@
 				<div class="w-full">
 					<div id="choice" class=" text-center max-w-xl mx-auto flex flex-col">
 						<div id="create-or-join" class=" m-8 items-center">
+							<div id="pinLabel" class="">
+
+							</div>
 							<button
 								id="createGame"
 								type="button"
@@ -115,30 +118,32 @@
 						>
 							Join game
 						</button>
-							<div id="join" class=" hidden flex-wrap">
-								<div id="maxNbOfPlayersReached" class="text-sm invisible z-10">Already full</div>
-	
-								<input
+							<div id="join" class=" hidden flex flex-col max-w-2xl mx-auto">
+								<div id="maxNbOfPlayersReached" class="text-sm hidden z-10">Already full</div>
+								<div class="max-w-2xl">
+									<input
 									id="room-pin"
 									type="text"
 									name="room-pin"
 									value=""
 									placeholder="Pin"
-									class=" grow rounded-md px-4 placeholder-gray-500 p-2 bg-slate-100"
+									class="w-full grow rounded-md px-4 placeholder-gray-500 py-2 my-2 px-4 bg-slate-100 focus:outline-none"
 								/>
 								<button
 									id="join-room-button"
 									type="button"
 									name="play"
 									onclick="joinRoom()"
-									class=" grow bg-amber-500 rounded-md shadow-xl p-2 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400 py-2 px-2"
+									class="w-full grow bg-amber-500 rounded-md shadow-xl py-2 my-2 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400 py-2 px-2"
 								>
 									Join
 								</button>
+								</div>
+								
 							</div>
 							<div id="optionMenu" class="hidden">
 
-								<div class="mt-8 bg-amber-500 rounded-md shadow-xl p-4">
+								<div class="mt-8 bg-amber-500 rounded-md  p-4">
 									<div class="flex flex-col">
 										<label for="nbOfQuestions">Rounds</label>
 										<div>
@@ -146,7 +151,7 @@
 										<output id="nbOfQuestionsValue">5</output>
 										</div>
 								</div>
-								<div class="mt-8 bg-amber-500 rounded-md shadow-xl p-4">
+								<div class="mt-8 bg-amber-500 rounded-md  p-4">
 									<p>Mode</p>
 									<div class="flex flex-row space-x-4 justify-center">
 										<input type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked="yes">
@@ -169,7 +174,7 @@
 								</div>
 
 
-								<div class="mt-8 bg-amber-500 rounded-md shadow-xl p-4">
+								<div id="players-table" class=" hidden mt-8 bg-amber-500 rounded-md shadow-xl p-4">
 									<p>Players</p>
 										<div id="players" class="flex flex-row flex-wrap">
 

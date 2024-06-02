@@ -10,27 +10,30 @@
 	<script src="/socket.io/socket.io.js"></script>
 	<body class="bg-amber-600">
 		<section class="h-screen flex flex-col items-center justify-center">
-			<div class="flex">
+			<div class="flex flex-row w-full h-36">
+				<div class="flex flex-col justify-center">
 				<button
-					id="home"
-					type="button"
-					name="homeButton"
-					class="bg-amber-500 w-300 rounded-md shadow-xl p-8 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-8"
-					onclick="home()"
-				>
-					Home
+				id="home"
+				type="button"
+				name="homeButton"
+				class=" bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+				onclick="home()"
+				>				
+			<svg class="text-center" xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
 				</button>
-				<h1
-					class="text-center text-6xl m-8 font-extrabold tracking-tight lg:text-7xl xl:text-9xl"
-				>
-					Punchline
-				</h1>
 				<button
-					id="punchlinePin"
+					id="rules"
 					type="button"
-					name="punchlinePin"
-					class="bg-amber-500 w-200 rounded-md shadow-xl p-4 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-8 right-0"
-				></button>
+					name="rulesButton"
+					class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+					
+				>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
+			</div>
+			
+			<h1 class=" text-center m-auto text-5xl font-extrabold tracking-tight ">
+				Punchline
+			</h1>
 			</div>
 
 			<div
