@@ -62,10 +62,10 @@ document.getElementById("room-pin").addEventListener("keyup", function (event) {
 /** Creation of a game **/
 function createGame() {
 	socket.emit("createGame");
-	document.getElementById("startGame").classList.remove("invisible");
+	document.getElementById("startGame").classList.remove("hidden");
 	document.getElementById("join").classList.add("hidden");
 	document.getElementById("joinGameInit").classList.add("hidden");
-	document.getElementById("optionMenu").classList.remove("invisible");
+	document.getElementById("optionMenu").classList.remove("hidden");
 	document
 		.getElementById("createGame")
 		.classList.remove("hover:cursor-pointer");
@@ -86,9 +86,9 @@ socket.on("newGame", function (data) {
 });
 
 function joinGameInit() {
-	document.getElementById("createGame").classList.add("invisible");
-	document.getElementById("joinGameInit").classList.add("invisible");
-	document.getElementById("join").classList.remove("invisible");
+	document.getElementById("createGame").classList.add("hidden");
+	document.getElementById("joinGameInit").classList.add("hidden");
+	document.getElementById("join").classList.remove("hidden");
 }
 
 
@@ -111,11 +111,11 @@ function joinRoom() {
 		// document.getElementById("room-pin").value = "";
 		let error = document.getElementById("invalidPIN");
 		error.textContent = "invalid PIN";
-		error.classList.remove("invisible");
+		error.classList.remove("hidden");
 		// Masquer le texte après 2 secondes
 		setTimeout(function () {
 			// messageElement.style.display = 'none';
-			error.classList.add("invisible");
+			error.classList.add("hidden");
 		}, joinRoomInvalidPinErrorTimer);
 	}
 }
@@ -138,7 +138,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 	document.querySelector("#pin").setAttribute("value", pin);
 
 	document.querySelector("#choice").remove();
-	document.querySelector("#name").classList.remove("invisible");
+	document.querySelector("#name").classList.remove("hidden");
 	if (!inGame) {
 		let nameInput = document.createElement("div");
 		document.querySelector("#name").append(nameInput);
@@ -280,11 +280,11 @@ socket.on("redirect", (newGameURL, pin, playerName) => {
 function startGame() {
 	if (nbOfPlayers < minNbOfPlayers) {
 		var messageElement = document.getElementById("notEnoughPlayers");
-		messageElement.classList.remove("invisible");
+		messageElement.classList.remove("hidden");
 		
 		setTimeout(function () {
 			// messageElement.style.display = 'none';
-			messageElement.classList.add("invisible");
+			messageElement.classList.add("hidden");
 		}, 1500);
 
 		
@@ -293,10 +293,10 @@ function startGame() {
 		document.getElementById("premiumMode").getAttribute("checked") == "yes"
 	) {
 		var messageElement = document.getElementById("noPremiumCode");
-		messageElement.classList.remove("invisible");
+		messageElement.classList.remove("hidden");
 		setTimeout(function () {
 			// messageElement.style.display = 'none';
-			messageElement.classList.add("invisible");
+			messageElement.classList.add("hidden");
 		}, 1500);
 	} else {
 		socket.emit("startGame", {
@@ -328,16 +328,19 @@ btn.onclick = function () {
 // When the user clicks on <span> (x), close the modal
 span.onclick = function () {
 	modal.classList.add("hidden");
+	window.scrollTo(0, 0);
 };
 
 btnRules.onclick = function () {
 	modal.classList.add("hidden");
+	window.scrollTo(0, 0);
 };
 
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
 	if (event.target == modal) {
 		modal.classList.add("hidden");
+		window.scrollTo(0, 0);
 	}
 };
 
@@ -363,11 +366,11 @@ function changeMode() {
 socket.on("premiumCodeError", function (data) {
 	let error = document.getElementById("premiumCodeError");
 	error.textContent = data;
-	error.classList.remove("invisible");
+	error.classList.remove("hidden");
 	// Hides the text after 1.5 seconds
 	setTimeout(function () {
 		// messageElement.style.display = 'none';
-		error.classList.add("invisible");
+		error.classList.add("hidden");
 	}, 1500);
 });
 
