@@ -21,6 +21,7 @@ app.use(express.static(publicPath));
 app.all("*", function (req, res) {
 	res.redirect("/");
 });
+// import 'animate.css';
 
 // Define classes
 const { Game } = require("./classes/game");

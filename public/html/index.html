@@ -6,6 +6,13 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="stylesheet" href="../css/style.css" />
+		
+			<link rel="stylesheet" href="../../node_modules/animate.css/animate.min.css">
+		  
+		<!-- <link
+		rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+	  /> -->
 	</head>
 	<script src="/socket.io/socket.io.js"></script>
 
@@ -80,8 +87,11 @@
 
 		</div>
 		<div class="flex items-start  grow">
-			<h1 class="grow mt-10 text-center text-5xl font-black tracking-tight ">
-			Punchline
+			<!-- <img src="./logo.png" alt="logo" width="50" height="50" > -->
+			<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate__animated animate__bounceInDown">  -->
+			<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate-bounce">  -->
+			<h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate__animated animate__bounceInDown"> 
+			<span class="animate-[fade-in_1s_ease-in-out]">Punchline</span>
 		</h1>
 		</div>
 		
@@ -150,9 +160,9 @@
 								</div>
 								
 							</div>
-							<div id="optionMenu" class="hidden rounded-md shadow-xl ">
+							<div id="optionMenu" class="hidden rounded-md  ">
 
-								<div class="mt-8 bg-amber-500 rounded-xl  p-4">
+								<div class="mt-8 bg-amber-500 rounded-xl shadow-xl p-4">
 									<div class="flex flex-col justify-center items-center">
 										<label class="font-bold text-lg" for="nbOfQuestions">Rounds</label>
 										<div class="mt-2 flex items-center justify-center w-1/2">
@@ -190,7 +200,7 @@
 								</div>
 
 
-								<div id="players-table" class=" hidden mt-8 bg-amber-500 rounded-md shadow-xl p-4">
+								<div id="players-table" class=" hidden mt-8 bg-amber-500 rounded-xl shadow-xl p-4">
 									<p class="font-bold text-lg mb-4">Players</p>
 										<div id="players" class="flex flex-row flex-wrap">
 
@@ -205,7 +215,7 @@
 									type="button"
 									name="startGame"
 									onclick="startGame()"
-									class=" mt-8 hidden text-4xl bg-indigo-600 w-full rounded-xl w-90 flex-none shadow-xl p-4 hover:cursor-pointer active:bg-violet-500 ease-in-out duration-200 transition active:scale-90 "
+									class=" mt-8 hidden text-4xl bg-indigo-600 w-full rounded-xl w-90 flex-none shadow-xl p-4 hover:cursor-pointer active:bg-violet-500 ease-in-out duration-200 transition active:scale-90 hover:bg-indigo-500 hover:text-slate-200"
 								>
 									<span class="text-slate-300 font-bold">Play</span>
 								</button>
@@ -216,6 +226,8 @@
 
 
 							</div>
+
+							
 							
 						</div>
 

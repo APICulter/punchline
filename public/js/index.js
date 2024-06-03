@@ -249,20 +249,25 @@ socket.on("newJoiner", function (data) {
 		nbOfPlayers += 1;
 		let playerBlock = document.createElement("div");
 		playerBlock.id = data.playerId;
-		playerBlock.className = "w-full flex flex-row rounded m-2 p-2";
+		playerBlock.className = "w-full flex flex-row rounded m-2 p-2 justify-between items-center";
 
 		let player = document.createElement("div");
 		playerBlock.append(player);
-		player.textContent = data.playerName;
-		player.className = "text-left font-medium w-full break-words  text-gray-900 ";
+		// player.className = "text-left font-medium w-full break-words  text-gray-900 ";
+		player.className = "bg-amber-400 p-2 rounded-md shadow-sm";
+		let playerText = document.createElement("div");
+		player.append(playerText);
+		playerText.textContent = data.playerName;
+		playerText.className = "font-medium";
 
 		let deleteButton = document.createElement("button");
-		deleteButton.className = " bg-indigo-500 rounded-full h-6 w-6 p-2 flex items-center justify-center overflow-visible";
+		deleteButton.className = " bg-indigo-500 rounded-full h-6 w-6 flex items-center justify-center relative shadow-sm";
 		deleteButton.setAttribute("onclick", "deletePlayer(this)");
 
 		let cross = document.createElement("p");
-		cross.innerText = "+";
-		cross.className = "rotate-45 text-gray-100";
+		cross.innerText = "x";
+		// cross.className = "rotate-45 text-gray-100";
+		cross.className = "text-gray-100 absolute h-7 font-semibold";
 		deleteButton.append(cross);
 		playerBlock.append(deleteButton);
 
