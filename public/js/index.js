@@ -212,7 +212,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 			let playerBlock = document.createElement("div");
 			playerBlock.id = players.indexOf(element);
 			playerBlock.className +=
-				" cursor-pointer text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 max-w-lg";
+				" cursor-pointer text-left p-2 bg-indigo-500 rounded-md shadow text-gray-200 max-w-lg";
 			playerBlock.textContent = element.name;
 
 			let label = document.createElement("label");

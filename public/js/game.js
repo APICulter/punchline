@@ -105,11 +105,11 @@ socket.on("getConfigResponse", function(data) {
 // prepares the game screen for the next question
 socket.on("question", function (data) {
 	document.getElementById("question").textContent = data.question;
-	document.getElementById("answer").classList.add("invisible");
-	document.getElementById("points").classList.add("invisible");
-	document.getElementById("player").classList.add("invisible");
+	document.getElementById("reponse-box").classList.add("invisible");
+	// document.getElementById("points").classList.add("invisible");
+	document.getElementById("points-box").classList.add("invisible");
 	document.getElementById("game-zone").classList.add("invisible");
-	document.getElementById("time").classList.remove("invisible");
+	// document.getElementById("time").classList.remove("invisible");
 	document.getElementById("countdown").classList.remove("invisible");
 	startCountdown(beforeQuestionCountDown, questionCountDown);
 });
@@ -117,17 +117,19 @@ socket.on("question", function (data) {
 // Displays answers randomly
 socket.on("displayAnswers", function (data) {
 	clearInterval(countdownIntervalQuestion);
-	document.getElementById("time").classList.add("invisible");
+	// ligne pour tester
+	// document.getElementById("time").classList.add("invisible");
+	document.getElementById("countdown").classList.add("invisible");
 
 	let index = 1;
 
 	data.forEach((element) => {
 		setTimeout(() => {
 			document.getElementById("answer").textContent = element.textAnswer;
-			document.getElementById("answer").classList.remove("invisible");
+			document.getElementById("reponse-box").classList.remove("invisible");
 			
 			setTimeout(() => {
-				document.getElementById("answer").classList.add("invisible");
+				document.getElementById("reponse-box").classList.add("invisible");
 			}, 6000);
 
 		}, 9000 * index);
@@ -137,7 +139,7 @@ socket.on("displayAnswers", function (data) {
 
 	setTimeout(function () {
 		socket.emit("getVotes", { punchlinePin: punchlinePin });
-		document.getElementById("answer").classList.add("invisible");
+		document.getElementById("reponse-box").classList.add("invisible");
 	}, data.length * 9000 + 2000);
 });
 
@@ -152,17 +154,17 @@ socket.on("displayVotes", function (answers) {
 	answers.forEach((element) => {
 		if (element.votes > 0)
 			setTimeout(() => {
-				document.getElementById("answer").classList.remove("invisible");
+				document.getElementById("reponse-box").classList.remove("invisible");
 				document.getElementById("answer").textContent = element.textAnswer;
-				document.getElementById("player").classList.remove("invisible");
+				// document.getElementById("player").classList.remove("invisible");
 				document.getElementById("player").textContent = element.playerName;
-				document.getElementById("points").classList.remove("invisible");
+				document.getElementById("points-box").classList.remove("invisible");
 				document.getElementById("points").textContent = "+ " + element.votes;
 
 				setTimeout(() => {
-					document.getElementById("answer").classList.add("invisible");
-					document.getElementById("player").classList.add("invisible");
-					document.getElementById("points").classList.add("invisible");
+					document.getElementById("reponse-box").classList.add("invisible");
+					// document.getElementById("player").classList.add("invisible");
+					document.getElementById("points-box").classList.add("invisible");
 
 				}, 6000);
 
