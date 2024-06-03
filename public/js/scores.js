@@ -16,7 +16,7 @@ socket.on("redirect", (newGameURL) => {
 // Displays the final results
 socket.on("scores", function (scores) {
 	const table = document.createElement("table");
-	table.className += "mb-20";
+	// table.className += "mb-20";
 	const body = document.createElement("tbody");
 	body.className += "drop-shadow-xl";
 

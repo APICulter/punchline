@@ -41,8 +41,8 @@ function startCountdown(count, questionCount) {
 		// Check if countdown has reached 0
 		if (count === 0) {
 			clearInterval(countdownInterval);
-			document.getElementById("game-zone").classList.remove("hidden");
-			document.getElementById("countdown").classList.add("hidden");
+			document.getElementById("game-zone").classList.remove("invisible");
+			// document.getElementById("countdown").classList.add("hidden");
 			socket.emit("startPrompt", { punchlinePin: punchlinePin });
 			startCountDownQuestion(questionCount);
 		}
@@ -50,7 +50,7 @@ function startCountdown(count, questionCount) {
 }
 
 function startCountDownQuestion(count) {
-	var countdownElement = document.getElementById("time");
+	var countdownElement = document.getElementById("countdown");
 
 	countdownIntervalQuestion = setInterval(function () {
 		count--;

@@ -249,20 +249,20 @@ socket.on("newJoiner", function (data) {
 		nbOfPlayers += 1;
 		let playerBlock = document.createElement("div");
 		playerBlock.id = data.playerId;
-		playerBlock.className = "w-full flex flex-row rounded bg-gray-900 m-2 p-2";
+		playerBlock.className = "w-full flex flex-row rounded bg-amber-400 m-2 p-2";
 
 		let player = document.createElement("div");
 		playerBlock.append(player);
 		player.textContent = data.playerName;
-		player.className = " w-full break-words  text-gray-300 ";
+		player.className = " w-full break-words  text-gray-900 ";
 
 		let deleteButton = document.createElement("button");
-		deleteButton.className = "text-indigo-300 rounded-full p-2 ";
+		deleteButton.className = "bg-indigo-500 rounded-full p-2 ";
 		deleteButton.setAttribute("onclick", "deletePlayer(this)");
 
 		let cross = document.createElement("p");
 		cross.innerText = "+";
-		cross.className = "rotate-45 text-red-600";
+		cross.className = "rotate-45 text-gray-100";
 		deleteButton.append(cross);
 		playerBlock.append(deleteButton);
 
@@ -339,11 +339,14 @@ function startGame() {
 
 
 
-
+let secretCode = document.getElementById("secretCode");
+secretCode.addEventListener('focus', () => {
+	document.getElementById("secretCode").scrollIntoView({ behavior: 'smooth' });
+  });
 // To change between classic mode and premium mode
 function changeMode() {
 	let radio = document.querySelector("input[name=modeSelection]:checked").value;
-	let secretCode = document.getElementById("secretCode");
+	
 	if (radio == "premium") {
 		document.getElementById("premiumMode").setAttribute("checked", "yes");
 		document.getElementById("normalMode").setAttribute("checked", "no");
@@ -356,6 +359,8 @@ function changeMode() {
 		secretCode.classList.add("invisible");
 	}
 }
+
+
 
 
 // Displays an error message if the premium code entered is invalid

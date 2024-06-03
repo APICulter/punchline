@@ -75,12 +75,12 @@
 				
 			>
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
-			<button id="punchlinePin" type="button" name="punchlinePin" class="invisible bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"><span class="invisible">0000</span></button>
+			<button id="punchlinePin" type="button" name="punchlinePin" class="invisible font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"><span class="invisible">0000</span></button>
 			<!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
 
 		</div>
 		<div class="flex items-start  grow">
-			<h1 class="grow mt-10 text-center text-5xl font-extrabold tracking-tight ">
+			<h1 class="grow mt-10 text-center text-5xl font-black tracking-tight ">
 			Punchline
 		</h1>
 		</div>
@@ -114,7 +114,7 @@
 								type="button"
 								name="createGame"
 								onclick="createGame()"
-								class="text-4xl bg-amber-500 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
+								class="text-4xl font-normal bg-amber-500 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
 							>
 								Create game
 							</button>
@@ -123,7 +123,7 @@
 							type="button"
 							name="joinGameInit"
 							onclick="joinGameInit()"
-							class="text-4xl bg-amber-500 w-200 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
+							class="text-4xl font-normal bg-amber-500 w-200 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
 						>
 							Join game
 						</button>
@@ -150,23 +150,30 @@
 								</div>
 								
 							</div>
-							<div id="optionMenu" class="hidden">
+							<div id="optionMenu" class="hidden rounded-md shadow-xl">
 
 								<div class="mt-8 bg-amber-500 rounded-md  p-4">
-									<div class="flex flex-col">
-										<label for="nbOfQuestions">Rounds</label>
-										<div>
-											<input class="bg-indigo-500" type="range" id="nbOfQuestions" name="nbOfQuestions" min="1" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
-										<output id="nbOfQuestionsValue">5</output>
+									<div class="flex flex-col justify-center items-center">
+										<label class="font-bold text-lg" for="nbOfQuestions">Rounds</label>
+										<div class="mt-2 flex items-center justify-center w-1/2">
+											<input class="accent-indigo-500 overflow-hidden items-center justify-center w-32" type="range" id="nbOfQuestions" name="nbOfQuestions" min="1" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
+										<output class=" ml-4 font-medium w-1" id="nbOfQuestionsValue">5</output>
 										</div>
 								</div>
-								<div class="mt-8 bg-amber-500 rounded-md  p-4">
-									<p>Mode</p>
-									<div class="flex flex-row space-x-4 justify-center">
-										<input type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked="yes">
-										<label for="normalMode">Classic</label><br>
-										<input type="radio" id="premiumMode" name="modeSelection" value="premium" onclick="changeMode()">
-										<label for="premiumMode">Premium</label><br>
+								<div class="mt-8 bg-amber-500 rounded-md flex flex-col p-4">
+									<p class="font-bold text-lg">Mode</p>
+									<div class="flex flex-row space-x-4 justify-center my-2">
+										<div class="flex">
+											<input class="accent-indigo-500 border-0 mr-1" type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked="yes">
+										<label class="font-medium" for="normalMode">Classic</label>
+										</div>
+										<div class="flex">
+											<input class="accent-indigo-500 mr-1" type="radio" id="premiumMode" name="modeSelection" value="premium" onclick="changeMode()">
+										<label class="font-medium" for="premiumMode">Premium</label>
+										</div>
+
+										
+										
 									</div>
 
 										<input
@@ -175,7 +182,7 @@
 											name="secretCode"
 											value=""
 											placeholder=""
-											class="invisible grow rounded-md px-4 placeholder-gray-500 p-2 bg-slate-100 focus:outline-none"
+											class="invisible rounded-md px-4 placeholder-gray-500 p-2 bg-slate-100 focus:outline-none"
 										/>
 										
 									</div>
