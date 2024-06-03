@@ -249,15 +249,15 @@ socket.on("newJoiner", function (data) {
 		nbOfPlayers += 1;
 		let playerBlock = document.createElement("div");
 		playerBlock.id = data.playerId;
-		playerBlock.className = "w-full flex flex-row rounded bg-amber-400 m-2 p-2";
+		playerBlock.className = "w-full flex flex-row rounded m-2 p-2";
 
 		let player = document.createElement("div");
 		playerBlock.append(player);
 		player.textContent = data.playerName;
-		player.className = " w-full break-words  text-gray-900 ";
+		player.className = "text-left font-medium w-full break-words  text-gray-900 ";
 
 		let deleteButton = document.createElement("button");
-		deleteButton.className = "bg-indigo-500 rounded-full p-2 ";
+		deleteButton.className = " bg-indigo-500 rounded-full h-6 w-6 p-2 flex items-center justify-center overflow-visible";
 		deleteButton.setAttribute("onclick", "deletePlayer(this)");
 
 		let cross = document.createElement("p");
