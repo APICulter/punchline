@@ -57,98 +57,103 @@
 
 		  </div>
 
-		<section class="flex flex-row w-full h-48 flex-wrap">
-			<div class="flex flex-col justify-center">
-			<button
-			id="home"
-			type="button"
-			name="homeButton"
-			class="flex items-center justify-center bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-			onclick="home()"
-			>				
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
-			</button>
-			<button
-				id="rules"
+		  <div class="flex flex-col h-screen">
+			<section class="flex flex-row w-full h-48 flex-wrap">
+				<div class="flex flex-col justify-center">
+				<button
+				id="home"
 				type="button"
-				name="rulesButton"
-				class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-				
-			>
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
-			<button id="punchlinePin" type="button" name="punchlinePin" class="font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"><span class="invisible">0000</span></button>
-			<!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
+				name="homeButton"
+				class="flex items-center justify-center bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+				onclick="home()"
+				>				
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
+				</button>
+				<button
+					id="rules"
+					type="button"
+					name="rulesButton"
+					class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+					
+				>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
+				<button id="punchlinePin" type="button" name="punchlinePin" class="font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"><span class="invisible">0000</span></button>
+				<!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
+	
+			</div>
+			<div class="flex items-start  grow">
+				<h1 class="grow mt-10 text-center text-5xl font-extrabold tracking-tight ">
+				Punchline
+			</h1>
+			</div>
+			</section>
 
-		</div>
-		<div class="flex items-start  grow">
-			<h1 class="grow mt-10 text-center text-5xl font-extrabold tracking-tight ">
-			Punchline
-		</h1>
-		</div>
-		
-		</section>
-
-
-		<section class="flex flex-col items-center justify-center mb-5">
+			<section class="flex flex-1 flex-col  items-center justify-center">
 			
 
 
-			<div
-				id="countdown"
-				class="hidden text-center font-bold text-6xl p-4 bg-indigo-500 rounded-full shadow-xl border-1 border-solid border-dark-900 mb-4"
-			></div>
-
-
-
-
-			<div
-				id="game-zone"
-				class="invisible flex-col p-4 mx-auto my-auto w-11/12  "
-			>
-				<!-- <div
-					id="time"
-					class="font-bold max-w-fit bg-red-500 rounded-full shadow-xl p-2 mx-auto my-auto mb-4"
-				></div> -->
-				
 				<div
-					id="question-box"
-					class="mx-auto flex align-top justify-center items-center bg-amber-500 shadow-xl p-4 rounded-lg"
+					id="countdown"
+					class="hidden text-center font-bold text-6xl p-4 bg-indigo-500 rounded-full shadow-xl border-1 border-solid border-dark-900 mb-4"
+				></div>
+	
+	
+	
+	
+				<div
+					id="game-zone"
+					class="invisible flex-col p-4 mx-auto my-auto w-11/12  "
 				>
-					<div
-						id="question"
-						class="text-center text-lg font-semibold"
-					></div>
-
 					<!-- <div
-						id="question"
-						class="text-center align-middle inline-flex items-center text-lg bg-amber-400 shadow-lg rounded p-4"
+						id="time"
+						class="font-bold max-w-fit bg-red-500 rounded-full shadow-xl p-2 mx-auto my-auto mb-4"
 					></div> -->
-
-				</div>
-				<div
-					id="reponse-box"
-					class="invisible mx-auto mt-5 flex flex-col items-center justify-center bg-amber-400  p-4 rounded-lg"
-				>
+					
 					<div
-						id="answer"
-						class=" items-center text-lg font-semibold rounded p-4 w-full break-words"
-					></div>
-				</div>
-				<div
-					id="points-box"
-					class="invisible mx-auto mt-5 flex flex-row align-middle items-center justify-between p-4 rounded-lg w-9/12"
-				>
+						id="question-box"
+						class="mx-auto flex align-top justify-center items-center bg-amber-500 shadow-xl p-4 rounded-lg"
+					>
+						<div
+							id="question"
+							class="text-center text-lg font-semibold"
+						></div>
+	
+						<!-- <div
+							id="question"
+							class="text-center align-middle inline-flex items-center text-lg bg-amber-400 shadow-lg rounded p-4"
+						></div> -->
+	
+					</div>
 					<div
-						id="player"
-						class=" items-center text-lg text-slate-200 bg-indigo-500 rounded-lg p-4 shadow-xl font-semibold  break-words"
-					></div>
+						id="reponse-box"
+						class="invisible mx-auto mt-5 flex flex-col items-center justify-center bg-amber-400  p-4 rounded-lg"
+					>
+						<div
+							id="answer"
+							class=" items-center text-lg font-semibold rounded p-4 w-full break-words"
+						></div>
+					</div>
 					<div
-						id="points"
-						class=" items-center text-xl bg-green-700 text-slate-200  rounded-full p-2 animate-bounce "
-					></div>
+						id="points-box"
+						class="invisible mx-auto mt-5 flex flex-row align-middle items-center justify-between p-4 rounded-lg w-9/12"
+					>
+						<div
+							id="player"
+							class=" items-center text-lg text-slate-200 bg-indigo-500 rounded-lg p-4 shadow-xl font-semibold  break-words"
+						></div>
+						<div
+							id="points"
+							class=" items-center text-xl bg-green-700 text-slate-200  rounded-full p-2 animate-bounce "
+						></div>
+					</div>
 				</div>
+			</section>
+	
 			</div>
-		</section>
+
+		
+
+		
 	</body>
 	<script src="../js/common.js"></script>
 	<script src="../js/game.js"></script>

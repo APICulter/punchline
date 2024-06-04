@@ -63,188 +63,200 @@
 
 		  </div>
 
-		<section class="flex flex-row w-full h-48 flex-wrap mb-8">
-			<div class="flex flex-col justify-center">
-			<button
-			id="home"
-			type="button"
-			name="homeButton"
-			class="flex items-center justify-center bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-			onclick="home()"
-			>				
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
-			</button>
-			<button
-				id="rules"
+		  <div class="flex flex-col h-screen">
+
+			<section class="flex flex-row w-full h-48 flex-wrap mb-8">
+				<div class="flex flex-col justify-center">
+				<button
+				id="home"
 				type="button"
-				name="rulesButton"
-				class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+				name="homeButton"
+				class="flex items-center justify-center bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+				onclick="home()"
+				>				
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
+				</button>
+				<button
+					id="rules"
+					type="button"
+					name="rulesButton"
+					class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+					
+				>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
+				<button id="punchlinePin" type="button" name="punchlinePin" class="invisible font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"><span class="invisible">0000</span></button>
+				<!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
+	
+			</div>
+			<div class="flex items-start  grow">
+				<!-- <img src="./logo.png" alt="logo" width="50" height="50" > -->
+				<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate__animated animate__bounceInDown">  -->
+				<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate-bounce">  -->
+				<h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate__animated animate__bounceInDown"> 
+				<span class="animate-[fade-in_1s_ease-in-out]">Punchline</span>
+			</h1>
+			</div>
+			
+			</section>
+
+
+
+
+			<section class="flex flex-1  items-center justify-center">
+			
+			
+
+				<!-- The Modal -->
 				
-			>
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
-			<button id="punchlinePin" type="button" name="punchlinePin" class="invisible font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"><span class="invisible">0000</span></button>
-			<!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
-
-		</div>
-		<div class="flex items-start  grow">
-			<!-- <img src="./logo.png" alt="logo" width="50" height="50" > -->
-			<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate__animated animate__bounceInDown">  -->
-			<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate-bounce">  -->
-			<h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate__animated animate__bounceInDown"> 
-			<span class="animate-[fade-in_1s_ease-in-out]">Punchline</span>
-		</h1>
-		</div>
-		
-		</section>
-
-		<section class="h-screen grid grid-cols-1 justify-center">
-			
-			
-
-			<!-- The Modal -->
-			
-
-			<div class="flex flex-col items-center">
-				<div id="name" class=" hidden max-w-2xl mx-auto flex flex-col">
-					<div id="nameInput">
-
+	
+				<div class="flex flex-col items-center">
+					<div id="name" class=" hidden max-w-2xl mx-auto flex flex-col">
+						<div id="nameInput">
+	
+						</div>
+						<div id="emptyName" class="text-sm hidden z-10">Please enter a name</div>
+	
 					</div>
-					<div id="emptyName" class="text-sm hidden z-10">Please enter a name</div>
-
-				</div>
-
-				<div class="w-full">
-					<div id="choice" class=" text-center max-w-xl mx-auto flex flex-col">
-						<div id="create-or-join" class=" m-8 mt-0 items-center">
-							<div id="pinLabel" class="">
-
-							</div>
-							<button
-								id="createGame"
-								type="button"
-								name="createGame"
-								onclick="createGame()"
-								class="text-4xl font-normal bg-amber-500 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
-							>
-								Create game
-							</button>
-							<button
-							id="joinGameInit"
-							type="button"
-							name="joinGameInit"
-							onclick="joinGameInit()"
-							class="text-4xl font-normal bg-amber-500 w-200 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
-						>
-							Join game
-						</button>
-							<div id="join" class=" hidden flex flex-col max-w-2xl mx-auto">
-								<div id="maxNbOfPlayersReached" class="text-sm hidden z-10">Already full</div>
-								<div class="max-w-2xl">
-									<input
-									id="room-pin"
-									type="text"
-									name="room-pin"
-									value=""
-									placeholder="Pin"
-									class="w-full grow rounded-md px-4 placeholder-gray-500 py-2 my-2 px-4 bg-slate-100 focus:outline-none"
-								/>
-								<button
-									id="join-room-button"
-									type="button"
-									name="play"
-									onclick="joinRoom()"
-									class="w-full grow bg-amber-500 rounded-md shadow-xl py-2 my-2 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400 py-2 px-2"
-								>
-									Join
-								</button>
+	
+					<div class="w-full">
+						<div id="choice" class=" text-center max-w-xl mx-auto flex flex-col">
+							<div id="create-or-join" class=" m-8 mt-0 items-center">
+								<div id="pinLabel" class="">
+	
 								</div>
+								<button
+									id="createGame"
+									type="button"
+									name="createGame"
+									onclick="createGame()"
+									class="text-4xl font-normal bg-amber-500 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
+								>
+									Create game
+								</button>
+								<button
+								id="joinGameInit"
+								type="button"
+								name="joinGameInit"
+								onclick="joinGameInit()"
+								class="text-4xl font-normal bg-amber-500 w-200 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
+							>
+								Join game
+							</button>
+								<div id="join" class=" hidden flex flex-col max-w-2xl mx-auto">
+									<div id="maxNbOfPlayersReached" class="text-sm hidden z-10">Already full</div>
+									<div class="max-w-2xl">
+										<input
+										id="room-pin"
+										type="text"
+										name="room-pin"
+										value=""
+										placeholder="Pin"
+										class="w-full grow rounded-md px-4 placeholder-gray-500 py-2 my-2 px-4 bg-slate-100 focus:outline-none"
+									/>
+									<button
+										id="join-room-button"
+										type="button"
+										name="play"
+										onclick="joinRoom()"
+										class="w-full grow bg-amber-500 rounded-md shadow-xl py-2 my-2 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400 py-2 px-2"
+									>
+										Join
+									</button>
+									</div>
+									
+								</div>
+								<div id="optionMenu" class="hidden rounded-md  ">
+	
+									<div class="mt-8 bg-amber-500 rounded-xl shadow-xl p-4">
+										<div class="flex flex-col justify-center items-center">
+											<label class="font-bold text-lg" for="nbOfQuestions">Rounds</label>
+											<div class="mt-2 flex items-center justify-center w-1/2">
+												<input class="accent-indigo-500 overflow-hidden items-center justify-center w-32" type="range" id="nbOfQuestions" name="nbOfQuestions" min="1" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
+											<output class=" ml-4 font-medium w-1" id="nbOfQuestionsValue">5</output>
+											</div>
+									</div>
+									<div class="mt-8 bg-amber-500 rounded-md flex flex-col p-4">
+										<p class="font-bold text-lg">Mode</p>
+										<div class="flex flex-row space-x-4 justify-center my-2">
+											<div class="flex">
+												<input class="accent-indigo-500 border-0 mr-1" type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked="yes">
+											<label class="font-medium" for="normalMode">Classic</label>
+											</div>
+											<div class="flex">
+												<input class="accent-indigo-500 mr-1" type="radio" id="premiumMode" name="modeSelection" value="premium" onclick="changeMode()">
+											<label class="font-medium" for="premiumMode">Premium</label>
+											</div>
+	
+											
+											
+										</div>
+	
+											<input
+												id="secretCode"
+												type="password"
+												name="secretCode"
+												value=""
+												placeholder=""
+												class="invisible rounded-md px-4 placeholder-gray-500 p-2 bg-slate-100 focus:outline-none"
+											/>
+											
+										</div>
+										
+									</div>
+	
+	
+									<div id="players-table" class=" hidden mt-8 bg-amber-500 rounded-xl shadow-xl p-4">
+										<p class="font-bold text-lg mb-4">Players</p>
+											<div id="players" class="flex flex-row flex-wrap">
+	
+											</div>
+										
+									</div>
+	
+								</div>
+								<div>
+									<button
+										id="startGame"
+										type="button"
+										name="startGame"
+										onclick="startGame()"
+										class=" mt-8 hidden text-4xl bg-indigo-600 w-full rounded-xl w-90 flex-none shadow-xl p-4 hover:cursor-pointer active:bg-violet-500 ease-in-out duration-200 transition active:scale-90 hover:bg-indigo-500 hover:text-slate-200"
+									>
+										<span class="text-slate-300 font-bold">Play</span>
+									</button>
+									<div id="notEnoughPlayers" class="text-sm hidden z-10">You need at least 2 players</div>
+									<div id="noPremiumCode" class="text-sm hidden z-10">You need to enter the code for premium content</div>
+									<div id="premiumCodeError" class="text-sm hidden z-10">Invalid code</div>
+									<div id="invalidPIN" class="text-sm hidden z-10">Invalid PIN game</div>
+	
+	
+								</div>
+	
+								
 								
 							</div>
-							<div id="optionMenu" class="hidden rounded-md  ">
-
-								<div class="mt-8 bg-amber-500 rounded-xl shadow-xl p-4">
-									<div class="flex flex-col justify-center items-center">
-										<label class="font-bold text-lg" for="nbOfQuestions">Rounds</label>
-										<div class="mt-2 flex items-center justify-center w-1/2">
-											<input class="accent-indigo-500 overflow-hidden items-center justify-center w-32" type="range" id="nbOfQuestions" name="nbOfQuestions" min="1" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
-										<output class=" ml-4 font-medium w-1" id="nbOfQuestionsValue">5</output>
-										</div>
-								</div>
-								<div class="mt-8 bg-amber-500 rounded-md flex flex-col p-4">
-									<p class="font-bold text-lg">Mode</p>
-									<div class="flex flex-row space-x-4 justify-center my-2">
-										<div class="flex">
-											<input class="accent-indigo-500 border-0 mr-1" type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked="yes">
-										<label class="font-medium" for="normalMode">Classic</label>
-										</div>
-										<div class="flex">
-											<input class="accent-indigo-500 mr-1" type="radio" id="premiumMode" name="modeSelection" value="premium" onclick="changeMode()">
-										<label class="font-medium" for="premiumMode">Premium</label>
-										</div>
-
-										
-										
-									</div>
-
-										<input
-											id="secretCode"
-											type="password"
-											name="secretCode"
-											value=""
-											placeholder=""
-											class="invisible rounded-md px-4 placeholder-gray-500 p-2 bg-slate-100 focus:outline-none"
-										/>
-										
-									</div>
-									
-								</div>
-
-
-								<div id="players-table" class=" hidden mt-8 bg-amber-500 rounded-xl shadow-xl p-4">
-									<p class="font-bold text-lg mb-4">Players</p>
-										<div id="players" class="flex flex-row flex-wrap">
-
-										</div>
-									
-								</div>
-
-							</div>
-							<div>
-								<button
-									id="startGame"
-									type="button"
-									name="startGame"
-									onclick="startGame()"
-									class=" mt-8 hidden text-4xl bg-indigo-600 w-full rounded-xl w-90 flex-none shadow-xl p-4 hover:cursor-pointer active:bg-violet-500 ease-in-out duration-200 transition active:scale-90 hover:bg-indigo-500 hover:text-slate-200"
-								>
-									<span class="text-slate-300 font-bold">Play</span>
-								</button>
-								<div id="notEnoughPlayers" class="text-sm hidden z-10">You need at least 2 players</div>
-								<div id="noPremiumCode" class="text-sm hidden z-10">You need to enter the code for premium content</div>
-								<div id="premiumCodeError" class="text-sm hidden z-10">Invalid code</div>
-								<div id="invalidPIN" class="text-sm hidden z-10">Invalid PIN game</div>
-
-
-							</div>
-
+	
 							
-							
+	
 						</div>
-
-						
-
 					</div>
+	
+	
+					<input id="pin" class="hidden" value="" type="text">
+	
+					
+	
+	
+					
 				</div>
+			</section>
 
 
-				<input id="pin" class="hidden" value="" type="text">
 
-				
-
-
-				
 			</div>
-		</section>
+		
+
+		
 	</body>
 	<script src="../js/common.js"></script>
 	<script src="../js/index.js"></script>
