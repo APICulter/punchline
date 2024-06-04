@@ -54,53 +54,56 @@
             
         </div>
 
-      </div>
+    </div>
 
-    <section class="flex flex-row w-full h-48 flex-wrap">
-        <div class="flex flex-col justify-center">
-        <button
-        id="home"
-        type="button"
-        name="homeButton"
-        class="flex items-center justify-center bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-        onclick="home()"
-        >				
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
-        </button>
-        <button
-            id="rules"
+    <div class="flex flex-col h-screen">
+
+
+        <section class="flex flex-row w-full flex-wrap">
+            <div class="flex flex-col justify-center">
+            <button
+            id="home"
             type="button"
-            name="rulesButton"
-            class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-            
-        >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
-        <button id="punchlinePin" type="button" name="punchlinePin" class="font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"><span class="invisible">0000</span></button>
-        <!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
-
-    </div>
-    <div class="flex items-start  grow">
-        <h1 class="grow mt-10 text-center text-5xl font-extrabold tracking-tight ">
-        Punchline
-    </h1>
-    </div>
+            name="homeButton"
+            class="flex items-center justify-center bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+            onclick="home()"
+            >				
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
+            </button>
+            <button
+                id="rules"
+                type="button"
+                name="rulesButton"
+                class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+                
+            >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
+            <button id="punchlinePin" type="button" name="punchlinePin" class="font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"><span class="invisible">0000</span></button>
+            <!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
     
-    </section>
-   
-    <div class="h-screen  flex flex-col items-center justify-center">
-
+        </div>
+        <div class="flex items-start  grow">
+            <h1 class="grow mt-10 text-center text-5xl font-extrabold tracking-tight ">
+            Punchline
+        </h1>
+        </div>
         
+        </section>
+       
+        <div class=" flex flex-1  items-center justify-center">
+    
+            <button type="button" class=" m-auto align-middle inline-flex items-center px-4 py-2 leading-6 text-lg rounded-md font-semibold  transition ease-in-out duration-150 cursor-default border-none">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Please wait...
+              </button>
+        </div>
 
-        
-        <button type="button" class=" m-auto align-middle inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm rounded-md text-white  transition ease-in-out duration-150 cursor-default border-none">
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Please wait...
-          </button>
-       </p>
-       </p>
+    </div>
+
+    
 </body>
 <script src="../js/common.js"></script>
 <script src="../js/waiting.js"></script>

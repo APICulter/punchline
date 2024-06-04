@@ -26,7 +26,7 @@ socket.on("postAnswers", function (data) {
 		let answerBlock = document.createElement("div");
 		answerBlock.id = data.indexOf(element);
 		answerBlock.className +=
-			" cursor-pointer text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 max-w-lg checked:bg-blue-500";
+			" cursor-pointer text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 max-w-lg checked:bg-blue-500 w-full break-words";
 		if (element.playerName == sessionStorage.getItem("playerName")) {
 			answer.setAttribute("disabled", "true");
 			answerBlock.classList.remove("bg-indigo-400");

@@ -140,7 +140,7 @@ socket.on("displayAnswers", function (data) {
 	setTimeout(function () {
 		socket.emit("getVotes", { punchlinePin: punchlinePin });
 		document.getElementById("reponse-box").classList.add("invisible");
-	}, data.length * 9000 + 2000);
+	}, data.length * 9000 + 5000);
 });
 
 
@@ -159,7 +159,7 @@ socket.on("displayVotes", function (answers) {
 				// document.getElementById("player").classList.remove("invisible");
 				document.getElementById("player").textContent = element.playerName;
 				document.getElementById("points-box").classList.remove("invisible");
-				document.getElementById("points").textContent = "+ " + element.votes;
+				document.getElementById("points").textContent = "+" + element.votes;
 
 				setTimeout(() => {
 					document.getElementById("reponse-box").classList.add("invisible");
