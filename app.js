@@ -506,7 +506,7 @@ io.on("connection", function (socket) {
 		if (typeof game === "undefined") {
 			let roomName = null;
 			for (const name in rooms) {
-				if (rooms[name].pin == data.punchlinePin) {
+				if (rooms[name].pin == pin) {
 					roomName = name;
 					break;
 				}
