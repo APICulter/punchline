@@ -68,14 +68,27 @@ socket.on("scores", function (scores) {
 		}
 
 		body.appendChild(row);
+		
 	});
 
 	table.appendChild(body);
 	document.querySelector("#score-table").appendChild(table);
+
+	document.getElementById("score-table").scrollIntoView({ behavior: 'smooth' });
+
+
 });
 
 // To go back to the lobby
 document.getElementById("home").addEventListener("click", function () {
+	socket.emit("endGame", {
+		punchlinePin: punchlinePin,
+	});
+	sessionStorage.clear();
+});
+
+// To go back to the lobby
+document.getElementById("playAgain").addEventListener("click", function () {
 	socket.emit("endGame", {
 		punchlinePin: punchlinePin,
 	});

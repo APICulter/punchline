@@ -121,11 +121,14 @@ socket.on("displayAnswers", function (data) {
 	// document.getElementById("time").classList.add("invisible");
 	document.getElementById("countdown").classList.add("invisible");
 
+	
+
 	let index = 1;
 
 	data.forEach((element) => {
 		setTimeout(() => {
 			document.getElementById("answer").textContent = element.textAnswer;
+			document.getElementById("reponse-box").scrollIntoView({ behavior: 'smooth' });
 			document.getElementById("reponse-box").classList.remove("invisible");
 			
 			setTimeout(() => {
@@ -150,6 +153,7 @@ socket.on("redirect", (newGameURL) => {
 });
 
 socket.on("displayVotes", function (answers) {
+	
 	let index = 1;
 	answers.forEach((element) => {
 		if (element.votes > 0)
@@ -160,6 +164,8 @@ socket.on("displayVotes", function (answers) {
 				document.getElementById("player").textContent = element.playerName;
 				document.getElementById("points-box").classList.remove("invisible");
 				document.getElementById("points").textContent = "+" + element.votes;
+
+				document.getElementById("points-box").scrollIntoView({ behavior: 'smooth' });
 
 				setTimeout(() => {
 					document.getElementById("reponse-box").classList.add("invisible");
@@ -177,6 +183,7 @@ socket.on("displayVotes", function (answers) {
 			punchlinePin: punchlinePin,
 			numberQuestion: numberQuestion,
 		});
+		document.getElementById("countdown").scrollIntoView({ behavior: 'smooth' });
 	}, answers.length * 9000 + 5000);
 });
 
