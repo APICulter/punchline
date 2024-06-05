@@ -1,5 +1,5 @@
 const socket = io();
-
+const button = document.getElementById("button");
 
 window.onload = function () {
 	playerName = sessionStorage.getItem("playerName");
@@ -16,6 +16,7 @@ socket.on("redirect", (newGameURL) => {
 	window.location = newGameURL;
 });
 
+
 // Sends the player'answer to the back end
 function sendAnswer() {
 	if (document.getElementById("answer").value.length > 0) {
@@ -24,9 +25,9 @@ function sendAnswer() {
 			punchlinePin: punchlinePin,
 			playerName: playerName,
 		});
-		document.getElementById("button").setAttribute("disabled", "disabled");
+		button.setAttribute("disabled", "disabled");
 	} else {
-		document.getElementById("button").classList.add("invalid:border-red-500");
+		button.classList.add("invalid:border-red-500");
 	}
 }
 

@@ -5,6 +5,7 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="stylesheet" href="../css/style.css" />
+		<link rel="stylesheet" href="../css/animate.min.css">
 		<title>Punchline</title>
 	</head>
 	<script src="/socket.io/socket.io.js"></script>
@@ -42,9 +43,9 @@
 						
 					<div class=" flex justify-center">
 						<button
-						id="rulesButton"
+						id="exitRules"
 						type="button"
-						name="rulesButton"
+						name="exitRules"
 						class="bg-indigo-600 rounded-md shadow-xl p-4 hover:cursor-pointer hover:bg-violet-500  "
 					>Got it !</button>			
 					</button>
@@ -72,7 +73,7 @@
 				<button
 					id="rules"
 					type="button"
-					name="rulesButton"
+					name="rules"
 					class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
 					
 				>
@@ -101,16 +102,13 @@
 	
 	
 				<div
-					id="game-zone"
+					id="gameZone"
 					class="invisible flex-col p-4 mx-auto my-auto w-11/12  "
 				>
-					<!-- <div
-						id="time"
-						class="font-bold max-w-fit bg-red-500 rounded-full shadow-xl p-2 mx-auto my-auto mb-4"
-					></div> -->
+					
 					
 					<div
-						id="question-box"
+						id="questionBox"
 						class="mx-auto flex align-top justify-center items-center bg-amber-500 shadow-xl p-4 rounded-lg"
 					>
 						<div
@@ -118,14 +116,11 @@
 							class="text-center text-lg font-semibold"
 						></div>
 	
-						<!-- <div
-							id="question"
-							class="text-center align-middle inline-flex items-center text-lg bg-amber-400 shadow-lg rounded p-4"
-						></div> -->
-	
+						
+
 					</div>
 					<div
-						id="reponse-box"
+						id="answerBox"
 						class="invisible mx-auto mt-5 flex flex-col items-center justify-center bg-amber-400  p-4 rounded-lg"
 					>
 						<div
@@ -134,7 +129,7 @@
 						></div>
 					</div>
 					<div
-						id="points-box"
+						id="pointsBox"
 						class="invisible mx-auto mt-5 flex flex-row align-middle items-center justify-between p-4 rounded-lg w-9/12"
 					>
 						<div
@@ -143,7 +138,7 @@
 						></div>
 						<div
 							id="points"
-							class=" items-center text-xl bg-green-700 text-slate-200  rounded-full p-2 animate-bounce "
+							class=" items-center text-xl bg-green-700 text-slate-200  rounded-full p-2 animate__animated animate__bounceInRight "
 						></div>
 					</div>
 				</div>

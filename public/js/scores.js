@@ -1,4 +1,5 @@
-var socket = io();
+const socket = io();
+const scoreTable = document.querySelector("#scoreTable");
 
 
 window.onload = function () {
@@ -72,9 +73,8 @@ socket.on("scores", function (scores) {
 	});
 
 	table.appendChild(body);
-	document.querySelector("#score-table").appendChild(table);
-
-	document.getElementById("score-table").scrollIntoView({ behavior: 'smooth' });
+	scoreTable.appendChild(table);
+	scoreTable.scrollIntoView({ behavior: 'smooth' });
 
 
 });

@@ -10,20 +10,19 @@ window.onload = function () {
 
 // get Punchline URL
 socket.on("sendPunchlineURL", function(data) {
-	
 	document.getElementById("gameURL").setAttribute("href", data);
-
 });
 
-/** choix du nom **/
+
+/** Choose the player's name **/
 function setUsername() {
-	if (document.getElementById("player-name").value.length !== 0) {
+	if (playerNameElement.value.length !== 0) {
 		socket.emit("setUsername", {
-			playerName: document.getElementById("player-name").value,
+			playerName: playerNameElement.value,
 			pin: document.getElementById("pin").value,
 		});
 	} else {
-		var messageElement = document.getElementById("emptyName");
+		const messageElement = document.getElementById("emptyName");
 		messageElement.classList.remove("invisible");
 		// Hide message after 1.5 seconds
 		setTimeout(function () {
@@ -52,7 +51,7 @@ document.getElementById("name").addEventListener("keyup", function (event) {
 });
 
 // Choose the gamePIN with Enter (key 13)
-document.getElementById("room-pin").addEventListener("keyup", function (event) {
+document.getElementById("roomPin").addEventListener("keyup", function (event) {
 	event.preventDefault();
 	if (event.keyCode === 13) {
 		joinRoom();
@@ -96,21 +95,21 @@ function joinGameInit() {
 	document.getElementById("createGame").classList.add("hidden");
 	document.getElementById("joinGameInit").classList.add("hidden");
 	document.getElementById("join").classList.remove("hidden");
-	document.getElementById("room-pin").focus();
+	document.getElementById("roomPin").focus();
 }
 
 
-let roomPin = document.getElementById("room-pin");
+let roomPin = document.getElementById("roomPin");
 // Ajoutez un écouteur d'événements pour le focus sur le champ input
 roomPin.addEventListener('focus', () => {
 	// Faites défiler la page jusqu'au champ input
 	
 
 	setTimeout(function() {
-		document.getElementById("join-room-button").scrollIntoView({ behavior: 'smooth' });
+		document.getElementById("joinRoomButton").scrollIntoView({ behavior: 'smooth' });
 	}, 300); // Delay to allow for keyboard animation
 
-	document.getElementById("join-room-button").addEventListener('blur', function() {
+	document.getElementById("joinRoomButton").addEventListener('blur', function() {
         // Optionally, you can scroll back to the top when the input loses focus
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
@@ -127,14 +126,14 @@ socket.on("gameExists", function (data) {
 // Join a room
 function joinRoom() {
 	if (
-		document.getElementById("room-pin").value.length > 0 &&
-		!isNaN(document.getElementById("room-pin").value)
+		document.getElementById("roomPin").value.length > 0 &&
+		!isNaN(document.getElementById("roomPin").value)
 	) {
 		socket.emit("findRoomById", {
-			pin: document.getElementById("room-pin").value,
+			pin: document.getElementById("roomPin").value,
 		});
 	} else {
-		// document.getElementById("room-pin").value = "";
+		// document.getElementById("roomPin").value = "";
 		let error = document.getElementById("invalidPIN");
 		error.textContent = "invalid PIN";
 		error.classList.remove("hidden");
@@ -150,11 +149,11 @@ function joinRoom() {
 socket.on("noGameFound", function (data) {
 	let error = document.getElementById("invalidPIN");
 	error.textContent = data;
-	error.classList.remove("invisible");
+	error.classList.remove("hidden");
 	
 	setTimeout(function () {
 		// messageElement.style.display = 'none';
-		error.classList.add("invisible");
+		error.classList.add("hidden");
 	}, 1500);
 });
 
@@ -339,6 +338,7 @@ function startGame() {
 
 		
 	} else if (
+		// validate(secretCode) &&
 		document.getElementById("secretCode").value.length == 0 &&
 		document.getElementById("premiumMode").getAttribute("checked") == "yes"
 	) {
@@ -360,7 +360,10 @@ function startGame() {
 }
 
 
+// function validate(inputField){
+// 	document.getElementById("secretCode").value.length == 
 
+// }
 
 let secretCode = document.getElementById("secretCode");
 secretCode.addEventListener('focus', () => {
@@ -418,3 +421,7 @@ socket.on("errorRoomFull", function (data) {
 		error.classList.add("hidden");
 	}, 1500);
 });
+
+// function errorMessage(error) {
+
+// }

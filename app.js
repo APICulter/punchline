@@ -121,6 +121,7 @@ io.on("connection", function (socket) {
 	// Handler for checking if the game / room exists
 	socket.on("findRoomById", function (data) {
 		let game = games.find((game) => game.pin === Number(data.pin));
+		console.log(games);
 		if (typeof game !== "undefined") {
 			if (game.players.length == Number(maxNumberOfPlayers)) {
 				socket.emit("errorRoomFull", errorRoomFullMessage);

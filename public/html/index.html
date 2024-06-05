@@ -49,9 +49,9 @@
 						
 					<div class=" flex justify-center">
 						<button
-						id="rulesButton"
+						id="exitRules"
 						type="button"
-						name="rulesButton"
+						name="exitRules"
 						class="bg-indigo-600 rounded-md shadow-xl p-4 hover:cursor-pointer hover:bg-violet-500  "
 					>Got it !</button>			
 					</button>
@@ -80,7 +80,7 @@
 				<button
 					id="rules"
 					type="button"
-					name="rulesButton"
+					name="rules"
 					class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
 					
 				>
@@ -94,18 +94,21 @@
 				<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate__animated animate__bounceInDown">  -->
 				<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate-bounce">  -->
 				<h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate__animated animate__bounceInDown"> 
-				<span class="animate-[fade-in_1s_ease-in-out]">Punchline</span>
+				<span class="">Punchline</span>
 			</h1>
 			</div>
 			
 			</section>
-
+			
 
 
 
 			<section class="flex flex-1  items-center justify-center">
 			
-			
+				<!-- <div class="animate-[wiggle_1s_ease-in-out_infinite]">
+					<p>dfqdfqsdf</p>
+				  </div>
+			 -->
 
 				<!-- The Modal -->
 				
@@ -121,7 +124,7 @@
 	
 					<div class="w-full">
 						<div id="choice" class=" text-center max-w-xl mx-auto flex flex-col">
-							<div id="create-or-join" class=" m-8 mt-0 items-center">
+							<div id="createOrJoin" class=" m-8 mt-0 items-center">
 								<div id="pinLabel" class="">
 	
 								</div>
@@ -147,15 +150,15 @@
 									<div id="maxNbOfPlayersReached" class="text-sm hidden z-10">Already full</div>
 									<div class="max-w-2xl">
 										<input
-										id="room-pin"
+										id="roomPin"
 										type="text"
-										name="room-pin"
+										name="roomPin"
 										value=""
 										placeholder="Pin"
 										class="w-full grow rounded-md px-4 placeholder-gray-500 py-2 my-2 px-4 bg-slate-100 focus:outline-none"
 									/>
 									<button
-										id="join-room-button"
+										id="joinRoomButton"
 										type="button"
 										name="play"
 										onclick="joinRoom()"
