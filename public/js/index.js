@@ -1,4 +1,6 @@
 const socket = io();
+// import DOMPurify from 'dompurify';
+// import DOMPurify from "isomorphic-dompurify";
 
 let nbOfPlayers = 0;
 var minNbOfPlayers = 2;
@@ -125,30 +127,45 @@ socket.on("gameExists", function (data) {
 	}
 });
 
+
+
 // Join a room
 function joinRoom() {
-	if (
-		document.getElementById("roomPin").value.length > 0 &&
-		!isNaN(document.getElementById("roomPin").value)
-	) {
-		socket.emit("findRoomById", {
-			pin: document.getElementById("roomPin").value,
-		});
-	} else {
-		// document.getElementById("roomPin").value = "";
-		let error = document.getElementById("invalidPIN");
-		error.textContent = "invalid PIN";
+
+	let roomPin = document.getElementById("roomPin");
+	let error = document.getElementById("invalidPIN");
+
+	function displayErrorMessage(message) {
+		error.textContent = message;
 		error.classList.remove("hidden");
-		// Masquer le texte après 2 secondes
+		// Message error for 1.5 seconds display
 		setTimeout(function () {
-			// messageElement.style.display = 'none';
 			error.classList.add("hidden");
-		}, joinRoomInvalidPinErrorTimer);
+		}, 1500);
 	}
+	
+	// Validation
+	if (roomPin.value.length == 0) {
+		displayErrorMessage("Empty PIN");
+		return;
+	} else if (isNaN(roomPin.value)) {
+		displayErrorMessage("Only numbers");
+		return;
+	} else if (roomPin.value.length > 4) {
+		displayErrorMessage("4 digit PIN");
+		return;
+	} else {
+		socket.emit("findRoomById", {
+			pin: DOMPurify.sanitize(roomPin.value),
+			pin: roomPin.value,
+		});
+	}
+	
+
 }
 
 // Displays error message if the PIN entered does not exist
-socket.on("noGameFound", function (data) {
+socket.on("findRoomByIdErrorMessages", function (data) {
 	let error = document.getElementById("invalidPIN");
 	error.textContent = data;
 	error.classList.remove("hidden");

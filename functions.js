@@ -1,3 +1,5 @@
+// import DOMPurify from 'dompurify';
+
 // Define classes
 const { Game } = require("./classes/game");
 const { Player } = require("./classes/player");
@@ -119,6 +121,11 @@ function initQuestions(mongoose, YourModel, game) {
 }
 
 
+// function sanitizeInput(data) {
+//     return sanitizedMessage = DOMPurify.sanitize(data);
+// }
+
+
 
 // Export the functions as properties of an object
 module.exports = {
@@ -127,6 +134,5 @@ module.exports = {
     initBot,
     addBotAnswer,
     shuffle,
-    initQuestions
-
+    initQuestions,
 };

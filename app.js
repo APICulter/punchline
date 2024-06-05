@@ -7,6 +7,8 @@ const express = require("express");
 const http = require("http");
 const socketIO = require("socket.io");
 const mongoose = require("mongoose");
+const DOMPurify = require("isomorphic-dompurify");
+
 
 // Create and configure the Express app
 const app = express();
@@ -118,25 +120,43 @@ io.on("connection", function (socket) {
 		}
 	});
 
+	
+
 	// Handler for checking if the game / room exists
 	socket.on("findRoomById", function (data) {
-		let game = games.find((game) => game.pin === Number(data.pin));
-		console.log(games);
-		if (typeof game !== "undefined") {
-			if (game.players.length == Number(maxNumberOfPlayers)) {
-				socket.emit("errorRoomFull", errorRoomFullMessage);
-				return;
-			} else {
-				socket.emit(
-					"gamePinFound",
-					game.pin,
-					game.inGame,
-					unlockedPlayers(game.players)
-				);
-			}
+
+		data.pin = DOMPurify.sanitize(data.pin);
+
+		if (data.pin.length == 0) {
+			socket.emit("findRoomByIdErrorMessages", emptyPinMessage);
+			return;
+		} else if (isNaN(data.pin)) {
+			socket.emit("findRoomByIdErrorMessages", onlyNumbersMessage);
+			return;
+		} else if (data.pin.length > 4) {
+			socket.emit("findRoomByIdErrorMessages", fourDigitPinMessage);
+			return;
 		} else {
-			socket.emit("noGameFound", noGameFoundMessage);
+
+			let game = games.find((game) => game.pin === Number(data.pin));
+			if (typeof game !== "undefined") {
+				if (game.players.length == Number(maxNumberOfPlayers)) {
+					socket.emit("errorRoomFull", errorRoomFullMessage);
+					return;
+				} else {
+					socket.emit(
+						"gamePinFound",
+						game.pin,
+						game.inGame,
+						unlockedPlayers(game.players)
+					);
+				}
+			} else {
+				socket.emit("findRoomByIdErrorMessages", noGameFoundMessage);
+			}
 		}
+	
+		
 	});
 
 	// Handler for joining a room (after entering PIN and before giving a name)
