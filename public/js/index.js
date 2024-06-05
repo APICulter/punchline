@@ -3,6 +3,8 @@ const socket = io();
 let nbOfPlayers = 0;
 var minNbOfPlayers = 2;
 
+// const playerNameElement = document.getElementById("player-name");
+
 sessionStorage.clear();
 window.onload = function () {
 	socket.emit("getPunchlineURL");
@@ -16,9 +18,9 @@ socket.on("sendPunchlineURL", function(data) {
 
 /** Choose the player's name **/
 function setUsername() {
-	if (playerNameElement.value.length !== 0) {
+	if (document.getElementById("player-name").value.length !== 0) {
 		socket.emit("setUsername", {
-			playerName: playerNameElement.value,
+			playerName: document.getElementById("player-name").value,
 			pin: document.getElementById("pin").value,
 		});
 	} else {
