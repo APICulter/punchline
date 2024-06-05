@@ -104,7 +104,17 @@ let roomPin = document.getElementById("room-pin");
 // Ajoutez un écouteur d'événements pour le focus sur le champ input
 roomPin.addEventListener('focus', () => {
 	// Faites défiler la page jusqu'au champ input
-	document.getElementById("join-room-button").scrollIntoView({ behavior: 'smooth' });
+	
+
+	setTimeout(function() {
+		document.getElementById("join-room-button").scrollIntoView({ behavior: 'smooth' });
+	}, 300); // Delay to allow for keyboard animation
+
+	document.getElementById("join-room-button").addEventListener('blur', function() {
+        // Optionally, you can scroll back to the top when the input loses focus
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
   });
 
 
@@ -172,7 +182,15 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		playerNameButton.focus();
 		playerNameButton.addEventListener('focus', () => {
 			// Faites défiler la page jusqu'au champ input
-			document.getElementById("name-button").scrollIntoView({ behavior: 'smooth' });
+			setTimeout(function() {
+				document.getElementById("name-button").scrollIntoView({ behavior: 'smooth' });
+			}, 300); // Delay to allow for keyboard animation
+
+			document.getElementById("name-button").addEventListener('blur', function() {
+				// Optionally, you can scroll back to the top when the input loses focus
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			});
+
 		  });
 
 		let nameButton = document.createElement("button");
@@ -346,7 +364,16 @@ function startGame() {
 
 let secretCode = document.getElementById("secretCode");
 secretCode.addEventListener('focus', () => {
-	document.getElementById("secretCode").scrollIntoView({ behavior: 'smooth' });
+
+	setTimeout(function() {
+		document.getElementById("secretCode").scrollIntoView({ behavior: 'smooth' });
+	}, 300); // Delay to allow for keyboard animation
+
+	document.getElementById("secretCode").addEventListener('blur', function() {
+		// Optionally, you can scroll back to the top when the input loses focus
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	});
+
   });
 // To change between classic mode and premium mode
 function changeMode() {
