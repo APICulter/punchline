@@ -116,6 +116,7 @@ io.on("connection", function (socket) {
 			socket.emit("newGame", pin);
 		} else {
 			// Retry if the generated room name already exists (highly unlikely)
+			
 			socket.emit("gameExists");
 		}
 	});
@@ -215,10 +216,21 @@ io.on("connection", function (socket) {
 
 	// Sets the player's name and goes to the waiting room
 	socket.on("setUsername", function (data) {
-		if (data.playerName.toLowerCase() == botName) {
-			socket.emit("userExists", unauthorizedNameMessage);
+
+
+		data.playerName = DOMPurify.sanitize(data.playerName);
+
+		if (data.playerName.length == 0) {
+			socket.emit("setUsernameErrorMessages", emptyPlayerNameMessage);
+			return;
+		} else if (data.playerName.length > 25) {
+			socket.emit("setUsernameErrorMessages", tooLongPlayerNameMessage);
+			return;
+		} else if (data.playerName.toLowerCase() == botName) {
+			socket.emit("setUsernameErrorMessages", unauthorizedNameMessage);
 			return;
 		}
+
 
 		let game = games.find((game) => game.pin === Number(data.pin));
 		let roomName = null;
@@ -247,7 +259,7 @@ io.on("connection", function (socket) {
 				});
 				socket.emit("userSet", data, "/html/waiting.html");
 			} else {
-				socket.emit("userExists", userExistsMessage);
+				socket.emit("setUsernameErrorMessages", userExistsMessage);
 			}
 		}
 	});

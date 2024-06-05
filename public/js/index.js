@@ -20,26 +20,58 @@ socket.on("sendPunchlineURL", function(data) {
 
 /** Choose the player's name **/
 function setUsername() {
-	if (document.getElementById("player-name").value.length !== 0) {
-		socket.emit("setUsername", {
-			playerName: document.getElementById("player-name").value,
-			pin: document.getElementById("pin").value,
-		});
-	} else {
-		const messageElement = document.getElementById("emptyName");
-		messageElement.classList.remove("invisible");
-		// Hide message after 1.5 seconds
+
+	let playerName = document.getElementById("player-name");
+	let pin = document.getElementById("pin");
+	let error = document.getElementById("errorName");
+
+	function displayErrorMessage(message) {
+		error.textContent = message;
+		error.classList.remove("invisible");
+		// Message error for 1.5 seconds display
 		setTimeout(function () {
-			// messageElement.style.display = 'none';
-			messageElement.classList.add("invisible");
+			error.classList.add("invisible");
 		}, 1500);
 	}
+
+	if (playerName.value.length == 0) {
+		displayErrorMessage("Please enter a name");
+		return;
+	} else if ( playerName.value.length > 25) {
+		displayErrorMessage("Name too long");
+		return;
+	} else {
+		socket.emit("setUsername", {
+			playerName: playerName.value,
+			pin: pin.value,
+		});
+	}
+
+
 }
 
-var user;
-socket.on("userExists", function (data) {
-	document.getElementById("error-container").innerText = data;
+
+
+// Displays error message coming from the backend if the PIN encounters a problem
+socket.on("setUsernameErrorMessages", function (data) {
+	let error = document.getElementById("errorName");
+	error.textContent = data;
+	error.classList.remove("hidden");
+	
+	setTimeout(function () {
+		// messageElement.style.display = 'none';
+		error.classList.add("hidden");
+	}, 1500);
 });
+
+
+
+
+
+var user;
+// socket.on("userExists", function (data) {
+// 	document.getElementById("errorName").innerText = data;
+// });
 socket.on("userSet", function (data, newGameURL) {
 	sessionStorage.setItem("playerName", data.playerName);
 	sessionStorage.setItem("punchlinePin", data.pin);
@@ -122,9 +154,7 @@ roomPin.addEventListener('focus', () => {
 
 
 socket.on("gameExists", function (data) {
-	if (user) {
-		document.getElementById("createGame").setAttribute("disabled", "");
-	}
+	// implement some code
 });
 
 
@@ -133,7 +163,7 @@ socket.on("gameExists", function (data) {
 function joinRoom() {
 
 	let roomPin = document.getElementById("roomPin");
-	let error = document.getElementById("invalidPIN");
+	let error = document.getElementById("errorPin");
 
 	function displayErrorMessage(message) {
 		error.textContent = message;
@@ -164,9 +194,9 @@ function joinRoom() {
 
 }
 
-// Displays error message if the PIN entered does not exist
+// Displays error message coming from the backend if the PIN encounters a problem
 socket.on("findRoomByIdErrorMessages", function (data) {
-	let error = document.getElementById("invalidPIN");
+	let error = document.getElementById("errorPin");
 	error.textContent = data;
 	error.classList.remove("hidden");
 	
@@ -193,6 +223,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		playerName.type = "text";
 		playerName.name = "player-name";
 		playerName.value = "";
+		playerName.maxLength = 25;
 		playerName.placeholder = "Name";
 		playerName.className =
 			"w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-slate-100 focus:outline-none";
@@ -223,7 +254,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 
 		let errorContainer = document.createElement("div");
 		document.querySelector("#name").append(errorContainer);
-		errorContainer.id = "error-container";
+		errorContainer.id = "errorName";
 		let errorRoomFull = document.createElement("div");
 		errorRoomFull.id = "errorRoomFull";
 		errorRoomFull.className = "text-sm invisible z-10";
