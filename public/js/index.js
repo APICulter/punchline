@@ -25,20 +25,12 @@ function setUsername() {
 	let pin = document.getElementById("pin");
 	let error = document.getElementById("errorName");
 
-	function displayErrorMessage(message) {
-		error.textContent = message;
-		error.classList.remove("invisible");
-		// Message error for 1.5 seconds display
-		setTimeout(function () {
-			error.classList.add("invisible");
-		}, 1500);
-	}
-
+	
 	if (playerName.value.length == 0) {
-		displayErrorMessage("Please enter a name");
+		displayErrorMessage(error, "Please enter a name");
 		return;
 	} else if ( playerName.value.length > 25) {
-		displayErrorMessage("Name too long");
+		displayErrorMessage(error, "Name too long");
 		return;
 	} else {
 		socket.emit("setUsername", {
@@ -165,29 +157,21 @@ function joinRoom() {
 	let roomPin = document.getElementById("roomPin");
 	let error = document.getElementById("errorPin");
 
-	function displayErrorMessage(message) {
-		error.textContent = message;
-		error.classList.remove("hidden");
-		// Message error for 1.5 seconds display
-		setTimeout(function () {
-			error.classList.add("hidden");
-		}, 1500);
-	}
 	
 	// Validation
 	if (roomPin.value.length == 0) {
-		displayErrorMessage("Empty PIN");
+		displayErrorMessage(error, "Empty PIN");
 		return;
 	} else if (isNaN(roomPin.value)) {
-		displayErrorMessage("Only numbers");
+		displayErrorMessage(error, "Only numbers");
 		return;
 	} else if (roomPin.value.length > 4) {
-		displayErrorMessage("4 digit PIN");
+		displayErrorMessage(error, "4 digit PIN");
 		return;
 	} else {
 		socket.emit("findRoomById", {
 			pin: DOMPurify.sanitize(roomPin.value),
-			pin: roomPin.value,
+			// pin: roomPin.value,
 		});
 	}
 	
@@ -377,37 +361,50 @@ socket.on("redirect", (newGameURL, pin, playerName) => {
 
 // Start of the game
 function startGame() {
-	if (nbOfPlayers < minNbOfPlayers) {
-		var messageElement = document.getElementById("notEnoughPlayers");
-		messageElement.classList.remove("hidden");
-		
-		setTimeout(function () {
-			// messageElement.style.display = 'none';
-			messageElement.classList.add("hidden");
-		}, 1500);
 
-		
-	} else if (
-		// validate(secretCode) &&
-		document.getElementById("secretCode").value.length == 0 &&
-		document.getElementById("premiumMode").getAttribute("checked") == "yes"
-	) {
-		var messageElement = document.getElementById("noPremiumCode");
-		messageElement.classList.remove("hidden");
-		setTimeout(function () {
-			// messageElement.style.display = 'none';
-			messageElement.classList.add("hidden");
-		}, 1500);
+	// check premium code if selected
+	let premiumCode = document.getElementById("secretCode");
+	let error = document.getElementById("startGameError");
+
+
+	if (premiumCode.value.length == 0 &&
+		document.getElementById("premiumMode").getAttribute("checked") == "yes") {
+		displayErrorMessage(error, "premium code needed");
+		return;
+	
+	// check the number of players
+	} else if (premiumCode.value.length > 15 &&
+		document.getElementById("premiumMode").getAttribute("checked") == "yes") {
+		displayErrorMessage(error, "Code too long");
+		return;
+	} else if (nbOfPlayers < minNbOfPlayers) {
+		displayErrorMessage(error, "2 players minimum");
+		return;
+
 	} else {
 		socket.emit("startGame", {
 			pin: document.getElementById("punchlinePin").textContent,
 			nbOfQuestions: document.getElementById("nbOfQuestionsValue").textContent,
-			secretCode: document.getElementById("secretCode").value,
+			secretCode: premiumCode.value,
 			premiumMode:
 				document.getElementById("premiumMode").getAttribute("checked") == "yes",
 		});
 	}
+
+
+	
 }
+
+socket.on("startGameErrorMessages", function (data) {
+	let error = document.getElementById("startGameError");
+	error.textContent = data;
+	error.classList.remove("hidden");
+	
+	setTimeout(function () {
+		// messageElement.style.display = 'none';
+		error.classList.add("hidden");
+	}, 1500);
+});
 
 
 // function validate(inputField){
@@ -449,16 +446,16 @@ function changeMode() {
 
 
 // Displays an error message if the premium code entered is invalid
-socket.on("premiumCodeError", function (data) {
-	let error = document.getElementById("premiumCodeError");
-	error.textContent = data;
-	error.classList.remove("hidden");
-	// Hides the text after 1.5 seconds
-	setTimeout(function () {
-		// messageElement.style.display = 'none';
-		error.classList.add("hidden");
-	}, 1500);
-});
+// socket.on("premiumCodeError", function (data) {
+// 	let error = document.getElementById("premiumCodeError");
+// 	error.textContent = data;
+// 	error.classList.remove("hidden");
+// 	// Hides the text after 1.5 seconds
+// 	setTimeout(function () {
+// 		// messageElement.style.display = 'none';
+// 		error.classList.add("hidden");
+// 	}, 1500);
+// });
 
 // Displays an error message if the players tries to join and the room is full
 socket.on("errorRoomFull", function (data) {
@@ -475,3 +472,13 @@ socket.on("errorRoomFull", function (data) {
 // function errorMessage(error) {
 
 // }
+
+
+function displayErrorMessage(element, message) {
+	element.textContent = message;
+	element.classList.remove("hidden");
+	// Message error for 1.5 seconds display
+	setTimeout(function () {
+		element.classList.add("hidden");
+	}, 1500);
+}

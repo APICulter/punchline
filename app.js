@@ -308,11 +308,15 @@ io.on("connection", function (socket) {
 
 	// Starts the game for all players in the room
 	socket.on("startGame", function (data) {
+
+		
+		
+		data.pin = DOMPurify.sanitize(data.pin);
 		let game = games.find((game) => game.pin === Number(data.pin));
 		if (typeof game === "undefined") {
 			let roomName = null;
 			for (const name in rooms) {
-				if (rooms[name].pin == data.punchlinePin) {
+				if (rooms[name].pin == data.pin) {
 					roomName = name;
 					break;
 				}
@@ -320,15 +324,30 @@ io.on("connection", function (socket) {
 			socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
+
+			// Sanitize input
+			data.nbOfQuestions = DOMPurify.sanitize(data.nbOfQuestions);
+			data.secretCode = DOMPurify.sanitize(data.secretCode);
+			data.premiumMode = DOMPurify.sanitize(data.premiumMode);
+	
+			if (isNaN(Number(data.nbOfQuestions)) || Number(data.nbOfQuestions) < 1 || Number(data.nbOfQuestions) > 10) {
+				socket.emit("startGameErrorMessages", nbOfQuestionsErrorMessage);
+				return;
+			} else if (data.secretCode.length == 0 || data.secretCode.length > 15) {
+				socket.emit("startGameErrorMessages", premiumCodeLengthErrorMessage);
+				return;
+			}
+
+
 			// Is game premium ?
-			if (data.premiumMode == true) {
+			if (data.premiumMode === "true") {
 				if (
 					typeof SECRET_CODE !== "undefined" &&
 					data.secretCode == SECRET_CODE
 				) {
 					game.premium = true;
 				} else {
-					socket.emit("premiumCodeError", premiumCodeErrorMessage);
+					socket.emit("startGameErrorMessages", premiumCodeErrorMessage);
 					return;
 				}
 			}
