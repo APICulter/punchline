@@ -30,7 +30,7 @@ window.onload = function () {
 	} else {
 		window.location = "/";
 		socket.emit("endGame", {
-			punchlinePin: punchlinePin,
+			pin: punchlinePin,
 		});
 		sessionStorage.clear();
 	}
@@ -51,7 +51,7 @@ function startCountdown(count, questionCount) {
 			clearInterval(countdownInterval);
 			gameZoneElement.classList.remove("invisible");
 			// countdownElement.classList.add("hidden");
-			socket.emit("startPrompt", { punchlinePin: punchlinePin });
+			socket.emit("startPrompt", { pin: punchlinePin });
 			startCountDownQuestion(questionCount);
 		}
 	}, 1000);
@@ -66,7 +66,7 @@ function startCountDownQuestion(count) {
 		// Check if countdown has reached 0
 		if (count === 0) {
 			clearInterval(countdownIntervalQuestion);
-			socket.emit("timeIsUpToAnswer", { punchlinePin: punchlinePin });
+			socket.emit("timeIsUpToAnswer", { pin: punchlinePin });
 		}
 	}, 1000);
 }
@@ -90,7 +90,7 @@ function startCountDownQuestion(count) {
 
 function getQuestion(numberQuestion) {
 	socket.emit("getQuestion", {
-		punchlinePin: punchlinePin,
+		pin: punchlinePin,
 		numberQuestion: numberQuestion,
 	});
 }
@@ -144,7 +144,7 @@ socket.on("displayAnswers", function (data) {
 	});
 
 	setTimeout(function () {
-		socket.emit("getVotes", { punchlinePin: punchlinePin });
+		socket.emit("getVotes", { pin: punchlinePin });
 		responseBoxElement.classList.add("invisible");
 	}, data.length * 9000 + 5000);
 });
@@ -183,7 +183,7 @@ socket.on("displayVotes", function (answers) {
 
 	setTimeout(function () {
 		socket.emit("getQuestion", {
-			punchlinePin: punchlinePin,
+			pin: punchlinePin,
 			numberQuestion: numberQuestion,
 		});
 		countdownElement.scrollIntoView({ behavior: 'smooth' });

@@ -6,7 +6,7 @@ window.onload = function () {
 	punchlinePin = sessionStorage.getItem("punchlinePin");
 	socket.emit("joinRoom", punchlinePin);
 	socket.emit("getScores", {
-		punchlinePin: punchlinePin,
+		pin: punchlinePin,
 	});
 };
 
