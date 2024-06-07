@@ -162,6 +162,10 @@ io.on("connection", function (socket) {
 
 	// Handler for joining a room (after entering PIN and before giving a name)
 	socket.on("joinRoom", (pin, playerName) => {
+
+		pin = DOMPurify.sanitize(pin);
+		playerName = DOMPurify.sanitize(playerName);
+
 		let roomName = null;
 		for (const name in rooms) {
 			if (rooms[name].pin == pin) {
@@ -189,6 +193,10 @@ io.on("connection", function (socket) {
 
 	// Handler for joining or rejoigning a game after disconnexion
 	socket.on("joinGame", (pin, playerName) => {
+
+		pin = DOMPurify.sanitize(pin);
+		playerName = DOMPurify.sanitize(playerName);
+
 		let game = games.find((game) => game.pin == pin);
 		if (typeof game !== "undefined") {
 			let player = game.players.find((player) => player.name === playerName);
@@ -231,7 +239,7 @@ io.on("connection", function (socket) {
 			return;
 		}
 
-
+		data.pin = DOMPurify.sanitize(data.pin);
 		let game = games.find((game) => game.pin === Number(data.pin));
 		let roomName = null;
 		for (const name in rooms) {
@@ -333,7 +341,7 @@ io.on("connection", function (socket) {
 			if (isNaN(Number(data.nbOfQuestions)) || Number(data.nbOfQuestions) < 1 || Number(data.nbOfQuestions) > 10) {
 				socket.emit("startGameErrorMessages", nbOfQuestionsErrorMessage);
 				return;
-			} else if (data.secretCode.length == 0 || data.secretCode.length > 15) {
+			} else if ((data.secretCode.length == 0 || data.secretCode.length > 15) && data.premiumMode === "true") {
 				socket.emit("startGameErrorMessages", premiumCodeLengthErrorMessage);
 				return;
 			}
@@ -365,6 +373,9 @@ io.on("connection", function (socket) {
 
 	// Handler for sending the next question in the pool
 	socket.on("getQuestion", function (data) {
+
+		data.punchlinePin = DOMPurify.sanitize(data.punchlinePin);
+
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		if (typeof game === "undefined") {
 			let roomName = null;
@@ -378,6 +389,7 @@ io.on("connection", function (socket) {
 			socket.emit("redirect", "/");
 		} else {
 			// Is there any question left ?
+			data.numberQuestion = DOMPurify.sanitize(data.numberQuestion);
 			game.question++;
 			if (game.question < game.questions.length) {
 				let question = game.questions[Number(game.question)];
@@ -401,6 +413,9 @@ io.on("connection", function (socket) {
 
 	// Handler to remove a player from the room in the lobby
 	socket.on("deletePlayer", function (data) {
+
+		data.punchlinePin = DOMPurify.sanitize(data.punchlinePin);
+
 		let game = games.find((game) => game.pin === Number(data.pin));
 
 		if (typeof game === "undefined") {
@@ -413,6 +428,7 @@ io.on("connection", function (socket) {
 			}
 		} else {
 			// delete player
+			data.playerId = DOMPurify.sanitize(data.playerId);
 			for (player of game.players) {
 				if (player.id == data.playerId) {
 					game.players.splice(game.players.indexOf(player), 1);
@@ -426,6 +442,7 @@ io.on("connection", function (socket) {
 
 	// Handler to allow players to answer the question
 	socket.on("startPrompt", function (data) {
+		data.punchlinePin = DOMPurify.sanitize(data.punchlinePin);
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 
 		if (typeof game === "undefined") {
@@ -453,11 +470,24 @@ io.on("connection", function (socket) {
 
 	// Handler to send the player's answer
 	socket.on("answer", function (data) {
-		let game = games.find((game) => game.pin === Number(data.punchlinePin));
+
+
+		data.answer = DOMPurify.sanitize(data.answer);
+
+		if (data.answer.length == 0) {
+			socket.emit("answerErrorMessages", answerEmptyErrorMessage);
+			return;
+		} else if (data.answer.length >= 100) {
+			socket.emit("answerErrorMessages", answerTooLongErrorMessage);
+			return;
+		}
+
+		data.pin = DOMPurify.sanitize(data.pin);
+		let game = games.find((game) => game.pin === Number(data.pin));
 		if (typeof game === "undefined") {
 			let roomName = null;
 			for (const name in rooms) {
-				if (rooms[name].pin == data.punchlinePin) {
+				if (rooms[name].pin == data.pin) {
 					roomName = name;
 					break;
 				}
@@ -465,6 +495,9 @@ io.on("connection", function (socket) {
 			socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
+
+			data.playerName = DOMPurify.sanitize(data.playerName);
+
 			let player = game.players.find(
 				(player) => player.name === data.playerName
 			);
@@ -484,7 +517,7 @@ io.on("connection", function (socket) {
 
 					let roomName = null;
 					for (const name in rooms) {
-						if (rooms[name].pin == data.punchlinePin) {
+						if (rooms[name].pin == data.pin) {
 							roomName = name;
 							break;
 						}
@@ -498,6 +531,7 @@ io.on("connection", function (socket) {
 
 	// Handler to end round when timer goes to 0 if there is still 1 player that did not answer
 	socket.on("timeIsUpToAnswer", function (data) {
+		data.punchlinePin = DOMPurify.sanitize(data.punchlinePin);
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		let roomName = null;
 			for (const name in rooms) {
@@ -534,6 +568,7 @@ io.on("connection", function (socket) {
 
 	// Handler to retrieve the votes and displau on UI
 	socket.on("getVotes", function (data) {
+		data.punchlinePin = DOMPurify.sanitize(data.punchlinePin);
 		let game = games.find((game) => game.pin === Number(data.punchlinePin));
 		game.status = "voting";
 		let roomName = null;

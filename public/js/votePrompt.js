@@ -41,8 +41,8 @@ socket.on("postAnswers", function (data) {
 		// document.getElementById(label.id).disabled=true;
 		// document.getElementById(label.id).setAttribute("disabled", "true");
 
-		document.getElementById("answers").append(answer).append(label);
-		// document.getElementById("answers").append(label);
+		document.getElementById("answers").append(answer);
+		document.getElementById("answers").append(label);
 		document.getElementById(label.id).append(answerBlock);
 
 		// document.getElementById(answerBlock.id).prepend(answer);

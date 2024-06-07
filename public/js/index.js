@@ -34,8 +34,8 @@ function setUsername() {
 		return;
 	} else {
 		socket.emit("setUsername", {
-			playerName: playerName.value,
-			pin: pin.value,
+			playerName: DOMPurify.sanitize(playerName.value),
+			pin: DOMPurify.sanitize(pin.value),
 		});
 	}
 
@@ -383,11 +383,11 @@ function startGame() {
 
 	} else {
 		socket.emit("startGame", {
-			pin: document.getElementById("punchlinePin").textContent,
-			nbOfQuestions: document.getElementById("nbOfQuestionsValue").textContent,
-			secretCode: premiumCode.value,
+			pin: DOMPurify.sanitize(document.getElementById("punchlinePin").textContent),
+			nbOfQuestions: DOMPurify.sanitize(document.getElementById("nbOfQuestionsValue").textContent),
+			secretCode: DOMPurify.sanitize(premiumCode.value),
 			premiumMode:
-				document.getElementById("premiumMode").getAttribute("checked") == "yes",
+			DOMPurify.sanitize(document.getElementById("premiumMode").getAttribute("checked") == "yes"),
 		});
 	}
 
@@ -474,11 +474,4 @@ socket.on("errorRoomFull", function (data) {
 // }
 
 
-function displayErrorMessage(element, message) {
-	element.textContent = message;
-	element.classList.remove("hidden");
-	// Message error for 1.5 seconds display
-	setTimeout(function () {
-		element.classList.add("hidden");
-	}, 1500);
-}
+

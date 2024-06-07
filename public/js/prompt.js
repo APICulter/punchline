@@ -19,16 +19,27 @@ socket.on("redirect", (newGameURL) => {
 
 // Sends the player'answer to the back end
 function sendAnswer() {
-	if (document.getElementById("answer").value.length > 0) {
+
+	let answer = document.getElementById("answer");
+	let error = document.getElementById("answerError");
+
+	if (answer.value.length == 0) {
+		displayErrorMessage(error, "please answer");
+		button.classList.add("invalid:border-red-500");
+		return;
+	} else if (answer.value.length >= 100) {
+		displayErrorMessage(error, "answer too long");
+		button.classList.add("invalid:border-red-500");
+		return;
+	} else {
 		socket.emit("answer", {
-			answer: document.getElementById("answer").value,
-			punchlinePin: punchlinePin,
-			playerName: playerName,
+			answer: DOMPurify.sanitize(answer.value),
+			pin: DOMPurify.sanitize(punchlinePin),
+			playerName: DOMPurify.sanitize(playerName),
 		});
 		button.setAttribute("disabled", "disabled");
-	} else {
-		button.classList.add("invalid:border-red-500");
 	}
+
 }
 
 function home() {
