@@ -19,6 +19,6 @@ socket.on("redirect", (newGameURL, clear) => {
 	}
 });
 
-function home() {
-	window.location.href = "/";
-}
+// function home() {
+// 	window.location.href = "/";
+// }

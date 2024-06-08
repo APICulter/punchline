@@ -53,9 +53,9 @@ window.onclick = function (event) {
 // To go back to the lobby
 function home() {
 	playerName = sessionStorage.getItem("playerName");
-	if ( !playerName) {
+	if (!playerName) {
 		socket.emit("endGame", {
-		punchlinePin: punchlinePin,
+		pin: punchlinePin,
 	});
 	sessionStorage.clear();
 	} 
@@ -65,7 +65,7 @@ function home() {
 }
 
 
-
+// Displays error messages
 function displayErrorMessage(element, message) {
 	element.textContent = message;
 	element.classList.remove("hidden");

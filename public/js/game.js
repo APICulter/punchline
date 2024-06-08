@@ -191,3 +191,14 @@ socket.on("displayVotes", function (answers) {
 });
 
 
+
+// To go back to the lobby
+// function home() {
+// 	socket.emit("endGame", {
+// 		pin: punchlinePin,
+// 	});
+// 	sessionStorage.clear();
+// }
+// document.getElementById("home").addEventListener("click", function () {
+	
+// });

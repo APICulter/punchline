@@ -80,17 +80,17 @@ socket.on("scores", function (scores) {
 });
 
 // To go back to the lobby
-document.getElementById("home").addEventListener("click", function () {
-	socket.emit("endGame", {
-		punchlinePin: punchlinePin,
-	});
-	sessionStorage.clear();
-});
+// function home() {
+// 	socket.emit("endGame", {
+// 		pin: punchlinePin,
+// 	});
+// 	sessionStorage.clear();
+// }
 
 // To go back to the lobby
-document.getElementById("playAgain").addEventListener("click", function () {
-	socket.emit("endGame", {
-		punchlinePin: punchlinePin,
-	});
-	sessionStorage.clear();
-});
+// document.getElementById("playAgain").addEventListener("click", function () {
+// 	socket.emit("endGame", {
+// 		pin: punchlinePin,
+// 	});
+// 	sessionStorage.clear();
+// });

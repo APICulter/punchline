@@ -64,6 +64,6 @@ socket.on("redirect", (newGameURL) => {
 	window.location = newGameURL;
 });
 
-function home() {
-	window.location.href = "/";
-}
+// function home() {
+// 	window.location.href = "/";
+// }
