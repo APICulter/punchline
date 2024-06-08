@@ -137,10 +137,10 @@ roomPin.addEventListener('focus', () => {
 		document.getElementById("joinRoomButton").scrollIntoView({ behavior: 'smooth' });
 	}, 300); // Delay to allow for keyboard animation
 
-	document.getElementById("joinRoomButton").addEventListener('blur', function() {
-        // Optionally, you can scroll back to the top when the input loses focus
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+	// document.getElementById("joinRoomButton").addEventListener('blur', function() {
+    //     // Optionally, you can scroll back to the top when the input loses focus
+    //     window.scrollTo({ top: 0, behavior: 'smooth' });
+    // });
 
   });
 
@@ -219,10 +219,10 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 				document.getElementById("name-button").scrollIntoView({ behavior: 'smooth' });
 			}, 300); // Delay to allow for keyboard animation
 
-			document.getElementById("name-button").addEventListener('blur', function() {
-				// Optionally, you can scroll back to the top when the input loses focus
-				window.scrollTo({ top: 0, behavior: 'smooth' });
-			});
+			// document.getElementById("name-button").addEventListener('blur', function() {
+			// 	// Optionally, you can scroll back to the top when the input loses focus
+			// 	window.scrollTo({ top: 0, behavior: 'smooth' });
+			// });
 
 		  });
 
@@ -419,10 +419,10 @@ secretCode.addEventListener('focus', () => {
 		document.getElementById("secretCode").scrollIntoView({ behavior: 'smooth' });
 	}, 300); // Delay to allow for keyboard animation
 
-	document.getElementById("secretCode").addEventListener('blur', function() {
-		// Optionally, you can scroll back to the top when the input loses focus
-		window.scrollTo({ top: 0, behavior: 'smooth' });
-	});
+	// document.getElementById("secretCode").addEventListener('blur', function() {
+	// 	// Optionally, you can scroll back to the top when the input loses focus
+	// 	window.scrollTo({ top: 0, behavior: 'smooth' });
+	// });
 
   });
 // To change between classic mode and premium mode
