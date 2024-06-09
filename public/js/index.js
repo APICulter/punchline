@@ -147,6 +147,7 @@ roomPin.addEventListener('focus', () => {
 
 socket.on("gameExists", function (data) {
 	// implement some code
+	socket.emit("createGame");
 });
 
 
