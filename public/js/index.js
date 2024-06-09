@@ -327,10 +327,10 @@ socket.on("newJoiner", function (data) {
 });
 
 // deletes a player on the back-end side
-function deletePlayer(number) {
+function deletePlayer(selfElement) {
 	socket.emit("deletePlayer", {
 		pin: sessionStorage.getItem("punchlinePin"),
-		playerId: number.parentElement.getAttribute("id"),
+		playerId: selfElement.parentElement.getAttribute("id"),
 	});
 }
 

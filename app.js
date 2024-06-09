@@ -447,24 +447,29 @@ io.on("connection", function (socket) {
 		data.pin = DOMPurify.sanitize(data.pin);
 
 		let game = games.find((game) => game.pin === Number(data.pin));
-
-		if (typeof game === "undefined") {
-			let roomName = null;
-			for (const name in rooms) {
-				if (rooms[name].pin == data.pin) {
-					roomName = name;
-					break;
-				}
+		let roomName = null;
+		for (const name in rooms) {
+			if (rooms[name].pin == data.pin) {
+				roomName = name;
+				break;
 			}
+		}
+		if (typeof game === "undefined") {
+			
 		} else {
-			// delete player
+			// delete player in the game object
 			data.playerId = DOMPurify.sanitize(data.playerId);
+			let playerName ;
 			for (player of game.players) {
 				if (player.id == data.playerId) {
+					playerName = player.name;
 					game.players.splice(game.players.indexOf(player), 1);
 					break;
 				}
 			}
+
+			// send to all the room the name of the player which has to be redirected to the lobby
+			socket.to(roomName).emit("redirect", "/html/index.html", "deletePlayer", playerName);
 
 			socket.emit("playerDeleted", data.playerId);
 		}

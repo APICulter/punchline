@@ -12,9 +12,10 @@ window.onload = function () {
 	}
 };
 
-socket.on("redirect", (newGameURL, clear) => {
-	window.location = newGameURL;
-	if (clear === "clear") {
+socket.on("redirect", (newGameURL, verb, playerNameID) => {
+	
+	if (verb === "clear" || (verb === "deletePlayer" && playerNameID === playerName)) {
+		window.location = newGameURL;
 		sessionStorage.clear();
 	}
 });
