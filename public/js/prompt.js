@@ -10,6 +10,8 @@ window.onload = function () {
 	} else {
 		window.location = "/";
 	}
+
+	document.getElementById("answer").focus();
 };
 
 socket.on("redirect", (newGameURL) => {
