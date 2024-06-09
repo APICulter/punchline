@@ -58,7 +58,13 @@ function home() {
 		pin: punchlinePin ? punchlinePin : punchlinePinElement.textContent,
 	});
 	sessionStorage.clear();
-	} 
+	} else {
+		// socket.emit("leaveGame", {
+		// 	pin: punchlinePin,
+		// 	playerName: playerName
+		// });
+			
+	}
 	window.location.href = "/";
 
 	

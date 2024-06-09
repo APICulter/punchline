@@ -144,7 +144,8 @@ io.on("connection", function (socket) {
 
 			let game = games.find((game) => game.pin === Number(data.pin));
 			if (typeof game !== "undefined") {
-				if (game.players.length == Number(maxNumberOfPlayers)) {
+				// We prevent max number of joigners before the game starts
+				if (game.players.length == Number(maxNumberOfPlayers) && game.inGame == false) {
 					socket.emit("errorRoomFull", errorRoomFullMessage);
 					return;
 				} else {
@@ -283,6 +284,32 @@ io.on("connection", function (socket) {
 			room.sockets = room.sockets.filter((s) => s !== socket);
 		}
 	});
+
+		// Handler for leaving a room
+		socket.on("leaveGame", (data) => {
+			
+		data.pin = DOMPurify.sanitize(data.pin);
+		data.playerName = DOMPurify.sanitize(data.playerName);
+		let game = games.find((game) => game.pin === Number(data.pin));
+		if (typeof game === "undefined") {
+			// let roomName = null;
+			// for (const name in rooms) {
+			// 	if (rooms[name].pin == data.pin) {
+			// 		roomName = name;
+			// 		break;
+			// 	}
+			// }
+			// socket.to(roomName).emit("redirect", "/");
+			// socket.emit("redirect", "/");
+
+		} else {
+			let player = game.players.find((player) => player.name === data.playerName);
+				if (typeof player !== "undefined") {
+					player.lock = false;
+				}
+		}
+
+		});
 
 	// Handler for disconnecting from the server
 	socket.on("disconnect", () => {
