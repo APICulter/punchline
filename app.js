@@ -96,8 +96,11 @@ io.on("connection", function (socket) {
 
 	// Handler for creating a new room
 	socket.on("createGame", () => {
-		const roomName = `room-${socket.id}`;
+		// console.log("Tableau des games " + JSON.stringify(games));
+
 		const pin = generatePIN();
+		const roomName = `${pin}-${socket.id}`;
+
 
 		if (!rooms[roomName]) {
 			rooms[roomName] = {
@@ -663,7 +666,12 @@ io.on("connection", function (socket) {
 		// 	// onLinePlayer.game = undefined;
 		// 	players.splice(players.indexOf(onLinePlayer), 1);
 		// });
+		// console.log("Tableau des games avant destruction " + JSON.stringify(games));
+		if (typeof game !== "undefined") {
 		games.splice(games.indexOf(game), 1);
+
+		}
+		// console.log("Tableau des games apres destruction " + JSON.stringify(games));
 		// if (game.maxVotes == game.nbOfPlayers) {
 		let roomName = null;
 		for (const name in rooms) {

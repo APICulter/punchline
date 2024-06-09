@@ -55,7 +55,7 @@ function home() {
 	playerName = sessionStorage.getItem("playerName");
 	if (!playerName) {
 		socket.emit("endGame", {
-		pin: punchlinePin,
+		pin: punchlinePin ? punchlinePin : punchlinePinElement.textContent,
 	});
 	sessionStorage.clear();
 	} 
