@@ -1,4 +1,4 @@
-const socket = io();
+// const socket = io();
 const scoreTable = document.querySelector("#scoreTable");
 
 
@@ -10,9 +10,9 @@ window.onload = function () {
 	});
 };
 
-socket.on("redirect", (newGameURL) => {
-	window.location = newGameURL;
-});
+// socket.on("redirect", (newGameURL) => {
+// 	window.location = newGameURL;
+// });
 
 // Displays the final results
 socket.on("scores", function (scores) {

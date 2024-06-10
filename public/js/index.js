@@ -1,4 +1,4 @@
-const socket = io();
+// const socket = io();
 // import DOMPurify from 'dompurify';
 // import DOMPurify from "isomorphic-dompurify";
 

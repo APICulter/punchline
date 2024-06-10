@@ -1,4 +1,4 @@
-const socket = io();
+// const socket = io();
 
 // default values in not loaded from config
 var questionCountDown = 61;
@@ -151,9 +151,9 @@ socket.on("displayAnswers", function (data) {
 
 
 
-socket.on("redirect", (newGameURL) => {
-	window.location = newGameURL;
-});
+// socket.on("redirect", (newGameURL) => {
+// 	window.location = newGameURL;
+// });
 
 socket.on("displayVotes", function (answers) {
 	

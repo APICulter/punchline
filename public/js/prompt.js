@@ -1,4 +1,4 @@
-const socket = io();
+// const socket = io();
 const button = document.getElementById("button");
 
 window.onload = function () {
@@ -14,9 +14,9 @@ window.onload = function () {
 	document.getElementById("answer").focus();
 };
 
-socket.on("redirect", (newGameURL) => {
-	window.location = newGameURL;
-});
+// socket.on("redirect", (newGameURL) => {
+// 	window.location = newGameURL;
+// });
 
 
 // Sends the player'answer to the back end

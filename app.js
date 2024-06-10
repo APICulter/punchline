@@ -469,7 +469,7 @@ io.on("connection", function (socket) {
 			}
 
 			// send to all the room the name of the player which has to be redirected to the lobby
-			socket.to(roomName).emit("redirect", "/html/index.html", "deletePlayer", playerName);
+			socket.to(roomName).emit("redirectDeletePlayer", "/html/index.html", "deletePlayer", playerName);
 
 			socket.emit("playerDeleted", data.playerId);
 		}
@@ -714,7 +714,7 @@ io.on("connection", function (socket) {
 		}
 		// }
 
-		socket.to(roomName).emit("redirect", "/html/index.html", "clear");
+		socket.to(roomName).emit("redirect", "/html/index.html");
 		delete rooms[roomName];
 
 		// socket.broadcast.emit("redirect", "/html/index.html", "clear");

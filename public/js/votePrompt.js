@@ -1,4 +1,4 @@
-const socket = io();
+// const socket = io();
 
 window.onload = function () {
 	punchlinePin = sessionStorage.getItem("punchlinePin");
@@ -60,9 +60,9 @@ button.addEventListener("click", function () {
 	socket.emit("vote", answer, punchlinePin);
 });
 
-socket.on("redirect", (newGameURL) => {
-	window.location = newGameURL;
-});
+// socket.on("redirect", (newGameURL) => {
+// 	window.location = newGameURL;
+// });
 
 // function home() {
 // 	window.location.href = "/";

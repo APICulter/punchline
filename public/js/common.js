@@ -1,3 +1,5 @@
+const socket = io();
+
 let punchlinePin;
 let playerName;
 var punchlinePinElement = document.getElementById("punchlinePin");
@@ -80,3 +82,7 @@ function displayErrorMessage(element, message) {
 		element.classList.add("hidden");
 	}, 1500);
 }
+
+socket.on("redirect", (newGameURL) => {
+	window.location = newGameURL;
+});

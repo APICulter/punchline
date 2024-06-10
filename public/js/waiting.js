@@ -1,4 +1,4 @@
-const socket = io();
+// const socket = io();
 
 
 window.onload = function () {
@@ -12,11 +12,11 @@ window.onload = function () {
 	}
 };
 
-socket.on("redirect", (newGameURL, verb, playerNameID) => {
+socket.on("redirectDeletePlayer", (newGameURL, verb, playerNameID) => {
 	
-	if (verb === "clear" || (verb === "deletePlayer" && playerNameID === playerName)) {
+	if ((verb === "deletePlayer" && playerNameID === playerName)) {
+	// if (verb === "clear" || (verb === "deletePlayer" && playerNameID === playerName) || (verb == null && playerNameID == null)) {
 		window.location = newGameURL;
-		sessionStorage.clear();
 	}
 });
 
