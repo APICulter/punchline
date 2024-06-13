@@ -64,11 +64,14 @@
 
 		  </div>
 
-		  <div class="flex flex-col h-screen">
+		  <div class="flex sm:flex-1 sm:justify-center flex-col h-screen big-phone:items-center">
 
-			<section class="flex flex-row w-full flex-wrap mb-8">
-				<div class="flex flex-col justify-center">
-				<button
+			<section class="flex flex-row w-full flex-wrap mb-8 sm:w-2/5 md:place-content-evenly lg:w-2/5 xl:1/5 sm:justify-around sm:flex-col-reverse">
+				<div class="flex flex-col sm:flex-row  big-phone:justify-between sm:ml-0">
+					<div class="sm:flex sm:flex-row sm:max-w-sm sm:justify-center sm:mt-8 ">
+
+						<!-- button home -->
+						<button
 				id="home"
 				type="button"
 				name="homeButton"
@@ -76,25 +79,37 @@
 				onclick="home()"
 				>				
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
-				</button>
-				<button
-					id="rules"
-					type="button"
-					name="rules"
-					class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-					
-				>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
-				<button id="punchlinePin" type="button" name="punchlinePin" class="invisible font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"><span class="invisible">0000</span></button>
+						</button>
+
+						<!-- button rules -->
+						<button
+						id="rules"
+						type="button"
+						name="rules"
+						class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
+						
+					>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				
+						</button>
+
+					</div>
+				
+
+				
+				<!-- button pin -->
+				 <div class="flex items-center sm:mt-8">
+					<button id="punchlinePin" type="button" name="punchlinePin" class=" invisible sm:w-min font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2 sm:align-baseline"><span class="invisible">0000</span></button>
+
+				 </div>
 				<!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
 	
 			</div>
-			<div class="flex items-start  grow">
+			<div class="flex items-start  grow  sm:grow-0 ">
 				<!-- <img src="./logo.png" alt="logo" width="50" height="50" > -->
 				<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate__animated animate__bounceInDown">  -->
 				<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate-bounce">  -->
-				<h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate__animated animate__bounceInDown"> 
-				<span class="">Punchline</span>
+				<h1 class="grow mt-10 text-center  font-black tracking-tight animate__animated animate__bounceInDown"> 
+				<span class="text-4xl big-phone:text-6xl sm:text-6xl md:text-6xl ">Punchline</span>
 			</h1>
 			</div>
 			
@@ -103,7 +118,7 @@
 
 
 
-			<section class="flex flex-1  items-center justify-center">
+			<section class="flex flex-1 sm:flex-auto items-center justify-center">
 			
 				<!-- <div class="animate-[wiggle_1s_ease-in-out_infinite]">
 					<p>dfqdfqsdf</p>
@@ -133,7 +148,7 @@
 									type="button"
 									name="createGame"
 									onclick="createGame()"
-									class="text-4xl font-normal bg-amber-500 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
+									class="text-4xl font-normal bg-amber-500 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400 sm:w-3/4"
 								>
 									Create game
 								</button>
@@ -142,7 +157,7 @@
 								type="button"
 								name="joinGameInit"
 								onclick="joinGameInit()"
-								class="text-4xl font-normal bg-amber-500 w-200 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400"
+								class="text-4xl font-normal bg-amber-500 w-200 rounded-md shadow-xl p-4 m-2 w-11/12 hover:ease-out hover:cursor-pointer hover:bg-amber-400 sm:w-3/4"
 							>
 								Join game
 							</button>
