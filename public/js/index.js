@@ -90,12 +90,35 @@ document.getElementById("roomPin").addEventListener("keyup", function (event) {
 function createGame() {
 	socket.emit("createGame");
 	document.getElementById("startGame").classList.remove("hidden");
+	document.getElementById("optionMenu").classList.remove("hidden");
 	document.getElementById("join").classList.add("hidden");
 	document.getElementById("joinGameInit").classList.add("hidden");
-	document.getElementById("optionMenu").classList.remove("hidden");
 	document
 		.getElementById("createGame")
 		.classList.remove("hover:cursor-pointer");
+		// var height = document.getElementById("startGame").height;
+		// height += document.getElementById("optionMenu").height;
+		// height += document.getElementById("join").offsetHeight;
+		// height += document.getElementById("joinGameInit").offsetHeight;
+	// document.getElementById("mainDiv").style.height ="1500px";
+	// setTimeout(() => {
+		// document.getElementById("mainDiv").style.height = 'auto';
+		// var height = document.getElementById("mainDiv").height;
+		// height += document.getElementById("startGame").style.height;
+		// height += document.getElementById("optionMenu").style.height;
+
+		var height = Number(getComputedStyle(document.getElementById("mainDiv")).height.slice(0, -2));
+		height += Number(getComputedStyle(document.getElementById("startGame")).height.slice(0, -2));
+		height += Number(getComputedStyle(document.getElementById("optionMenu")).height.slice(0, -2));
+		// height = "sm:min-h-["+ height.toString() +"px]";
+		console.log(height);
+		// document.getElementById("mainDiv").classList.replace("sm:min-h-[430px]", `sm:min-h-[${height.toString()}px]`);
+		document.getElementById("mainDiv").classList.replace("sm:min-h-[430px]", "sm:min-h-[700px]");
+
+		// console.log();
+		// console.log(height);
+	//   }, 500);
+	
 }
 
 socket.on("newGame", function (data) {

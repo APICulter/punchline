@@ -74,9 +74,10 @@
 
 
 		  <!-- main screen -->
-		<div class="flex  sm:justify-center sm:mt-6 sm: flex-col h-screen big-phone:items-center min-h-screen overflow-y-auto overscroll-y-none mx-auto 
+		<div id="mainDiv" class="flex  sm:justify-center sm:mt-6 sm: flex-col h-screen big-phone:items-center min-h-screen overflow-y-auto overscroll-y-none mx-auto 
 		lg:max-w-screen-md sm:border-2 sm:rounded-lg sm:border-amber-300 lg:my-4
-		2xl:max-w-screen-lg sm:items-center sm:size-2/6 sm:min-h-0 sm:h-1/4">
+		2xl:max-w-screen-lg sm:items-center sm:h-1/4 sm:min-w-[535px] sm:min-h-[430px]
+		transition-all duration-500 ease-in-out max-h-0">
 
 			<!-- title -->
 			<section class="flex flex-row w-full flex-wrap lg:mb-0  sm:place-content-evenly sm:justify-around sm:flex-col-reverse sm:bg-amber-600">
@@ -131,7 +132,7 @@
 
 
 			<!-- options -->
-			<section class="flex flex-1 sm:flex-auto items-center justify-center sm:bg-amber-600 lg:w-full sm:items-start ">
+			<section class="flex flex-1 sm:flex-auto items-center justify-center sm:bg-amber-600 lg:w-full sm:items-start sm:w-full ">
 			
 				<!-- <div class="animate-[wiggle_1s_ease-in-out_infinite]">
 					<p>dfqdfqsdf</p>
