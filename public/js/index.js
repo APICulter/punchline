@@ -113,7 +113,12 @@ function createGame() {
 		// height = "sm:min-h-["+ height.toString() +"px]";
 		console.log(height);
 		// document.getElementById("mainDiv").classList.replace("sm:min-h-[430px]", `sm:min-h-[${height.toString()}px]`);
-		document.getElementById("mainDiv").classList.replace("sm:min-h-[430px]", "sm:min-h-[700px]");
+		document.getElementById("mainDiv").classList.replace("sm:min-h-[430px]", "sm:min-h-[960px]");
+		// document.getElementById("mainDiv").classList.replace("sm:max-h-max", "sm:max-h-0");
+
+		// setTimeout(() => {
+		// 	document.getElementById("mainDiv").classList.replace("sm:max-h-0", "sm:max-h-max");
+		// }, 500);
 
 		// console.log();
 		// console.log(height);
@@ -318,9 +323,9 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 // Displays the new player in the room with a delete button to remove him/her if needed
 socket.on("newJoiner", function (data) {
 	if (data) {
-		if (document.getElementById("players-table").classList.contains("hidden")) {
-			document.getElementById("players-table").classList.remove("hidden");
-		}
+		// if (document.getElementById("players-table").classList.contains("hidden")) {
+		// 	document.getElementById("players-table").classList.remove("hidden");
+		// }
 		nbOfPlayers += 1;
 		let playerBlock = document.createElement("div");
 		playerBlock.id = data.playerId;
@@ -362,9 +367,9 @@ function deletePlayer(selfElement) {
 socket.on("playerDeleted", function (data) {
 	document.getElementById(data).remove();
 	nbOfPlayers -= 1;
-	if (document.getElementById("players").childElementCount === 0) {
-		document.getElementById("players-table").classList.add("hidden");
-	}
+	// if (document.getElementById("players").childElementCount === 0) {
+	// 	document.getElementById("players-table").classList.add("hidden");
+	// }
 });
 
 // redirect the screen
