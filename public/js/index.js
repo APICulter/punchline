@@ -329,7 +329,7 @@ socket.on("newJoiner", function (data) {
 		nbOfPlayers += 1;
 		let playerBlock = document.createElement("div");
 		playerBlock.id = data.playerId;
-		playerBlock.className = "text-wrap w-full flex flex-row rounded m-2 p-2 justify-between items-center";
+		playerBlock.className = "text-wrap w-full flex flex-row rounded m-1 p-2 justify-between items-center";
 
 		let player = document.createElement("div");
 		playerBlock.append(player);
