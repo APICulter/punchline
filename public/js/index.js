@@ -29,7 +29,7 @@ function setUsername() {
 	if (playerName.value.length == 0) {
 		displayErrorMessage(error, "Please enter a name");
 		return;
-	} else if ( playerName.value.length > 25) {
+	} else if ( playerName.value.length > 22) {
 		displayErrorMessage(error, "Name too long");
 		return;
 	} else {
@@ -329,16 +329,16 @@ socket.on("newJoiner", function (data) {
 		updateNbOfPlayers();
 		let playerBlock = document.createElement("div");
 		playerBlock.id = data.playerId;
-		playerBlock.className = "text-wrap w-full flex flex-row rounded m-1 p-2 justify-between items-center";
+		playerBlock.className = "text-wrap w-full flex flex-row rounded m-1 p-2 justify-between items-center  whitespace-nowrap";
 
 		let player = document.createElement("div");
 		playerBlock.append(player);
 		// player.className = "text-left font-medium w-full break-words  text-gray-900 ";
-		player.className = "bg-amber-400 p-2 rounded-md shadow-sm w-9/12 break-words";
+		player.className = "bg-amber-400 p-2 rounded-md shadow-sm w-10/12 break-words ";
 		let playerText = document.createElement("div");
 		player.append(playerText);
 		playerText.textContent = data.playerName;
-		playerText.className = " font-medium";
+		playerText.className = " font-medium text-ellipsis overflow-hidden";
 
 		let deleteButton = document.createElement("button");
 		deleteButton.className = " bg-indigo-500 rounded-full h-6 w-6 flex items-center justify-center relative shadow-sm";
