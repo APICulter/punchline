@@ -111,7 +111,6 @@ function createGame() {
 		height += Number(getComputedStyle(document.getElementById("startGame")).height.slice(0, -2));
 		height += Number(getComputedStyle(document.getElementById("optionMenu")).height.slice(0, -2));
 		// height = "sm:min-h-["+ height.toString() +"px]";
-		console.log(height);
 		// document.getElementById("mainDiv").classList.replace("sm:min-h-[430px]", `sm:min-h-[${height.toString()}px]`);
 		document.getElementById("mainDiv").classList.replace("sm:min-h-[430px]", "sm:min-h-[960px]");
 		// document.getElementById("mainDiv").classList.replace("sm:max-h-max", "sm:max-h-0");
@@ -327,6 +326,7 @@ socket.on("newJoiner", function (data) {
 		// 	document.getElementById("players-table").classList.remove("hidden");
 		// }
 		nbOfPlayers += 1;
+		updateNbOfPlayers();
 		let playerBlock = document.createElement("div");
 		playerBlock.id = data.playerId;
 		playerBlock.className = "text-wrap w-full flex flex-row rounded m-1 p-2 justify-between items-center";
@@ -363,10 +363,16 @@ function deletePlayer(selfElement) {
 	});
 }
 
+function updateNbOfPlayers() {
+	document.getElementById("playerCounter").textContent = nbOfPlayers;
+}
+
+
 // deletes the display of a player (front end side)
 socket.on("playerDeleted", function (data) {
 	document.getElementById(data).remove();
 	nbOfPlayers -= 1;
+	updateNbOfPlayers();
 	// if (document.getElementById("players").childElementCount === 0) {
 	// 	document.getElementById("players-table").classList.add("hidden");
 	// }
