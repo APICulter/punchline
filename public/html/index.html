@@ -112,7 +112,7 @@
 				
 				<!-- button pin -->
 				 <div class="flex items-center sm:mt-8">
-					<button id="punchlinePin" type="button" name="punchlinePin" class=" invisible sm:w-min font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2 sm:align-baseline"><span class="invisible">0000</span></button>
+					<button id="punchlinePin" type="button" name="punchlinePin" class=" invisible sm:w-min font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-default hover:bg-amber-400 m-2 sm:align-baseline"><span class="invisible">0000</span></button>
 
 				 </div>
 				<!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
@@ -212,14 +212,14 @@
 									</div>
 									<div class="mt-8 bg-amber-500 rounded-md flex flex-col p-4">
 										<p class="font-bold text-lg">Mode</p>
-										<div class="flex flex-row space-x-4 justify-center my-2">
-											<div class="flex">
-												<input class="accent-indigo-500 border-0 mr-1" type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked="yes">
-											<label class="font-medium" for="normalMode">Classic</label>
+										<div class="flex flex-row space-x-4 justify-center my-2 ">
+											<div class="flex items-center hover:cursor-pointer">
+												<input class="radio-custom accent-indigo-500 border-0 mr-1 before:accent-red-500 after:accent-green-500" type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked="yes">
+											<label class="font-medium hover:cursor-pointer" for="normalMode">Classic</label>
 											</div>
-											<div class="flex">
-												<input class="accent-indigo-500 mr-1" type="radio" id="premiumMode" name="modeSelection" value="premium" onclick="changeMode()">
-											<label class="font-medium" for="premiumMode">Premium</label>
+											<div class="flex items-center">
+												<input class="radio-custom accent-indigo-500 mr-1" type="radio" id="premiumMode" name="modeSelection" value="premium" onclick="changeMode()">
+											<label class="font-medium hover:cursor-pointer" for="premiumMode">Premium</label>
 											</div>
 	
 											
@@ -232,12 +232,14 @@
 												name="secretCode"
 												value=""
 												placeholder=""
-												class="invisible rounded-md px-4 placeholder-gray-500 p-2 bg-gray-100 focus:outline-none"
+												class="invisible rounded-md px-4 placeholder-gray-500 p-2 bg-orange-200 focus:outline-none"
 											/>
 											
 										</div>
 										
 									</div>
+
+									
 	
 	
 									<div id="players-table" class=" h-60 mt-6 bg-amber-500 rounded-xl shadow-xl px-4 pb-4  max-w-72">
@@ -245,7 +247,7 @@
 										<div class="sticky top-0 bg-amber-500 py-2 z-10 ">
 											<p class="font-bold text-lg my-2 ">Players (<span id="playerCounter">0</span>)</p>
 										</div>
-											<div id="players" class="flex flex-row flex-wrap overflow-y-scroll no-scrollbar h-40 items-start shadow-inner-custom rounded-xl content-start">
+											<div id="players" class="flex flex-row flex-wrap overflow-y-scroll no-scrollbar h-40 bg-orange-200 items-start shadow-inner-custom rounded-xl content-start">
 	
 											</div>
 										<!-- </div> -->

@@ -17,7 +17,7 @@
       -webkit-appearance: none;
       width: 100%;
       height: 0.5rem;
-      background: #f3f4f6;
+      background: rgb(254 215 170 / var(--tw-bg-opacity));
       outline: none;
       opacity: 1;
       cursor: pointer;
@@ -47,6 +47,29 @@
       cursor: pointer;
       border-radius: 1rem;
     }
+
+
+    .radio-custom {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 0.75rem;
+      width: 0.75rem;
+      background-color: rgb(254 215 170 / var(--tw-bg-opacity));
+      margin-right: 0.25rem;
+      border-radius: 6px;
+    }
+
+    .radio-custom:hover {
+      cursor: pointer;
+    }
+
+    .radio-custom:checked {
+      background-color: rgb(99 102 241);
+      border-width: 2px;
+      border-color: rgb(254 215 170 / var(--tw-bg-opacity));
+  }
+
+
     
 
 
