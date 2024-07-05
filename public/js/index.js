@@ -151,6 +151,8 @@ function joinGameInit() {
 	document.getElementById("joinGameInit").classList.add("hidden");
 	document.getElementById("join").classList.remove("hidden");
 	document.getElementById("roomPin").focus();
+	document.getElementById("optionJoin").classList.replace("sm:items-start", "sm:items-center");
+
 }
 
 
@@ -341,7 +343,7 @@ socket.on("newJoiner", function (data) {
 		playerText.className = " font-medium text-ellipsis overflow-hidden";
 
 		let deleteButton = document.createElement("button");
-		deleteButton.className = " bg-indigo-500 rounded-full h-6 w-6 flex items-center justify-center relative shadow-sm hover:bg-red-600";
+		deleteButton.className = " bg-indigo-500 rounded-full h-6 w-6 flex items-center justify-center relative shadow-sm hover:bg-red-600 ease-in-out duration-200 transition active:scale-90 ";
 		deleteButton.setAttribute("onclick", "deletePlayer(this)");
 
 		let cross = document.createElement("p");
