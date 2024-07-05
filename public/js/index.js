@@ -341,7 +341,7 @@ socket.on("newJoiner", function (data) {
 		playerText.className = " font-medium text-ellipsis overflow-hidden";
 
 		let deleteButton = document.createElement("button");
-		deleteButton.className = " bg-indigo-500 rounded-full h-6 w-6 flex items-center justify-center relative shadow-sm";
+		deleteButton.className = " bg-indigo-500 rounded-full h-6 w-6 flex items-center justify-center relative shadow-sm hover:bg-red-600";
 		deleteButton.setAttribute("onclick", "deletePlayer(this)");
 
 		let cross = document.createElement("p");
