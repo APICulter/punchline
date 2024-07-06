@@ -4,6 +4,7 @@
 
 let nbOfPlayers = 0;
 var minNbOfPlayers = 2;
+const forbiddenCaracters = ["&","~","\"","#","'","{","(","[","|","`","\\","@",")","]","=","+","¨","$","¤","£","%","ù","*","µ",",","?",";",".",":","/","§","/"];
 
 // const playerNameElement = document.getElementById("player-name");
 
@@ -33,10 +34,19 @@ function setUsername() {
 		displayErrorMessage(error, "Name too long");
 		return;
 	} else {
-		socket.emit("setUsername", {
+
+		var result = forbiddenCaracters.filter((caracter) => playerName.value.includes(caracter));
+		if (result.length > 0) {
+			displayErrorMessage(error, "Invalid caracter(s): " + result);
+			return;
+		} else {
+			socket.emit("setUsername", {
 			playerName: DOMPurify.sanitize(playerName.value),
 			pin: DOMPurify.sanitize(pin.value),
 		});
+		}
+
+		
 	}
 
 
