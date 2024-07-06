@@ -4,7 +4,7 @@
 
 let nbOfPlayers = 0;
 var minNbOfPlayers = 2;
-const forbiddenCaracters = ["&","~","\"","#","'","{","(","[","|","`","\\","@",")","]","=","+","¨","$","¤","£","%","ù","*","µ",",","?",";",".",":","/","§","/"];
+const forbiddenCaracters = ["&","~","\"","#","'","{","(","[","|","`","\\","@",")","]","=","+","¨","$","¤","£","%","*","µ",",","?",";",".",":","/","§","/"];
 
 // const playerNameElement = document.getElementById("player-name");
 
@@ -247,10 +247,10 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		playerName.type = "text";
 		playerName.name = "player-name";
 		playerName.value = "";
-		playerName.maxLength = 25;
+		playerName.maxLength = 21;
 		playerName.placeholder = "Name";
 		playerName.className =
-			"w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-orange-200 focus:outline-none";
+			"shadow-xl w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-orange-200 autofill:bg-orange-200 focus:outline-none";
 		let playerNameButton = document.getElementById("player-name");
 		playerNameButton.focus();
 		playerNameButton.addEventListener('focus', () => {
@@ -274,7 +274,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		nameButton.innerText = "Go";
 		nameButton.setAttribute("onclick", "setUsername()");
 		nameButton.className =
-			"w-full sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400";
+			"w-full text-2xl sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400";
 
 		let errorContainer = document.createElement("div");
 		document.querySelector("#name").append(errorContainer);
