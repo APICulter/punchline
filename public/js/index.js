@@ -250,7 +250,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		playerName.maxLength = 25;
 		playerName.placeholder = "Name";
 		playerName.className =
-			"w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-slate-100 focus:outline-none";
+			"w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-orange-200 focus:outline-none";
 		let playerNameButton = document.getElementById("player-name");
 		playerNameButton.focus();
 		playerNameButton.addEventListener('focus', () => {
