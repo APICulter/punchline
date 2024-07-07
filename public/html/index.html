@@ -26,8 +26,8 @@
 
 			<div class="bg-slate-300 w-full sm:w-3/4 lg:w-1/2  m-auto shadow-xl sm:rounded-xl p-4 ">
 				<div class="p-4">
-					<div class="bg-indigo-600 rounded-full h-6 w-6 flex items-center justify-center relative float-right hover:bg-indigo-700 ease-in-out duration-200 transition active:scale-90">
-						<span id="closeRules" class=" hover:cursor-pointer text-gray-200 font-bold absolute h-7">&times;</span>
+					<div class="bg-indigo-600 rounded-full h-6 w-6 flex items-center justify-center relative float-right hover:bg-indigo-700 ease-in-out duration-200 transition active:scale-90 hover:cursor-pointer">
+						<span id="closeRules" class="  text-gray-200 font-bold absolute h-7">&times;</span>
 
 					</div>
 					<p class="text-center pb-8 text-xl font-bold">Rules of the game</p>
@@ -150,7 +150,7 @@
 						<div id="nameInput">
 	
 						</div>
-						<div id="emptyName" class="text-sm hidden z-10">Please enter a name</div>
+						<div id="emptyName" class="text-sm hidden z-10 absolute bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition">Please enter a name !</div>
 	
 					</div>
 	
@@ -179,7 +179,6 @@
 								Join game
 							</button>
 								<div id="join" class=" hidden flex flex-col max-w-2xl mx-auto">
-									<div id="maxNbOfPlayersReached" class="text-sm hidden z-10">Already full</div>
 									<div class="max-w-2xl">
 										<input
 										id="roomPin"
@@ -260,7 +259,7 @@
 									</div>
 	
 								</div>
-								<div>
+								<div class="relative flex justify-center">
 									<button
 										id="startGame"
 										type="button"
@@ -270,9 +269,10 @@
 									>
 										<span class="text-slate-300 font-bold">Play</span>
 									</button>
-									<div id="startGameError" class="text-sm hidden z-10">Invalid code</div>
-									<div id="errorPin" class="text-sm hidden z-10">Invalid PIN game</div>
-	
+									<div id="startGameError" class="text-sm hidden z-10 absolute top-1/2  bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition">Invalid code</div>
+									<div id="errorPin" class="text-sm hidden z-10 absolute bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition">Invalid PIN game</div>
+									<div id="maxNbOfPlayersReached" class="text-sm hidden z-10 absolute bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition">Already full</div>
+
 	
 								</div>
 	

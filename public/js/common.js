@@ -77,9 +77,11 @@ function home() {
 function displayErrorMessage(element, message) {
 	element.textContent = message;
 	element.classList.remove("hidden");
+	element.classList.remove("animate__fadeOutRight");
 	// Message error for 1.5 seconds display
 	setTimeout(function () {
-		element.classList.add("hidden");
+		// element.classList.add("hidden");
+		element.classList.add("animate__fadeOutRight");
 	}, 1500);
 }
 
