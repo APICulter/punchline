@@ -261,10 +261,6 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 				document.getElementById("name-button").scrollIntoView({ behavior: 'smooth' });
 			}, 300); // Delay to allow for keyboard animation
 
-			// document.getElementById("name-button").addEventListener('blur', function() {
-			// 	// Optionally, you can scroll back to the top when the input loses focus
-			// 	window.scrollTo({ top: 0, behavior: 'smooth' });
-			// });
 
 		  });
 
@@ -281,10 +277,10 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		let errorContainer = document.createElement("div");
 		document.querySelector("#name").append(errorContainer);
 		errorContainer.id = "errorName";
-		errorContainer.className = "text-sm z-10 absolute bg-red-700 rounded-lg p-2 w-max text-slate-200";
+		errorContainer.className = "text-sm z-10 hidden absolute bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition";
 		let errorRoomFull = document.createElement("div");
 		errorRoomFull.id = "errorRoomFull";
-		errorRoomFull.className = "text-sm invisible z-10 absolute bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition";
+		errorRoomFull.className = "text-sm hidden z-10 absolute bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition";
 
 	} else {
 		let nameChoice = document.createElement("div");
