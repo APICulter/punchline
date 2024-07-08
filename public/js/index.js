@@ -168,20 +168,20 @@ function joinGameInit() {
 
 let roomPin = document.getElementById("roomPin");
 // Ajoutez un écouteur d'événements pour le focus sur le champ input
-roomPin.addEventListener('focus', () => {
-	// Faites défiler la page jusqu'au champ input
+// roomPin.addEventListener('focus', () => {
+// 	// Faites défiler la page jusqu'au champ input
 	
 
-	setTimeout(function() {
-		document.getElementById("joinRoomButton").scrollIntoView({ behavior: 'smooth' });
-	}, 300); // Delay to allow for keyboard animation
+// 	setTimeout(function() {
+// 		document.getElementById("joinRoomButton").scrollIntoView({ behavior: 'smooth' });
+// 	}, 300); // Delay to allow for keyboard animation
 
-	// document.getElementById("joinRoomButton").addEventListener('blur', function() {
-    //     // Optionally, you can scroll back to the top when the input loses focus
-    //     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // });
+// 	// document.getElementById("joinRoomButton").addEventListener('blur', function() {
+//     //     // Optionally, you can scroll back to the top when the input loses focus
+//     //     window.scrollTo({ top: 0, behavior: 'smooth' });
+//     // });
 
-  });
+//   });
 
 
 socket.on("gameExists", function (data) {
@@ -255,14 +255,14 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 			"shadow-xl w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-orange-200 autofill:bg-orange-200 focus:outline-none";
 		let playerNameButton = document.getElementById("player-name");
 		playerNameButton.focus();
-		playerNameButton.addEventListener('focus', () => {
-			// Faites défiler la page jusqu'au champ input
-			setTimeout(function() {
-				document.getElementById("name-button").scrollIntoView({ behavior: 'smooth' });
-			}, 300); // Delay to allow for keyboard animation
+		// playerNameButton.addEventListener('focus', () => {
+		// 	// Faites défiler la page jusqu'au champ input
+		// 	setTimeout(function() {
+		// 		document.getElementById("name-button").scrollIntoView({ behavior: 'smooth' });
+		// 	}, 300); // Delay to allow for keyboard animation
 
 
-		  });
+		//   });
 
 		let nameButton = document.createElement("button");
 		document.querySelector("#name").append(nameButton);
@@ -277,7 +277,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		let errorContainer = document.createElement("div");
 		document.querySelector("#name").append(errorContainer);
 		errorContainer.id = "errorName";
-		errorContainer.className = "text-sm z-10 hidden absolute bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition";
+		errorContainer.className = "text-sm z-10 hidden  bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition";
 		let errorRoomFull = document.createElement("div");
 		errorRoomFull.id = "errorRoomFull";
 		errorRoomFull.className = "text-sm hidden z-10 absolute bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition";
