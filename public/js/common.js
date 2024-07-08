@@ -10,6 +10,7 @@ var modalRules = document.getElementById("rulesModal");
 var rules = document.getElementById("rules");
 var exitRulesX = document.getElementById("closeRules");
 var exitRules = document.getElementById("exitRules");
+var mainDiv = document.getElementById("mainDiv");
 
 
 // when the page is fully charged
@@ -28,16 +29,19 @@ window.addEventListener('load', function() {
 // When the user clicks the button, open the modal
 rules.onclick = function () {
 	modalRules.classList.remove("hidden");
+	mainDiv.classList.add("hidden");
 };
 
 // When the user clicks on <span> (x), close the modal
 exitRulesX.onclick = function () {
 	modalRules.classList.add("hidden");
+	mainDiv.classList.remove("hidden");
 	window.scrollTo(0, 0);
 };
 
 exitRules.onclick = function () {
 	modalRules.classList.add("hidden");
+	mainDiv.classList.remove("hidden");
 	window.scrollTo(0, 0);
 };
 
@@ -45,6 +49,7 @@ exitRules.onclick = function () {
 window.onclick = function (event) {
 	if (event.target == modalRules) {
 		modalRules.classList.add("hidden");
+		mainDiv.classList.remove("hidden");
 		window.scrollTo(0, 0);
 	}
 };
