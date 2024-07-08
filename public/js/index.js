@@ -459,18 +459,18 @@ socket.on("startGameErrorMessages", function (data) {
 // }
 
 let secretCode = document.getElementById("secretCode");
-secretCode.addEventListener('focus', () => {
+// secretCode.addEventListener('focus', () => {
 
-	setTimeout(function() {
-		document.getElementById("secretCode").scrollIntoView({ behavior: 'smooth' });
-	}, 300); // Delay to allow for keyboard animation
+// 	setTimeout(function() {
+// 		document.getElementById("secretCode").scrollIntoView({ behavior: 'smooth' });
+// 	}, 300); // Delay to allow for keyboard animation
 
-	// document.getElementById("secretCode").addEventListener('blur', function() {
-	// 	// Optionally, you can scroll back to the top when the input loses focus
-	// 	window.scrollTo({ top: 0, behavior: 'smooth' });
-	// });
+// 	// document.getElementById("secretCode").addEventListener('blur', function() {
+// 	// 	// Optionally, you can scroll back to the top when the input loses focus
+// 	// 	window.scrollTo({ top: 0, behavior: 'smooth' });
+// 	// });
 
-  });
+//   });
 // To change between classic mode and premium mode
 function changeMode() {
 	let radio = document.querySelector("input[name=modeSelection]:checked").value;
