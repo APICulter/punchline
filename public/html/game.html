@@ -8,8 +8,24 @@
 		<link rel="stylesheet" href="../css/animate.min.css">
 		<title>Punchline</title>
 	</head>
+	<style>
+		#main {
+			width: 700px;
+			height: 700px;
+			
+		}
+
+		@media (max-width: 700px) {
+  /* … */#main {
+			width: auto;
+			height: auto;
+			
+		}
+			}
+	</style>
 	<script src="/socket.io/socket.io.js"></script>
-	<body class="bg-amber-600 min-h-screen overflow-y-auto overscroll-y-none">
+	<body class="bg-amber-600 sm:bg-slate-900 min-h-screen overflow-y-auto overscroll-y-none
+	sm:flex sm:items-center sm:justify-center sm:size-1/4">
 
 
 
@@ -56,10 +72,15 @@
 				
 			</div>
 
-		  </div>
+		</div>
 
-		  <div class="flex flex-col h-screen">
-			<section class="flex flex-row w-full flex-wrap">
+		
+
+		  <div id="main" class="bg-amber-600 flex flex-wrap sm:justify-center sm:m-6 sm: flex-col big-phone:items-center sm:overflow-hidden overscroll-y-none mx-auto 
+		  lg:max-w-screen-md sm:border-2 sm:rounded-lg sm:border-amber-300 lg:my-4
+		  2xl:max-w-screen-lg sm:items-center  sm:w-[700px] sm:h-[100px] sm:min-w-[500px]
+		  transition-all duration-300 ease-in-out">
+			<section class="flex grow flex-row w-full flex-wrap bg-amber-600">
 				<div class="flex flex-col justify-center">
 				<button
 				id="home"
@@ -89,13 +110,13 @@
 			</div>
 			</section>
 
-			<section class="flex flex-1 flex-col  items-center justify-center">
+			<section class="flex grow flex-col w-full items-center justify-center bg-amber-600 w-[700px]">
 			
 
 
 				<div
 					id="countdown"
-					class="hidden text-center font-bold text-6xl p-4 bg-indigo-500 rounded-full shadow-xl border-1 border-solid border-dark-900 mb-4"
+					class="hidden text-center font-bold text-4xl p-4 bg-indigo-500 rounded-full shadow-xl border-1 border-solid border-dark-900 mb-4"
 				></div>
 	
 	
@@ -103,17 +124,17 @@
 	
 				<div
 					id="gameZone"
-					class="invisible flex-col p-4 mx-auto my-auto "
+					class="invisible flex-col p-4 mx-auto my-auto text-wrap"
 				>
 					
 					
 					<div
 						id="questionBox"
-						class="mx-auto flex align-top justify-center items-center bg-amber-500 shadow-xl p-4 rounded-lg"
+						class="mx-auto flex align-top justify-center items-center bg-amber-500 shadow-xl p-4 rounded-lg w-full"
 					>
 						<div
 							id="question"
-							class="text-center text-lg font-semibold"
+							class="text-center text-lg font-semibold w-[100px] text-wrap"
 						></div>
 	
 						
@@ -121,7 +142,7 @@
 					</div>
 					<div
 						id="answerBox"
-						class="invisible mx-auto mt-5 flex flex-col items-center justify-center bg-amber-400  p-4 rounded-lg"
+						class="invisible mx-auto mt-5 flex flex-col items-center justify-center bg-amber-400  p-4 rounded-lg w-full"
 					>
 						<div
 							id="answer"
@@ -134,17 +155,19 @@
 					>
 						<div
 							id="player"
-							class=" items-center text-lg text-slate-200 bg-indigo-500 rounded-lg p-4 shadow-xl font-semibold  break-words"
+							class=" items-center text-lg text-slate-200 bg-indigo-500 rounded-lg p-4 shadow-xl  break-words"
 						></div>
 						<div
 							id="points"
-							class=" items-center text-xl bg-green-700 text-slate-200  rounded-full p-2 animate__animated animate__bounceInRight "
+							class=" items-center text-xl bg-green-700 text-slate-200 shadow-xl rounded-full p-2 font-semibold animate__animated animate__bounceInRight "
 						></div>
 					</div>
 				</div>
 			</section>
 	
 			</div>
+
+			
 
 		
 
