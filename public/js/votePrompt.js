@@ -21,7 +21,7 @@ socket.on("postAnswers", function (data) {
 		answer.id = element.playerName;
 		answer.value = element.textAnswer;
 		answer.name = "answer";
-		answer.className += "invisible w-0";
+		answer.className += "invisible";
 
 		let answerBlock = document.createElement("div");
 		answerBlock.id = data.indexOf(element);
@@ -37,6 +37,7 @@ socket.on("postAnswers", function (data) {
 		let label = document.createElement("label");
 		label.setAttribute("for", answer.id);
 		label.id = "label-" + data.indexOf(element);
+		label.className = "w-11/12";
 		// document.getElementById(label.id).style.pointerEvents = "none";
 		// document.getElementById(label.id).disabled=true;
 		// document.getElementById(label.id).setAttribute("disabled", "true");

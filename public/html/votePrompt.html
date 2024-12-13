@@ -7,6 +7,21 @@
 		<link rel="stylesheet" href="../css/style.css" />
 		<title>Punchline</title>
 	</head>
+	<style>
+		#votes {
+			width: 400px;
+			
+			
+		}
+
+		@media (max-width: 700px) {
+  #votes{
+			width: 100%;
+		
+			
+		}
+			}
+	</style>
 	<script src="/socket.io/socket.io.js"></script>
 
 	<body class="bg-amber-600 min-h-screen overflow-y-auto overscroll-y-none">
@@ -88,12 +103,12 @@
 		
 		</section>
 
-		<section class=" flex flex-1 flex-col items-center justify-center  mx-auto  ">
+		<section id="votes" class=" w-full flex flex-1 flex-col items-center justify-center  mx-auto  ">
 			
 			<div
 				class="flex flex-col bg-amber-500 shadow-xl p-4 rounded-lg my-auto mx-auto w-10/12"
 			>
-				<div id="answers" class="flex flex-col"></div>
+				<div id="answers" class="flex flex-col items-center"></div>
 				<div id="voteBox" class="flex">
 					<button
 						id="vote"
