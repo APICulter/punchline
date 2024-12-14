@@ -1,6 +1,6 @@
 // const socket = io();
 
-// default values in not loaded from config
+// default values if not loaded from config
 var questionCountDown = 61;
 var beforeQuestionCountDown = 6;
 var voteCountDown = 10;
@@ -44,10 +44,11 @@ function startCountdown(count, questionCount) {
 	var countdownInterval = setInterval(function () {
 		count--;
 		countdownElement.innerText = count;
-		countdownElement.classList.remove("hidden");
+		countdownElement.classList.remove("invisible");
+		countdownElement.classList.add("fade-in");
 
 		// Check if countdown has reached 0
-		if (count === 0) {
+		if (count === 1) {
 			clearInterval(countdownInterval);
 			gameZoneElement.classList.remove("invisible");
 			// countdownElement.classList.add("hidden");
@@ -67,6 +68,8 @@ function startCountDownQuestion(count) {
 		if (count === 0) {
 			clearInterval(countdownIntervalQuestion);
 			socket.emit("timeIsUpToAnswer", { pin: punchlinePin });
+			countdownElement.classList.add("fade-out");
+			countdownElement.classList.remove("fade-in");
 		}
 	}, 1000);
 }
@@ -115,7 +118,6 @@ socket.on("question", function (data) {
 	responseBoxElement.classList.add("invisible");
 	pointsBoxElement.classList.add("invisible");
 	gameZoneElement.classList.add("invisible");
-	countdownElement.classList.remove("invisible");
 	startCountdown(beforeQuestionCountDown, questionCountDown);
 });
 
