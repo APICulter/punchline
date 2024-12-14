@@ -7,8 +7,36 @@
 		<link rel="stylesheet" href="../css/style.css" />
 		<title>Punchline</title>
 	</head>
+	<style>
+		#main {
+			width: 700px;
+			height: 700px;
+			
+		}
+
+		#scoreTable {
+			
+			height: 345px;
+			
+		}
+
+		@media (max-width: 700px) {
+  /* … */#main {
+			width: auto;
+			height: auto;
+			
+		}
+
+		#scoreTable {
+			
+			height: auto;
+			
+		}
+			}
+	</style>
 	<script src="/socket.io/socket.io.js"></script>
-	<body class="bg-amber-600 min-h-screen overflow-y-auto overscroll-y-none">
+	<body class="bg-amber-600 sm:bg-slate-900 min-h-screen overflow-y-auto overscroll-y-none
+	sm:flex sm:items-center sm:justify-center sm:size-1/4">
 		
 		<div id="rulesModal" class="hidden bg-slate-400/70 w-full h-full fixed z-20 overflow-auto flex flex-col items-center">
 
@@ -55,7 +83,10 @@
 
 		  </div>
 
-		  <div class="flex flex-col h-screen">
+		<div id="main" class="bg-amber-600 flex flex-wrap sm:justify-center sm:m-6 sm: flex-col big-phone:items-center sm:overflow-hidden overscroll-y-none mx-auto 
+		  lg:max-w-screen-md sm:border-2 sm:rounded-lg sm:border-amber-300 lg:my-4
+		  2xl:max-w-screen-lg sm:items-center  sm:w-[700px] sm:h-[100px] sm:min-w-[500px]
+		  transition-all duration-300 ease-in-out">
 			<section class="flex flex-row w-full flex-wrap">
 				<div class="flex flex-col justify-center">
 				<button
@@ -87,17 +118,25 @@
 			
 			</section>
 			
-			<section id="finalScores" class="flex flex-1 flex-col items-center justify-center mt-10">
-				
-				<div id="scoreTable" >
+			<!-- <section id="finalScores" class="flex flex-1 flex-col items-center justify-between mt-10 overflow-y-scroll no-scrollbar"> -->
+			<section id="finalScores" class="flex  flex-1 flex-col items-center sm:justify-between ">
+				<div class="flex flex-col flex-wrap  items-start  rounded-xl content-start">
+					<div id="scoreTable" class="overflow-y-scroll no-scrollbar shadow-inner-custom rounded-xl">
 	
 				</div>
-	
-	  <button id="playAgain" onclick="home()" class="animate-pulse mx-auto flex flex-col items-center  justify-center mb-20 bg-amber-400 rounded-md shadow-xl p-4 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400">
-				<a href="/html/index.html">Play again</a>
-			</button>
+				</div>
 				
+	
+				
+				<button id="playAgain" onclick="home()" class="mt-10 animate-bounce mx-auto flex flex-col items-center  justify-center  bg-amber-400 rounded-md shadow-xl p-4 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400">
+					<a href="/html/index.html">Play again</a>
+				</button>	
+			
 			</section>
+
+			
+
+			
 		  </div>
 
 		

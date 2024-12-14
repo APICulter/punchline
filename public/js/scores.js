@@ -22,6 +22,7 @@ socket.on("scores", function (scores) {
 	body.className += "drop-shadow-xl";
 
 	var row = body.insertRow();
+	row.className= "sticky top-0";
 	var cell = row.insertCell();
 	var text = document.createTextNode("Rank");
 	cell.className =
