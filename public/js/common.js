@@ -11,6 +11,7 @@ var rules = document.getElementById("rules");
 var exitRulesX = document.getElementById("closeRules");
 var exitRules = document.getElementById("exitRules");
 var mainDiv = document.getElementById("mainDiv");
+var errorMessages = document.getElementById("errorMessages");
 
 
 // when the page is fully charged
@@ -37,12 +38,14 @@ exitRulesX.onclick = function () {
 	modalRules.classList.add("hidden");
 	mainDiv.classList.remove("hidden");
 	window.scrollTo(0, 0);
+	errorMessages.classList.add("hidden");
 };
 
 exitRules.onclick = function () {
 	modalRules.classList.add("hidden");
 	mainDiv.classList.remove("hidden");
 	window.scrollTo(0, 0);
+	errorMessages.classList.add("hidden");
 };
 
 // When the user clicks anywhere outside of the modal, close it
@@ -51,6 +54,7 @@ window.onclick = function (event) {
 		modalRules.classList.add("hidden");
 		mainDiv.classList.remove("hidden");
 		window.scrollTo(0, 0);
+		errorMessages.classList.add("hidden");
 	}
 };
 
@@ -80,6 +84,7 @@ function home() {
 
 // Displays error messages
 function displayErrorMessage(element, message) {
+	document.getElementById("errorMessages").classList.remove("hidden");
 	element.textContent = message;
 	element.classList.remove("hidden");
 	element.classList.remove("animate__fadeOutRight");
