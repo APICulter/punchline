@@ -27,11 +27,9 @@ function sendAnswer() {
 
 	if (answer.value.length == 0) {
 		displayErrorMessage(error, "please answer");
-		button.classList.add("invalid:border-red-500");
 		return;
 	} else if (answer.value.length >= 100) {
 		displayErrorMessage(error, "answer too long");
-		button.classList.add("invalid:border-red-500");
 		return;
 	} else {
 		socket.emit("answer", {
