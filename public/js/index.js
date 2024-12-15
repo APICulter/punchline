@@ -220,16 +220,8 @@ function joinRoom() {
 
 // Displays error message coming from the backend if the PIN encounters a problem
 socket.on("findRoomByIdErrorMessages", function (data) {
-	let error = document.getElementById("errorPin");
-	error.textContent = data;
-	error.classList.remove("hidden");
-	error.classList.remove("animate__fadeOutRight");
-
+	displayErrorMessage(document.getElementById("errorPin"), data);
 	
-	setTimeout(function () {
-		// messageElement.style.display = 'none';
-		error.classList.add("animate__fadeOutRight");
-	}, 1500);
 });
 
 
@@ -505,16 +497,8 @@ function changeMode() {
 
 // Displays an error message if the players tries to join and the room is full
 socket.on("errorRoomFull", function (data) {
-	let error = document.getElementById("maxNbOfPlayersReached");
-	error.textContent = data;
-	error.classList.remove("hidden");
-	error.classList.remove("animate__fadeOutRight");
-
-	// Masquer le texte après 2 secondes
-	setTimeout(function () {
-		// messageElement.style.display = 'none';
-		error.classList.add("animate__fadeOutRight");
-	}, 1500);
+	displayErrorMessage(document.getElementById("maxNbOfPlayersReached"), data);
+	
 });
 
 // function errorMessage(error) {
