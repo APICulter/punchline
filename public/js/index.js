@@ -117,12 +117,12 @@ function createGame() {
 		// height += document.getElementById("startGame").style.height;
 		// height += document.getElementById("optionMenu").style.height;
 
-		var height = Number(getComputedStyle(document.getElementById("mainDiv")).height.slice(0, -2));
+		var height = Number(getComputedStyle(document.getElementById("main")).height.slice(0, -2));
 		height += Number(getComputedStyle(document.getElementById("startGame")).height.slice(0, -2));
 		height += Number(getComputedStyle(document.getElementById("optionMenu")).height.slice(0, -2));
 		// height = "sm:min-h-["+ height.toString() +"px]";
 		// document.getElementById("mainDiv").classList.replace("sm:min-h-[430px]", `sm:min-h-[${height.toString()}px]`);
-		document.getElementById("mainDiv").classList.replace("sm:min-h-[430px]", "sm:min-h-[860px]");
+		document.getElementById("main").classList.replace("sm:min-h-[430px]", "sm:min-h-[860px]");
 		// document.getElementById("mainDiv").classList.replace("sm:max-h-max", "sm:max-h-0");
 
 		// setTimeout(() => {

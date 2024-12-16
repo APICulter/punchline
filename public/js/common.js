@@ -10,7 +10,7 @@ var modalRules = document.getElementById("rulesModal");
 var rules = document.getElementById("rules");
 var exitRulesX = document.getElementById("closeRules");
 var exitRules = document.getElementById("exitRules");
-var mainDiv = document.getElementById("mainDiv");
+var mainDiv = document.getElementById("main");
 var errorMessages = document.getElementById("errorMessages");
 
 
