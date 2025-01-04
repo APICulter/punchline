@@ -38,6 +38,8 @@ window.onload = function () {
 
 // Function to start the countdown
 function startCountdown(count, questionCount) {
+
+	
 	
 
 	// Update the countdown every second
@@ -54,6 +56,9 @@ function startCountdown(count, questionCount) {
 			// countdownElement.classList.add("hidden");
 			socket.emit("startPrompt", { pin: punchlinePin });
 			startCountDownQuestion(questionCount);
+			document.getElementById("audio-player").play().catch((error) => {
+				console.log("Lecture automatique bloquée par le navigateur :", error);
+			 });
 		}
 	}, 1000);
 }
