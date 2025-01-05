@@ -9,15 +9,19 @@ document.addEventListener("DOMContentLoaded", () => {
   </svg>
 `;
 const volumeOff = `
- <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-  <path d="M9 7H5a1 1 0 00-1 1v8a1 1 0 001 1h4l5 4V3L9 7zM15.293 8.707a1 1 0 011.414 0L18 10.586l1.293-1.879a1 1 0 111.414 1.414L19.414 12l1.879 2.707a1 1 0 11-1.414 1.414L18 13.414l-1.293 1.879a1 1 0 01-1.414-1.414L16.586 12l-1.879-2.707a1 1 0 010-1.414z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+  <!-- Haut-parleur -->
+  <path d="M9 7H5a1 1 0 00-1 1v8a1 1 0 001 1h4l5 4V3L9 7z" />
+  <!-- Barre oblique -->
+  <path d="M4 4l16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
 </svg>
+
 
 `;
 
   // Configure initial volume and mute settings
   audioPlayer.volume = 0.2;
-  audioPlayer.muted = true;
+  audioPlayer.muted = false;
 
   // Play audio when page is loaded
 //    audioPlayer.play().catch((error) => {
