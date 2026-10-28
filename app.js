@@ -8,6 +8,7 @@ const http = require("http");
 const socketIO = require("socket.io");
 const mongoose = require("mongoose");
 const DOMPurify = require("isomorphic-dompurify");
+const os = require("os");
 
 
 // Create and configure the Express app
@@ -38,6 +39,50 @@ var properties = propertiesReader(__dirname + "/config.properties");
 properties.each((key, value) => {
 	global[key] = value;
 });
+
+// Port: PORT environment variable (set by most hosting platforms) or applicationPort
+const port = Number(process.env.PORT) || Number(global.applicationPort) || 3000;
+
+// First IPv4 address of this machine on the local network (e.g. 192.168.1.10)
+function lanAddress() {
+	for (const addresses of Object.values(os.networkInterfaces())) {
+		for (const address of addresses || []) {
+			if (address.family === "IPv4" && !address.internal) {
+				return address.address;
+			}
+		}
+	}
+	return null;
+}
+
+// Public address shown to players ("On your phone, open …"), in order of priority:
+// 1. PUBLIC_URL environment variable (production)
+// 2. punchlineURL in config.properties
+// 3. the address the host used to open the game; "localhost" is replaced by the
+//    machine's local network address so that phones on the same Wi-Fi can reach it
+function resolvePunchlineURL(socket) {
+	const configured = String(process.env.PUBLIC_URL || global.punchlineURL || "").trim();
+	if (configured) {
+		return configured.replace(/\/+$/, "");
+	}
+
+	const headers = socket.handshake.headers || {};
+	const forwardedProto = String(headers["x-forwarded-proto"] || "").split(",")[0].trim();
+	const protocol = forwardedProto || (socket.handshake.secure ? "https" : "http");
+	let host = String(headers["x-forwarded-host"] || headers.host || "").split(",")[0].trim();
+	if (!host) {
+		host = "localhost:" + port;
+	}
+
+	const local = host.match(/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i);
+	if (local) {
+		const ip = lanAddress();
+		if (ip) {
+			host = ip + (local[2] || "");
+		}
+	}
+	return protocol + "://" + host;
+}
 
 // Get the premium code
 if (global.premiumCode != null && String(global.premiumCode).length > 0) {
@@ -123,7 +168,7 @@ io.on("connection", function (socket) {
 
 	// Handler to get the game URL => Rules panel
 	socket.on("getPunchlineURL", () => {
-		socket.emit("sendPunchlineURL", punchlineURL);
+		socket.emit("sendPunchlineURL", resolvePunchlineURL(socket));
 	});
 
 	// Handler for creating a new room
@@ -693,7 +738,6 @@ io.on("connection", function (socket) {
 	});
 });
 
-const port = applicationPort;
 server.listen(port, () => {
 	console.log(`Server is running on http://localhost:${port}`);
 });

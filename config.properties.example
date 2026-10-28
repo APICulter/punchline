@@ -1,5 +1,8 @@
 databaseUrl = mongodb://127.0.0.1:27017/punchline
-punchlineURL = http://localhost:3000
+# Address shown to players ("On your phone, open ..."). Leave empty to use the
+# address the host opened (localhost is replaced by this machine's network IP).
+# In production, set it here or with the PUBLIC_URL environment variable.
+punchlineURL =
 applicationPort = 3000
 maxNumberOfPlayers = 3
 # max 15 caracters for premium code

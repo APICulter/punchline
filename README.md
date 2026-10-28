@@ -45,8 +45,8 @@ Open the site on a shared screen and create a room. Each participant opens the g
    | Key | Purpose |
    | --- | --- |
    | `databaseUrl` | MongoDB connection string, e.g. `mongodb://127.0.0.1:27017/punchline` |
-   | `applicationPort` | HTTP port the server listens on (default `3000`) |
-   | `punchlineURL` | Public URL of the game shown to players |
+   | `applicationPort` | HTTP port the server listens on (default `3000`, overridden by the `PORT` environment variable) |
+   | `punchlineURL` | Address shown to players in the lobby. Leave empty on a local network: the server shows the address the host opened, with `localhost` replaced by the machine's network IP. In production set it here or with the `PUBLIC_URL` environment variable (which wins), e.g. `https://punchline.example.com` |
    | `maxNumberOfPlayers` | Maximum number of players per room |
    | `premiumCode` | Code that unlocks premium (explicit) questions, 15 characters max |
    | `questionCountDown`, `beforeQuestionCountDown`, `voteCountDown` | Round timers, in seconds |
@@ -69,7 +69,15 @@ Open the site on a shared screen and create a room. Each participant opens the g
    npm start
    ```
 
-6. Open <http://localhost:3000> (or the port set in `applicationPort`). Players join from their phones using the address of the machine on the local network, e.g. `http://192.168.1.10:3000`.
+6. Open <http://localhost:3000> (or the port set in `applicationPort`). Players join from their phones using the address shown in the lobby (the machine's local network address, e.g. `http://192.168.1.10:3000`, unless `PUBLIC_URL` / `punchlineURL` is set).
+
+### Production
+
+```bash
+PUBLIC_URL=https://punchline.example.com PORT=8080 npm start
+```
+
+Behind a reverse proxy, `PUBLIC_URL` is the address players type; without it the server falls back to the `Host` / `X-Forwarded-Host` headers.
 
 In VS Code, the "Launch Punchline" configuration in `.vscode/launch.json` starts `app.js` under the debugger.
 
