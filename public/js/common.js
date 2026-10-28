@@ -21,8 +21,6 @@ window.addEventListener('load', function() {
     if (punchlinePin) {
         punchlinePinElement.textContent = punchlinePin;
 		punchlinePinElement.classList.remove("invisible");
-		punchlinePinElement.className += " animate-pulse";
-		punchlinePinElement.classList.replace("bg-amber-500", "bg-amber-400");
     }
 
 	// Link to the game in the rules panel

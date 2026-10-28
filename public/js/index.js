@@ -26,7 +26,7 @@ function setUsername() {
 	playerName.value = playerName.value.trim();
 
 	if (playerName.value.length == 0) {
-		displayErrorMessage(error, "Please enter a name");
+		displayErrorMessage(error, "Enter a name to join");
 		return;
 	} else if ( playerName.value.length > 22) {
 		displayErrorMessage(error, "Name too long");
@@ -99,35 +99,47 @@ function createGame() {
 	gameCreationRequested = true;
 
 	socket.emit("createGame");
-	document.getElementById("startGame").classList.remove("hidden");
-	document.getElementById("optionMenu").classList.remove("hidden");
+	document.getElementById("startButtons").classList.add("hidden");
 	document.getElementById("join").classList.add("hidden");
-	document.getElementById("joinGameInit").classList.add("hidden");
-	document
-		.getElementById("createGame")
-		.classList.remove("hover:cursor-pointer");
-	document.getElementById("main").classList.replace("sm:min-h-[430px]", "sm:min-h-[860px]");
+	document.getElementById("tagline").classList.add("hidden");
+	document.getElementById("hero").classList.remove("flex-1");
+	document.getElementById("lobby").classList.remove("hidden");
+	socket.emit("getPunchlineURL");
+}
+
+// The join address shown in the lobby (same URL as the one in the rules)
+socket.on("sendPunchlineURL", function (data) {
+	let lobbyURL = document.getElementById("lobbyURL");
+	if (lobbyURL && data) {
+		lobbyURL.textContent = String(data).replace(/^https?:\/\//, "").replace(/\/$/, "");
+	}
+});
+
+// Big PIN tiles in the lobby, readable from across the room
+function displayLobbyPin(pin) {
+	let lobbyPin = document.getElementById("lobbyPin");
+	lobbyPin.replaceChildren();
+	String(pin).split("").forEach((digit) => {
+		let tile = document.createElement("span");
+		tile.className =
+			"grid h-20 w-16 place-items-center rounded-2xl bg-butter text-5xl font-extrabold tabular-nums text-plum sm:h-24 sm:w-20 sm:text-6xl";
+		tile.textContent = digit;
+		lobbyPin.append(tile);
+	});
 }
 
 socket.on("newGame", function (data) {
 	document.getElementById("punchlinePin").textContent = data;
 	document.getElementById("punchlinePin").classList.remove("invisible");
-	document.getElementById("punchlinePin").className += " animate-pulse";
-	document
-		.getElementById("punchlinePin")
-		.classList.replace("bg-amber-500", "bg-amber-400");
-
-	document.getElementById("createGame").classList.add("hidden");
+	displayLobbyPin(data);
 
 	sessionStorage.setItem("punchlinePin", data);
 });
 
 function joinGameInit() {
-	document.getElementById("createGame").classList.add("hidden");
-	document.getElementById("joinGameInit").classList.add("hidden");
+	document.getElementById("startButtons").classList.add("hidden");
 	document.getElementById("join").classList.remove("hidden");
 	document.getElementById("roomPin").focus();
-	document.getElementById("optionJoin").classList.replace("sm:items-start", "sm:items-center");
 
 }
 
@@ -148,13 +160,13 @@ function joinRoom() {
 	
 	// Validation
 	if (roomPin.value.length == 0) {
-		displayErrorMessage(error, "Empty PIN");
+		displayErrorMessage(error, "Enter the 4-digit PIN");
 		return;
 	} else if (!/^[0-9]+$/.test(roomPin.value)) {
-		displayErrorMessage(error, "Only numbers");
+		displayErrorMessage(error, "The PIN only has numbers");
 		return;
 	} else if (roomPin.value.length != 4) {
-		displayErrorMessage(error, "4 digit PIN");
+		displayErrorMessage(error, "The PIN has 4 digits");
 		return;
 	} else {
 		socket.emit("findRoomById", {
@@ -182,46 +194,66 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 	document.querySelector("#pin").setAttribute("value", pin);
 
 	document.querySelector("#choice").remove();
-	document.querySelector("#name").classList.remove("hidden");
+	document.getElementById("tagline").classList.add("hidden");
+
+	let nameBox = document.querySelector("#name");
+	nameBox.classList.remove("hidden");
+
+	let panel = document.createElement("div");
+	panel.className = "panel flex flex-col gap-4";
+	nameBox.append(panel);
+
+	let title = document.createElement("h2");
+	title.className = "panel-title";
+	panel.append(title);
+
+	let hint = document.createElement("p");
+	hint.className = "muted -mt-2";
+	panel.append(hint);
+
+	let errorContainer = document.createElement("div");
+	errorContainer.id = "errorName";
+	errorContainer.setAttribute("role", "alert");
+	errorContainer.className = "toast pointer-events-none hidden animate__animated animate__fadeInDown";
+
 	if (!inGame) {
-		let nameInput = document.createElement("div");
-		document.querySelector("#name").append(nameInput);
+		title.textContent = "What should we call you?";
+		hint.textContent = "Up to 21 characters. Your friends will see it on the scoreboard.";
 
 		let playerName = document.createElement("input");
-		document.querySelector("#name").append(playerName);
 		playerName.id = "player-name";
 		playerName.type = "text";
 		playerName.name = "player-name";
 		playerName.value = "";
 		playerName.maxLength = 21;
-		playerName.placeholder = "Name";
-		playerName.className =
-			"shadow-xl w-full sm:max-w-md rounded-md py-2 my-2 px-4 placeholder-gray-500 max-w-xs bg-orange-200 autofill:bg-orange-200 focus:outline-none";
-		playerName.focus();
+		playerName.placeholder = "Your name";
+		playerName.autocomplete = "nickname";
+		playerName.setAttribute("autocapitalize", "words");
+		playerName.setAttribute("enterkeyhint", "go");
+		playerName.setAttribute("aria-label", "Your name");
+		playerName.className = "field";
+		panel.append(playerName);
 
 		let nameButton = document.createElement("button");
-		document.querySelector("#name").append(nameButton);
 		nameButton.id = "name-button";
 		nameButton.type = "button";
 		nameButton.name = "button";
-		nameButton.innerText = "Go";
+		nameButton.textContent = "Let's go";
 		nameButton.setAttribute("onclick", "setUsername()");
-		nameButton.className =
-			"w-full text-2xl sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400";
+		nameButton.className = "btn btn-primary btn-block";
+		panel.append(nameButton);
+		panel.append(errorContainer);
 
-		let errorContainer = document.createElement("div");
-		document.querySelector("#name").append(errorContainer);
-		errorContainer.id = "errorName";
-		errorContainer.className = "text-sm z-10 hidden  bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition";
-
+		playerName.focus();
 	} else {
-		let nameChoice = document.createElement("div");
-		nameChoice.id = "nameList";
-		document.querySelector("#name").append(nameChoice);
+		title.textContent = "Who are you?";
+		hint.textContent = "The game has already started. Pick your name to jump back in.";
 
-		let availablePlayers = document.createElement("ul");
-		availablePlayers.id = "availablePlayers";
-		document.querySelector("#nameList").append(availablePlayers);
+		let availablePlayers = document.createElement("div");
+		availablePlayers.id = "nameList";
+		availablePlayers.className = "flex flex-col gap-3";
+		availablePlayers.setAttribute("role", "radiogroup");
+		panel.append(availablePlayers);
 
 		players.forEach((element, index) => {
 			let player = document.createElement("input");
@@ -230,41 +262,34 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 			player.id = "player-" + index;
 			player.value = element.name;
 			player.name = "player";
-			player.className += "invisible w-0";
-
-			let playerBlock = document.createElement("div");
-			playerBlock.id = players.indexOf(element);
-			playerBlock.className +=
-				" cursor-pointer text-left p-2 bg-indigo-400 rounded-md shadow text-gray-200 max-w-lg";
-			playerBlock.textContent = element.name;
+			player.className = "sr-only";
 
 			let label = document.createElement("label");
 			label.setAttribute("for", player.id);
-			label.id = "label-" + players.indexOf(element);
+			label.id = "label-" + index;
 
-			document.getElementById("name").append(player);
-			document.getElementById("name").append(label);
-			document.getElementById(label.id).append(playerBlock);
+			let playerBlock = document.createElement("div");
+			playerBlock.className = "choice-option";
+			playerBlock.textContent = element.name;
+			label.append(playerBlock);
+
+			availablePlayers.append(player);
+			availablePlayers.append(label);
 		});
 
 		let nameButton = document.createElement("button");
-		document.querySelector("#name").append(nameButton);
 		nameButton.id = "name-button";
 		nameButton.type = "button";
 		nameButton.name = "button";
-		nameButton.innerText = "Go";
-		nameButton.className =
-			"w-full sm:max-w-md bg-amber-500 rounded-md shadow-xl py-2 my-4 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400";
-
-		let errorContainer = document.createElement("div");
-		document.querySelector("#name").append(errorContainer);
-		errorContainer.id = "errorName";
-		errorContainer.className = "text-sm z-10 hidden  bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition";
+		nameButton.textContent = "Rejoin";
+		nameButton.className = "btn btn-primary btn-block";
+		panel.append(nameButton);
+		panel.append(errorContainer);
 
 		nameButton.addEventListener("click", function () {
 			let checkedPlayer = document.querySelector("input[name=player]:checked");
 			if (!checkedPlayer) {
-				displayErrorMessage(errorContainer, "Please pick a name");
+				displayErrorMessage(errorContainer, "Pick your name first");
 				return;
 			}
 			socket.emit("joinGame", document.querySelector("#pin").value, checkedPlayer.value);
@@ -282,26 +307,21 @@ socket.on("newJoiner", function (data) {
 		updateNbOfPlayers();
 		let playerBlock = document.createElement("div");
 		playerBlock.id = data.playerId;
-		playerBlock.className = "text-wrap w-full flex flex-row rounded m-1 p-2 justify-between items-center  whitespace-nowrap";
+		playerBlock.className = "chip animate__animated animate__bounceIn";
 
-		let player = document.createElement("div");
-		playerBlock.append(player);
-		// player.className = "text-left font-medium w-full break-words  text-gray-900 ";
-		player.className = "bg-amber-400 p-2 rounded-md shadow-sm w-10/12 break-words ";
-		let playerText = document.createElement("div");
-		player.append(playerText);
+		let playerText = document.createElement("span");
+		playerText.className = "chip-name";
 		playerText.textContent = data.playerName;
-		playerText.className = " font-medium text-ellipsis overflow-hidden";
+		playerBlock.append(playerText);
 
+		// must stay a direct child of playerBlock (deletePlayer reads the parent id)
 		let deleteButton = document.createElement("button");
-		deleteButton.className = " bg-indigo-500 rounded-full h-6 w-6 flex items-center justify-center relative shadow-sm hover:bg-red-600 ease-in-out duration-200 transition active:scale-90 ";
+		deleteButton.type = "button";
+		deleteButton.className = "chip-remove";
+		deleteButton.setAttribute("aria-label", "Remove " + data.playerName);
 		deleteButton.setAttribute("onclick", "deletePlayer(this)");
-
-		let cross = document.createElement("p");
-		cross.innerText = "x";
-		// cross.className = "rotate-45 text-gray-100";
-		cross.className = "text-gray-100 absolute h-7 font-semibold";
-		deleteButton.append(cross);
+		deleteButton.innerHTML =
+			'<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 		playerBlock.append(deleteButton);
 
 		document.getElementById("players").append(playerBlock);
@@ -345,7 +365,7 @@ function startGame() {
 
 	if (premiumCode.value.length == 0 &&
 		isPremiumMode()) {
-		displayErrorMessage(error, "premium code needed");
+		displayErrorMessage(error, "Enter the premium code");
 		return;
 	
 	// check the number of players
@@ -354,7 +374,7 @@ function startGame() {
 		displayErrorMessage(error, "Code too long");
 		return;
 	} else if (nbOfPlayers < minNbOfPlayers) {
-		displayErrorMessage(error, "2 players minimum");
+		displayErrorMessage(error, "You need at least 2 players");
 		return;
 
 	} else {
@@ -391,10 +411,10 @@ function changeMode() {
 	let radio = document.querySelector("input[name=modeSelection]:checked").value;
 	
 	if (radio == "premium") {
-		secretCode.classList.remove("invisible");
+		secretCode.classList.remove("hidden");
 		secretCode.focus();
 	} else {
-		secretCode.classList.add("invisible");
+		secretCode.classList.add("hidden");
 	}
 }
 

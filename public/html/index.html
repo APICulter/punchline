@@ -1,313 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Punchline</title>
 		<meta charset="UTF-8" />
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#FF6A4D" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="Punchline" />
+		<title>Punchline</title>
+		<link rel="preload" href="../fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="stylesheet" href="../css/style.css" />
-		
-			<!-- <link rel="stylesheet" href="../../node_modules/animate.css/animate.min.css"> -->
-			<link rel="stylesheet" href="../css/animate.min.css">
-		  
-		<!-- <link
-		rel="stylesheet"
-		href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
-	  /> -->
+		<link rel="stylesheet" href="../css/animate.min.css" />
+		<script src="/socket.io/socket.io.js"></script>
 	</head>
-	<script src="/socket.io/socket.io.js"></script>
 
-	<body class="bg-amber-600 sm:bg-slate-900 min-h-screen overflow-y-auto overscroll-y-none
-	sm:flex sm:items-center sm:justify-center sm:size-1/4">
-
-
-		<!-- rules modal -->
-		<div id="rulesModal" class="hidden bg-slate-900 w-full h-full fixed z-20 overflow-auto flex flex-col items-center ">
-
-			<div class="bg-slate-300 w-full sm:w-3/4 lg:w-1/2  m-auto shadow-xl sm:rounded-xl p-4 2xl:max-w-[780px]">
-				<div class="p-4">
-					<div class="bg-indigo-600 rounded-full h-6 w-6 flex items-center justify-center relative float-right hover:bg-indigo-700 ease-in-out duration-200 transition active:scale-90 hover:cursor-pointer">
-						<span id="closeRules" class="  text-gray-200 font-bold absolute h-7">&times;</span>
-
-					</div>
-					<p class="text-center pb-8 text-xl font-bold">Rules of the game</p>
-					<div class="pb-6">
-						<p>First create a room. A PIN number will be generated. You can choose the options for the game as the following: </p>
-						<ul class="list-disc list-outside">
-							<li class="m-4 ml-6">From 1 to 10 rounds</li>
-							<li class="m-4 ml-6"><span class="underline underline-offset-4">Optional</span>: enter the premium code to have access to more content!</li>
-						</ul>
-					</div>
-					
-					<div class="py-4">
-						<p>Each participant connects to <a id="gameURL" class="underline underline-offset-4 font-bold" href="">Punchline</a>  with their phone, enters the PIN code and picks a name tag. <br><br>
-								Click "Play" to start the game. It goes like this: </p>
-						<ul class="list-disc list-outside">
-							<li class="m-4 ml-6">A question is displayed on the screen</li>
-							<li class="m-4 ml-6">Everyone has 60 seconds to give an answer through their phone</li>
-							<li class="m-4 ml-6">Once everyone has answered, the answers are displayed anonymously on the phones</li>
-							<li class="m-4 ml-6">Everyone votes for the answer they like the most (except their own, of course &#128521;)</li>
-							<li class="m-4 ml-6">Every time someone votes for you, you get 1 point</li>
-						</ul>
-						<p>That was one round. Repeat for each round until the end. <br>
-							The one with the highest number of points wins!</p>
-					</div>	<br>
-						
-					<div class=" flex justify-center">
-						<button
-						id="exitRules"
-						type="button"
-						name="exitRules"
-						class="bg-indigo-600 rounded-xl shadow-xl p-4 hover:cursor-pointer hover:bg-indigo-700 ease-in-out duration-200 transition active:scale-90 "
-					><span class="text-gray-200 font-bold ">Got it !</span></button>			
-					</div>
+	<body>
+		<!-- Rules -->
+		<div id="rulesModal" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+			<div class="sheet-card">
+				<div class="mb-4 flex items-center justify-between gap-4">
+					<h2 id="rulesTitle" class="text-3xl font-extrabold tracking-tight">How to play</h2>
+					<button id="closeRules" type="button" class="icon-btn" aria-label="Close">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
+					</button>
 				</div>
-	
-				
-				
+				<p class="mb-5 text-lg">One big screen for the questions, one phone per player.</p>
+				<ol class="steps text-lg">
+					<li><span>Create a game on the big screen. Choose 1 to 10 rounds, or enter a premium code for extra questions.</span></li>
+					<li><span>Everyone opens <a id="gameURL" class="font-bold underline decoration-pink decoration-[3px] underline-offset-4" href="">Punchline</a> on their phone, types the PIN and picks a name.</span></li>
+					<li><span>A question appears. You have 60 seconds to write your answer.</span></li>
+					<li><span>The answers show up on every phone, without names. Vote for your favourite, just not your own.</span></li>
+					<li><span>Every vote you get is worth 1 point. Most points after the last round wins.</span></li>
+				</ol>
+				<button id="exitRules" type="button" class="btn btn-primary btn-block mt-7">Got it</button>
 			</div>
+		</div>
 
-		  </div>
-
-
-
-
-
-
-
-		  <!-- main screen -->
-		<div id="main" class="flex  sm:justify-center sm:m-6 sm: flex-col h-screen big-phone:items-center sm:overflow-hidden overscroll-y-none mx-auto 
-		lg:max-w-screen-md sm:border-2 sm:rounded-lg sm:border-amber-300 lg:my-4
-		2xl:max-w-screen-lg sm:items-center sm:h-1/4 sm:min-w-[535px] sm:min-h-[430px]
-		transition-all duration-300 ease-in-out max-h-0">
-
-			<!-- title -->
-			<section class="flex flex-row w-full flex-wrap lg:mb-0  place-content-evenly justify-around flex-col-reverse bg-amber-600">
-				<div class="flex flex-row  justify-between ml-0">
-					<div class="flex flex-row max-w-sm justify-center mt-8 ">
-
-						<!-- button home -->
-						<button
-				id="home"
-				type="button"
-				name="homeButton"
-				class="flex items-center justify-center bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-				onclick="home()"
-				>				
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
+		<div id="main" class="app">
+			<div class="app-inner app-inner--wide">
+				<header class="topbar">
+					<div class="flex gap-2">
+						<button id="home" type="button" class="icon-btn" onclick="home()" aria-label="Back to home">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9v11h13V9" /></svg>
 						</button>
-
-						<!-- button rules -->
-						<button
-						id="rules"
-						type="button"
-						name="rules"
-						class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-						
-					>
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				
+						<button id="rules" type="button" class="icon-btn" aria-label="How to play">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 8.6a3.5 3.5 0 0 1 6.8 1.1c0 2.3-3.4 2.8-3.4 5.2" /><path d="M12 19.2h.01" /></svg>
 						</button>
-
 					</div>
-				
+					<button id="punchlinePin" type="button" class="pin-badge invisible" aria-label="Game PIN">0000</button>
+				</header>
 
-				
-				<!-- button pin -->
-				 <div class="flex items-center mt-8">
-					<button id="punchlinePin" type="button" name="punchlinePin" class=" invisible w-min font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-default hover:bg-amber-400 m-2 align-baseline"><span class="invisible">0000</span></button>
-
-				 </div>
-				<!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
-	
-			</div>
-			<div class="flex items-start  grow  grow-0 ">
-				<!-- <img src="./logo.png" alt="logo" width="50" height="50" > -->
-				<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate__animated animate__bounceInDown">  -->
-				<!-- <h1 class="grow mt-10 text-center text-5xl font-black tracking-tight animate-bounce">  -->
-				<h1 class="grow mt-6 text-center  font-black tracking-tight animate__animated animate__bounceInDown"> 
-				<span class="text-5xl ">Punchline</span>
-			</h1>
-			</div>
-			
-			</section>
-			
-
-
-			<!-- options -->
-			<section id="optionJoin" class="flex flex-1 sm:flex-auto items-center justify-center mt-10 sm:mt-0 sm:bg-amber-600 lg:w-full sm:items-start sm:w-full ">
-			
-				<!-- <div class="animate-[wiggle_1s_ease-in-out_infinite]">
-					<p>dfqdfqsdf</p>
-				  </div>
-			 -->
-
-				<!-- The Modal -->
-				
-	
-				<div class="flex flex-col items-center sm:mt-6">
-					<div id="name" class=" hidden max-w-2xl mx-auto flex flex-col justify-center items-center">
-						<div id="nameInput">
-	
-						</div>
-						<div id="emptyName" class="text-sm hidden z-10 absolute bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition">Please enter a name !</div>
-	
+				<section id="hero" class="flex flex-1 flex-col items-center justify-center pb-10 pt-8 text-center sm:flex-none sm:pt-12">
+					<div class="animate__animated animate__bounceIn">
+						<h1 class="wordmark">Punchline</h1>
 					</div>
-	
-					<div class="w-full">
-						<div id="choice" class=" text-center max-w-xl mx-auto flex flex-col">
-							<div id="createOrJoin" class=" m-8 mt-0 items-center">
-								<div id="pinLabel" class="">
-	
-								</div>
-								<button
-									id="createGame"
-									type="button"
-									name="createGame"
-									onclick="createGame()"
-									class="text-4xl font-normal bg-amber-500 rounded-md shadow-xl p-4 m-2 w-11/12 big-phone:w-4/5 hover:ease-out hover:cursor-pointer hover:bg-amber-400 sm:w-3/5"
-								>
-									Create game
+					<p id="tagline" class="mt-9 max-w-[18rem] text-xl font-semibold leading-snug sm:max-w-sm sm:text-2xl">
+						Write the funniest answer. Vote for the best one.
+					</p>
+				</section>
+
+				<section id="optionJoin" class="flex flex-col items-center justify-end pb-2 sm:flex-1 sm:justify-start">
+					<!-- Player: choose a name (filled by index.js) -->
+					<div id="name" class="mx-auto hidden flex w-full max-w-md flex-col gap-4">
+						<div id="nameInput"></div>
+					</div>
+
+					<div id="choice" class="w-full">
+						<div id="createOrJoin" class="w-full">
+							<div id="pinLabel"></div>
+
+							<div id="startButtons" class="mx-auto flex w-full max-w-md flex-col gap-4">
+								<button id="createGame" type="button" class="btn btn-primary btn-lg btn-block" onclick="createGame()">
+									Create a game
 								</button>
-								<button
-								id="joinGameInit"
-								type="button"
-								name="joinGameInit"
-								onclick="joinGameInit()"
-								class="text-4xl font-normal bg-amber-500 w-200 rounded-md shadow-xl p-4 m-2 w-11/12 big-phone:w-4/5 hover:ease-out hover:cursor-pointer hover:bg-amber-400 sm:w-3/5"
-							>
-								Join game
-							</button>
-								<div id="join" class=" hidden flex flex-col max-w-2xl mx-auto">
-									<div class="max-w-2xl">
-										<input
+								<button id="joinGameInit" type="button" class="btn btn-secondary btn-lg btn-block" onclick="joinGameInit()">
+									Join a game
+								</button>
+								<p class="muted mt-2 text-center">Create on the big screen, join from your phone.</p>
+							</div>
+
+							<!-- Player: enter the PIN -->
+							<div id="join" class="mx-auto hidden w-full max-w-md">
+								<div class="panel flex flex-col gap-4">
+									<div>
+										<label for="roomPin" class="panel-title">Enter the game PIN</label>
+										<p class="muted mt-1">You'll find it on the big screen.</p>
+									</div>
+									<input
 										id="roomPin"
 										type="text"
 										name="roomPin"
 										value=""
-										placeholder="Pin"
+										placeholder="0000"
 										minlength="4"
 										maxlength="4"
 										inputmode="numeric"
+										pattern="[0-9]*"
 										autocomplete="off"
-										style="-webkit-text-fill-color: currentColor;"
-										class="w-full grow rounded-md px-4 placeholder-gray-500 py-2 my-2 px-4 bg-orange-200 autofill:bg-orange-200 focus:outline-none shadow-xl"
+										class="field field--pin"
 									/>
-									<button
-										id="joinRoomButton"
-										type="button"
-										name="play"
-										onclick="joinRoom()"
-										class="w-full grow text-2xl bg-amber-500 rounded-md shadow-xl py-2 my-2 transition ease-in hover:cursor-pointer active:-rotate-6 duration-150 hover:bg-amber-400 py-2 px-2"
-									>
-										Join
-									</button>
-									</div>
-									
+									<button id="joinRoomButton" type="button" class="btn btn-primary btn-block" onclick="joinRoom()">Join</button>
 								</div>
-								<div id="optionMenu" class="hidden rounded-md max-w-min mt-6 sm:mt-0 ">
-	
-									<div class=" bg-amber-500 rounded-xl shadow-xl p-4">
-										<div class="flex flex-col justify-center items-center">
-											<label class="font-bold text-lg" for="nbOfQuestions">Rounds</label>
-											<div class="mt-2 flex items-center justify-center w-1/2">
-												<input class=" accent-indigo-500 items-center justify-center w-32 slider " type="range" id="nbOfQuestions" name="nbOfQuestions" min="1" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
-											<output class=" ml-4 font-medium w-1" id="nbOfQuestionsValue">5</output>
+							</div>
+
+							<!-- Host: lobby -->
+							<div id="lobby" class="hidden w-full">
+							<div class="gap-6 lg:grid lg:grid-cols-[1.15fr_1fr] lg:items-start">
+								<div class="panel panel--plum mb-6 flex flex-col gap-5 p-7 lg:mb-0 lg:p-10">
+									<p class="text-2xl font-bold leading-tight lg:text-4xl">On your phone, open</p>
+									<p id="lobbyURL" class="break-all text-2xl font-extrabold leading-tight text-butter lg:text-4xl">&nbsp;</p>
+									<p class="text-2xl font-bold leading-tight lg:text-4xl">and enter this PIN</p>
+									<div id="lobbyPin" class="flex gap-2 sm:gap-3" aria-label="Game PIN"></div>
+								</div>
+
+								<div class="flex flex-col gap-6">
+									<div id="optionMenu" class="panel flex flex-col gap-6">
+										<div>
+											<div class="flex items-baseline justify-between">
+												<label for="nbOfQuestions" class="panel-title">Rounds</label>
+												<output id="nbOfQuestionsValue" for="nbOfQuestions" class="text-2xl font-extrabold tabular-nums">5</output>
 											</div>
-									</div>
-									<div class="mt-2 pb-0 bg-amber-500 rounded-md flex flex-col p-4">
-										<p class="font-bold text-lg">Mode</p>
-										<div class="flex flex-row space-x-4 justify-center my-2 ">
-											<div class="flex items-center hover:cursor-pointer">
-												<input class="radio-custom accent-indigo-500 border-0 mr-1 before:accent-red-500 after:accent-green-500" type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked="yes">
-											<label class="font-medium hover:cursor-pointer" for="normalMode">Classic</label>
-											</div>
-											<div class="flex items-center">
-												<input class="radio-custom accent-indigo-500 mr-1" type="radio" id="premiumMode" name="modeSelection" value="premium" onclick="changeMode()">
-											<label class="font-medium hover:cursor-pointer" for="premiumMode">Premium</label>
-											</div>
-	
-											
-											
+											<input
+												id="nbOfQuestions"
+												type="range"
+												name="nbOfQuestions"
+												min="1"
+												max="10"
+												value="5"
+												class="range mt-4"
+												oninput="document.getElementById('nbOfQuestionsValue').value = this.value"
+											/>
 										</div>
-	
+
+										<fieldset>
+											<legend class="panel-title mb-3">Questions</legend>
+											<div class="segmented">
+												<input type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked />
+												<label for="normalMode">Classic</label>
+												<input type="radio" id="premiumMode" name="modeSelection" value="premium" onclick="changeMode()" />
+												<label for="premiumMode">Premium</label>
+											</div>
 											<input
 												id="secretCode"
 												type="password"
 												name="secretCode"
 												value=""
-												placeholder=""
-												class="invisible rounded-md px-4 placeholder-gray-500 p-2 bg-orange-200 focus:outline-none"
+												placeholder="Premium code"
+												autocomplete="off"
+												aria-label="Premium code"
+												class="field mt-3 hidden"
 											/>
-											
-										</div>
-										
+										</fieldset>
 									</div>
 
-									
-	
-	
-									<div id="players-table" class=" h-60 mt-6 bg-amber-500 rounded-xl shadow-xl px-4 pb-4  max-w-72">
-										<!-- <div class=""> -->
-										<div class="sticky top-0 bg-amber-500 py-2 z-10 ">
-											<p class="font-bold text-lg my-2 ">Players (<span id="playerCounter">0</span>)</p>
+									<div id="players-table" class="panel">
+										<div class="mb-4 flex items-baseline justify-between gap-3">
+											<h2 class="panel-title">Players</h2>
+											<p class="muted font-bold"><span id="playerCounter">0</span> joined</p>
 										</div>
-											<div id="players" class="flex flex-row flex-wrap overflow-y-scroll no-scrollbar h-40 bg-orange-200 items-start shadow-inner-custom rounded-xl content-start">
-	
-											</div>
-										<!-- </div> -->
-										
-										
+										<div id="players" class="no-scrollbar grid max-h-72 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2" data-empty="Waiting for players to join…"></div>
 									</div>
-	
+
+									<button id="startGame" type="button" class="btn btn-pink btn-lg btn-block" onclick="startGame()">Start the game</button>
 								</div>
-								<div class="relative flex justify-center">
-									<button
-										id="startGame"
-										type="button"
-										name="startGame"
-										onclick="startGame()"
-										class=" mt-8 hidden text-4xl bg-indigo-600 w-full rounded-xl w-90 flex-none shadow-xl p-4 hover:cursor-pointer ease-in-out duration-200 transition active:scale-90 hover:bg-indigo-700 hover:text-slate-200"
-									>
-										<span class="text-slate-300 font-bold">Play</span>
-									</button>
-									
-									
-	
-								</div>
-	
-								
-								
 							</div>
-	
-							
-	
+							</div>
 						</div>
 					</div>
-	
-	
-					<input id="pin" class="hidden" value="" type="text">
-	
-					<div id="errorMessages" class=" flex justify-center">
-										<div id="startGameError" class="text-sm hidden z-10 absolute top-1/2  bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition">Invalid code</div>
-										<div id="errorPin" class="text-sm hidden z-10 absolute bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition">Invalid PIN game</div>
-										<div id="maxNbOfPlayersReached" class="text-sm hidden z-10 absolute bg-red-700 rounded-lg p-2 w-max text-slate-200 font-bold text-lg shadow-xl animate__animated animate__bounceInLeft  ease-in-out duration-200 transition">Already full</div>
-	
-									</div>
-	
-	
-					
-				</div>
-			</section>
 
+					<input id="pin" class="hidden" value="" type="text" />
 
-
+					<div id="errorMessages">
+						<div id="startGameError" class="toast pointer-events-none hidden animate__animated animate__fadeInDown" role="alert"></div>
+						<div id="errorPin" class="toast pointer-events-none hidden animate__animated animate__fadeInDown" role="alert"></div>
+						<div id="maxNbOfPlayersReached" class="toast pointer-events-none hidden animate__animated animate__fadeInDown" role="alert"></div>
+					</div>
+				</section>
 			</div>
-		
+		</div>
 
-		
+		<script src="../js/common.js"></script>
+		<script src="../js/thrid-party/purify.min.js"></script>
+		<script src="../js/index.js"></script>
 	</body>
-	<script src="../js/common.js"></script>
-	<script type="text/javascript" src="../js/thrid-party/purify.min.js"></script>
-	<script src="../js/index.js"></script>
-	
 </html>

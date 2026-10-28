@@ -2,101 +2,412 @@
 @tailwind components;
 @tailwind utilities;
 
-    /* Add style rules here */
-    input[type="radio"]:checked + label div {
-        /* CSS properties for the checked radio button */
-        /* Example styles: */
-        background-color: rgb(99 102 241);
-    }
+/* ==========================================================================
+   Punchline design system
+   Palette: plum (ink), coral (stage), butter (actions), pink (votes),
+   milk (surfaces), mint (done). One family: Bricolage Grotesque.
+   Signature: speech bubbles with a plum outline and a hard "sticker" shadow.
+   ========================================================================== */
 
-    .shadow-inner-custom {
-        box-shadow:  inset 0 0 10px 6px rgba(0, 0, 0, 0.04);
-    }
-
-    .slider {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 0.5rem;
-      background: rgb(254 215 170 / var(--tw-bg-opacity));
-      outline: none;
-      opacity: 1;
-      cursor: pointer;
-      /* overflow: hidden; */
-      border-radius: 1rem;
-      fill: aqua;
-    }
-    
-  
-    
-    .slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 1rem;
-      height: 1rem;
-      background: rgb(99 102 241);
-      cursor: pointer;
-      border-radius: 1rem;
-      overflow: visible;
-      accent-color: rgb(99 102 241);
-    }
-    
-    .slider::-moz-range-thumb {
-      width: 1rem;
-      height: 1rem;
-      background: rgb(99 102 241);
-      cursor: pointer;
-      border-radius: 1rem;
-    }
-
-
-    .radio-custom {
-      -webkit-appearance: none;
-      appearance: none;
-      height: 0.75rem;
-      width: 0.75rem;
-      background-color: rgb(254 215 170 / var(--tw-bg-opacity));
-      margin-right: 0.25rem;
-      border-radius: 6px;
-    }
-
-    .radio-custom:hover {
-      cursor: pointer;
-    }
-
-    .radio-custom:checked {
-      background-color: rgb(99 102 241);
-      border-width: 2px;
-      border-color: rgb(254 215 170 / var(--tw-bg-opacity));
+@layer base {
+  /* Bricolage Grotesque (SIL Open Font License, see public/fonts/OFL.txt).
+     Self-hosted so the game works without Google Fonts. */
+  @font-face {
+    font-family: "Bricolage Grotesque";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 200 800;
+    src: url("../fonts/bricolage-grotesque-latin-ext-wght-normal.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
   }
 
-  input:-webkit-autofill,
-  input:-webkit-autofill:focus {
-    transition: background-color 0s 600000s, color 0s 600000s !important;
+  @font-face {
+    font-family: "Bricolage Grotesque";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 200 800;
+    src: url("../fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
   }
-    
+}
 
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
 
-    /* input[type="range"]{
-        background-color: rgb(99 102 241);
-      }
-    
-    input[type="range"]::-webkit-slider-thumb {
-        background-color: rgb(99 102 241);
-      }
-      
-      input[type="range"]:hover::-webkit-slider-thumb {
-        background-color: rgb(99 102 241);
-      } */
+  body {
+    @apply bg-coral font-sans text-plum antialiased;
+    min-height: 100vh;
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
 
-    /* // add the code bellow */
-    @layer utilities {
-      /* Hide scrollbar for Chrome, Safari and Opera */
-      .no-scrollbar::-webkit-scrollbar {
-          display: none;
-      }
-     /* Hide scrollbar for IE, Edge and Firefox */
-      .no-scrollbar {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
+  button,
+  label,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* 16px minimum stops iOS Safari from zooming into focused fields */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  :focus-visible {
+    outline: 3px solid theme("colors.plum.DEFAULT");
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    @apply bg-butter text-plum;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
   }
+}
+
+@layer components {
+  /* ---------- Page frame ---------- */
+
+  /* Full-height page that respects the iPhone notch and home indicator */
+  .app {
+    @apply flex w-full flex-col;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+
+  /* Column used on phones; host screens widen it with .app-inner--wide */
+  .app-inner {
+    @apply mx-auto flex w-full max-w-md flex-1 flex-col;
+  }
+
+  .app-inner--wide {
+    @apply max-w-6xl;
+  }
+
+  .topbar {
+    @apply flex items-center justify-between gap-3;
+  }
+
+  .icon-btn {
+    @apply grid h-12 w-12 shrink-0 place-items-center rounded-full border-[2.5px] border-plum bg-milk text-plum shadow-pop-sm transition duration-100;
+  }
+
+  .icon-btn:hover {
+    @apply bg-white;
+  }
+
+  .icon-btn:active {
+    @apply translate-y-[2px] shadow-none;
+  }
+
+  .icon-btn svg {
+    @apply h-6 w-6;
+  }
+
+  /* Game PIN shown in the top bar */
+  .pin-badge {
+    @apply inline-flex h-12 items-center rounded-full bg-plum px-5 text-lg font-extrabold tabular-nums tracking-[0.18em] text-butter;
+  }
+
+  /* ---------- Wordmark: the logo is a speech bubble ---------- */
+
+  .wordmark {
+    @apply relative inline-block -rotate-3 rounded-[1.75rem] border-[3px] border-plum bg-milk px-6 pb-2 pt-1 text-5xl font-extrabold tracking-[-0.04em] text-plum shadow-pop-lg sm:text-6xl;
+  }
+
+  /* Tail: a solid plum triangle hanging from the bubble, like its shadow */
+  .wordmark::after {
+    content: "";
+    @apply absolute h-0 w-0;
+    left: 16%;
+    top: 100%;
+    border-left: 0.75rem solid transparent;
+    border-right: 0.75rem solid transparent;
+    border-top: 1.6rem solid theme("colors.plum.DEFAULT");
+    transform: skewX(-22deg);
+  }
+
+  .wordmark--sm::after {
+    border-left-width: 0.5rem;
+    border-right-width: 0.5rem;
+    border-top-width: 1rem;
+  }
+
+  /* ---------- Speech bubble (questions, answers) ---------- */
+
+  .bubble {
+    @apply relative rounded-3xl border-[2.5px] border-plum bg-milk px-5 py-4 text-lg font-semibold leading-snug text-plum shadow-pop;
+  }
+
+  .bubble::after {
+    content: "";
+    @apply absolute h-0 w-0;
+    left: 1.75rem;
+    top: 100%;
+    border-left: 0.6rem solid transparent;
+    border-right: 0.6rem solid transparent;
+    border-top: 1.1rem solid theme("colors.plum.DEFAULT");
+    transform: skewX(-22deg);
+  }
+
+  .bubble--right::after {
+    left: auto;
+    right: 1.75rem;
+    transform: skewX(22deg);
+  }
+
+  .bubble--lg {
+    @apply rounded-[2rem] border-[3px] px-8 py-7 text-3xl font-bold shadow-pop-lg sm:text-4xl;
+  }
+
+  .bubble--lg::after {
+    left: 3rem;
+    border-left-width: 0.9rem;
+    border-right-width: 0.9rem;
+    border-top-width: 1.9rem;
+  }
+
+  /* Selectable bubble: hide the radio, style the label */
+  input:checked + label .bubble,
+  input:checked + .bubble {
+    @apply bg-pink text-white;
+  }
+
+  input:focus-visible + label .bubble,
+  input:focus-visible + .bubble {
+    outline: 3px solid theme("colors.plum.DEFAULT");
+    outline-offset: 3px;
+  }
+
+  /* ---------- Buttons ---------- */
+
+  .btn {
+    @apply inline-flex min-h-[56px] select-none items-center justify-center gap-2 rounded-2xl border-[2.5px] border-plum px-6 text-xl font-bold text-plum shadow-pop transition duration-100;
+  }
+
+  .btn:active:not(:disabled) {
+    @apply translate-y-[3px] shadow-pop-sm;
+  }
+
+  .btn:disabled {
+    @apply cursor-not-allowed opacity-50 shadow-pop-sm;
+  }
+
+  .btn-primary {
+    @apply bg-butter;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    @apply bg-butter-deep;
+  }
+
+  .btn-secondary {
+    @apply bg-milk;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    @apply bg-white;
+  }
+
+  .btn-pink {
+    @apply bg-pink text-white;
+  }
+
+  .btn-pink:hover:not(:disabled) {
+    @apply bg-pink-deep;
+  }
+
+  .btn-block {
+    @apply w-full;
+  }
+
+  .btn-lg {
+    @apply min-h-[68px] text-2xl;
+  }
+
+  /* ---------- Fields ---------- */
+
+  .field {
+    @apply block min-h-[56px] w-full rounded-2xl border-[2.5px] border-plum bg-milk px-5 text-xl font-semibold text-plum shadow-pop-sm transition placeholder:font-medium placeholder:text-plum/40 focus:outline-none focus:ring-4 focus:ring-butter;
+    -webkit-text-fill-color: currentColor;
+  }
+
+  .field:-webkit-autofill,
+  .field:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 100px theme("colors.milk.DEFAULT") inset;
+    transition: background-color 0s 600000s, color 0s 600000s;
+  }
+
+  .field--pin {
+    @apply text-center text-3xl font-extrabold tabular-nums tracking-[0.5em];
+  }
+
+  .field--pin::placeholder {
+    @apply tracking-normal;
+  }
+
+  /* ---------- Panels ---------- */
+
+  .panel {
+    @apply rounded-[1.75rem] border-[2.5px] border-plum bg-milk p-5 text-plum shadow-pop-lg;
+  }
+
+  .panel--plum {
+    @apply bg-plum text-milk;
+  }
+
+  .panel-title {
+    @apply text-xl font-extrabold tracking-tight;
+  }
+
+  .muted {
+    @apply text-plum/70;
+  }
+
+  /* ---------- Segmented control (Classic / Premium) ---------- */
+
+  .segmented {
+    @apply grid grid-cols-2 gap-1 rounded-2xl border-[2.5px] border-plum bg-milk-dim p-1;
+  }
+
+  .segmented input {
+    @apply sr-only;
+  }
+
+  .segmented label {
+    @apply flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl text-lg font-bold transition;
+  }
+
+  .segmented input:checked + label {
+    @apply bg-plum text-milk;
+  }
+
+  .segmented input:focus-visible + label {
+    outline: 3px solid theme("colors.plum.DEFAULT");
+    outline-offset: 2px;
+  }
+
+  /* ---------- Range slider (rounds, volume) ---------- */
+
+  .range {
+    -webkit-appearance: none;
+    appearance: none;
+    @apply h-3 w-full cursor-pointer rounded-full border-2 border-plum bg-milk-dim;
+  }
+
+  .range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    @apply h-7 w-7 rounded-full border-[2.5px] border-plum bg-butter shadow-pop-sm;
+  }
+
+  .range::-moz-range-thumb {
+    @apply h-6 w-6 rounded-full border-[2.5px] border-plum bg-butter;
+  }
+
+  /* ---------- Players ---------- */
+
+  .chip {
+    @apply flex h-11 min-w-0 items-center gap-2 rounded-full border-2 border-plum bg-butter pl-4 pr-1 font-bold;
+  }
+
+  .chip-name {
+    @apply min-w-0 flex-1 truncate;
+  }
+
+  .chip-remove {
+    @apply grid h-8 w-8 shrink-0 place-items-center rounded-full bg-plum text-milk transition hover:bg-pink;
+  }
+
+  /* Big choice rows (rejoin a game: pick your name) */
+  .choice-option {
+    @apply flex min-h-[56px] cursor-pointer items-center rounded-2xl border-[2.5px] border-plum bg-milk px-5 text-xl font-bold shadow-pop-sm transition;
+  }
+
+  input:checked + label > .choice-option {
+    @apply bg-plum text-milk;
+  }
+
+  input:focus-visible + label > .choice-option {
+    outline: 3px solid theme("colors.plum.DEFAULT");
+    outline-offset: 3px;
+  }
+
+  /* ---------- Toast (error messages) ---------- */
+
+  .toast {
+    @apply fixed inset-x-0 z-50 mx-auto w-max max-w-[calc(100%-2rem)] rounded-2xl border-[2.5px] border-plum bg-plum px-5 py-3 text-center text-lg font-bold text-milk;
+    top: max(0.75rem, env(safe-area-inset-top));
+    box-shadow: 0 4px 0 0 theme("colors.pink.DEFAULT");
+  }
+
+  /* ---------- Rules sheet ---------- */
+
+  .sheet {
+    @apply fixed inset-0 z-40 flex items-end justify-center overflow-y-auto bg-plum/70 backdrop-blur-sm sm:items-center sm:p-6;
+  }
+
+  .sheet-card {
+    @apply w-full rounded-t-[1.75rem] border-[2.5px] border-b-0 border-plum bg-milk p-6 text-plum sm:max-w-xl sm:rounded-[1.75rem] sm:border-b-[2.5px] sm:shadow-pop-lg;
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+
+  .steps {
+    counter-reset: step;
+    @apply space-y-3;
+  }
+
+  .steps li {
+    counter-increment: step;
+    @apply flex gap-3 leading-snug;
+  }
+
+  .steps li::before {
+    content: counter(step);
+    @apply grid h-7 w-7 shrink-0 place-items-center rounded-full bg-pink text-sm font-extrabold text-white;
+  }
+
+  /* ---------- Countdown ---------- */
+
+  .timer {
+    @apply grid h-16 w-16 place-items-center rounded-full border-[3px] border-plum bg-butter text-2xl font-extrabold tabular-nums shadow-pop;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer components {
+  /* Empty list message, e.g. the lobby before anyone joins */
+  [data-empty]:empty::before {
+    content: attr(data-empty);
+    @apply col-span-full py-6 text-center font-semibold text-plum/60;
+  }
+}
