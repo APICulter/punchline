@@ -23,11 +23,6 @@ const volumeOff = `
   audioPlayer.volume = 0.2;
   audioPlayer.muted = false;
 
-  // Play audio when page is loaded
-//    audioPlayer.play().catch((error) => {
-// 	 console.log("Lecture automatique bloquée par le navigateur :", error);
-//    });
-
   // Mute/unmute on icon click
   volumeIcon.addEventListener("click", () => {
   audioPlayer.muted = !audioPlayer.muted;
@@ -40,20 +35,4 @@ const volumeOff = `
   audioPlayer.muted = audioPlayer.volume === 0;
   volumeIcon.innerHTML = audioPlayer.muted ? volumeOff : volumeOn;
   });
-
-  // Unmute audio on first user interaction
-  const unmuteOnFirstInteraction = () => {
-  audioPlayer.muted = false;
-  document.removeEventListener("click", unmuteOnFirstInteraction);
-  document.removeEventListener("keydown", unmuteOnFirstInteraction);
-  };
-  document.addEventListener("click", unmuteOnFirstInteraction);
-  document.addEventListener("keydown", unmuteOnFirstInteraction);
-
-//   const volumeIcon = document.getElementById("volume-icon");
-
-
-
-
-
 });

@@ -4,15 +4,15 @@ const scoreTable = document.querySelector("#scoreTable");
 
 window.onload = function () {
 	punchlinePin = sessionStorage.getItem("punchlinePin");
+	if (!punchlinePin) {
+		window.location = "/";
+		return;
+	}
 	socket.emit("joinRoom", punchlinePin);
 	socket.emit("getScores", {
 		pin: punchlinePin,
 	});
 };
-
-// socket.on("redirect", (newGameURL) => {
-// 	window.location = newGameURL;
-// });
 
 // Displays the final results
 socket.on("scores", function (scores) {
@@ -74,24 +74,7 @@ socket.on("scores", function (scores) {
 	});
 
 	table.appendChild(body);
-	scoreTable.appendChild(table);
+	// avoids a duplicated table if the event is received twice
+	scoreTable.replaceChildren(table);
 	scoreTable.scrollIntoView({ behavior: 'smooth' });
-
-
 });
-
-// To go back to the lobby
-// function home() {
-// 	socket.emit("endGame", {
-// 		pin: punchlinePin,
-// 	});
-// 	sessionStorage.clear();
-// }
-
-// To go back to the lobby
-// document.getElementById("playAgain").addEventListener("click", function () {
-// 	socket.emit("endGame", {
-// 		pin: punchlinePin,
-// 	});
-// 	sessionStorage.clear();
-// });

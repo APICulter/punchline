@@ -14,16 +14,13 @@ window.onload = function () {
 	document.getElementById("answer").focus();
 };
 
-// socket.on("redirect", (newGameURL) => {
-// 	window.location = newGameURL;
-// });
-
-
 // Sends the player'answer to the back end
 function sendAnswer() {
 
 	let answer = document.getElementById("answer");
 	let error = document.getElementById("answerError");
+
+	answer.value = answer.value.trim();
 
 	if (answer.value.length == 0) {
 		displayErrorMessage(error, "please answer");
@@ -37,11 +34,13 @@ function sendAnswer() {
 			pin: DOMPurify.sanitize(punchlinePin),
 			playerName: DOMPurify.sanitize(playerName),
 		});
+		// prevents sending the answer twice (re-enabled if the server refuses it)
 		button.setAttribute("disabled", "disabled");
 	}
-
 }
 
-function home() {
-	window.location.href = "/";
-}
+// Displays error message coming from the backend if the answer is refused
+socket.on("answerErrorMessages", function (data) {
+	button.removeAttribute("disabled");
+	displayErrorMessage(document.getElementById("answerError"), data);
+});

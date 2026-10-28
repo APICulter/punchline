@@ -8,7 +8,11 @@ var voteCountDown = 10;
 // let punchlinePin;
 let numberQuestion = 0;
 
+var countdownInterval;
 var countdownIntervalQuestion;
+// prevents displaying the answers / votes twice for the same round
+var answersDisplayed = false;
+var votesDisplayed = false;
 var countdownElement = document.getElementById("countdown");
 var gameZoneElement = document.getElementById("gameZone");
 var responseBoxElement = document.getElementById("answerBox");
@@ -28,22 +32,18 @@ window.onload = function () {
 		getQuestion(numberQuestion);
 		document.querySelector("#punchlinePin").textContent = punchlinePin;
 	} else {
+		// not the host of a game (no pin, or a player): back to the lobby
+		// (no "endGame" here: a player opening this page must not end the game of everyone)
 		window.location = "/";
-		socket.emit("endGame", {
-			pin: punchlinePin,
-		});
-		sessionStorage.clear();
 	}
 };
 
 // Function to start the countdown
 function startCountdown(count, questionCount) {
-
-	
-	
-
-	// Update the countdown every second
-	var countdownInterval = setInterval(function () {
+	// Update the countdown every second (stop the previous countdowns if any)
+	clearInterval(countdownInterval);
+	clearInterval(countdownIntervalQuestion);
+	countdownInterval = setInterval(function () {
 		count--;
 		countdownElement.innerText = count;
 		countdownElement.classList.remove("invisible");
@@ -56,15 +56,15 @@ function startCountdown(count, questionCount) {
 			// countdownElement.classList.add("hidden");
 			socket.emit("startPrompt", { pin: punchlinePin });
 			startCountDownQuestion(questionCount);
-			document.getElementById("audio-player").play().catch((error) => {
-				console.log("Lecture automatique bloquée par le navigateur :", error);
-			 });
+			document.getElementById("audio-player").play().catch(() => {
+				// autoplay blocked by the browser: the music starts after a user interaction
+			});
 		}
 	}, 1000);
 }
 
 function startCountDownQuestion(count) {
-
+	clearInterval(countdownIntervalQuestion);
 	countdownIntervalQuestion = setInterval(function () {
 		count--;
 		countdownElement.innerText = count;
@@ -78,23 +78,6 @@ function startCountDownQuestion(count) {
 		}
 	}, 1000);
 }
-
-// function startCountDownVote() {
-// 	var countdownElement = document.getElementById("time");
-// 	var count = voteCountDown;
-
-// 	var countdownInterval = setInterval(function () {
-// 		count--;
-// 		countdownElement.innerText = count;
-
-// 		// Check if countdown has reached 0
-// 		if (count === 0) {
-// 			clearInterval(countdownInterval);
-// 			document.getElementById("time").classList.add("invisible");
-// 			socket.emit("timeIsUpToVote", { punchlinePin: punchlinePin });
-// 		}
-// 	}, 1000);
-// }
 
 function getQuestion(numberQuestion) {
 	socket.emit("getQuestion", {
@@ -113,12 +96,10 @@ socket.on("getConfigResponse", function(data) {
     voteCountDown = data[2];
 });
 
-// socket.on("skipVoteQuestion", (data) => {
-// 	getQuestion(data);
-// });
-
 // prepares the game screen for the next question
 socket.on("question", function (data) {
+	answersDisplayed = false;
+	votesDisplayed = false;
 	document.getElementById("question").textContent = data.question;
 	responseBoxElement.classList.add("invisible");
 	pointsBoxElement.classList.add("invisible");
@@ -129,8 +110,10 @@ socket.on("question", function (data) {
 // Displays answers randomly
 socket.on("displayAnswers", function (data) {
 	clearInterval(countdownIntervalQuestion);
-	// ligne pour tester
-	// document.getElementById("time").classList.add("invisible");
+	if (answersDisplayed) {
+		return;
+	}
+	answersDisplayed = true;
 	countdownElement.classList.add("invisible");
 
 	let index = 1;
@@ -156,35 +139,31 @@ socket.on("displayAnswers", function (data) {
 	}, data.length * 9000 + 5000);
 });
 
-
-
-// socket.on("redirect", (newGameURL) => {
-// 	window.location = newGameURL;
-// });
-
 socket.on("displayVotes", function (answers) {
-	
+	if (votesDisplayed) {
+		return;
+	}
+	votesDisplayed = true;
+
+	// only the answers which received votes are displayed (no empty 9s pause for the others)
+	let votedAnswers = answers.filter((element) => element.votes > 0);
 	let index = 1;
-	answers.forEach((element) => {
-		if (element.votes > 0)
+	votedAnswers.forEach((element) => {
+		setTimeout(() => {
+			responseBoxElement.classList.remove("invisible");
+			answerElement.textContent = element.textAnswer;
+			playerElement.textContent = element.playerName;
+			pointsBoxElement.classList.remove("invisible");
+			pointsElement.textContent = "+" + element.votes;
+
+			pointsBoxElement.scrollIntoView({ behavior: 'smooth' });
+
 			setTimeout(() => {
-				responseBoxElement.classList.remove("invisible");
-				answerElement.textContent = element.textAnswer;
-				// document.getElementById("player").classList.remove("invisible");
-				playerElement.textContent = element.playerName;
-				pointsBoxElement.classList.remove("invisible");
-				pointsElement.textContent = "+" + element.votes;
+				responseBoxElement.classList.add("invisible");
+				pointsBoxElement.classList.add("invisible");
+			}, 6000);
 
-				pointsBoxElement.scrollIntoView({ behavior: 'smooth' });
-
-				setTimeout(() => {
-					responseBoxElement.classList.add("invisible");
-					// document.getElementById("player").classList.add("invisible");
-					pointsBoxElement.classList.add("invisible");
-
-				}, 6000);
-
-			}, 9000 * index);
+		}, 9000 * index);
 		index++;
 	});
 
@@ -194,18 +173,6 @@ socket.on("displayVotes", function (answers) {
 			numberQuestion: numberQuestion,
 		});
 		countdownElement.scrollIntoView({ behavior: 'smooth' });
-	}, answers.length * 9000 + 5000);
+	}, votedAnswers.length * 9000 + 5000);
 });
 
-
-
-// To go back to the lobby
-// function home() {
-// 	socket.emit("endGame", {
-// 		pin: punchlinePin,
-// 	});
-// 	sessionStorage.clear();
-// }
-// document.getElementById("home").addEventListener("click", function () {
-	
-// });

@@ -45,8 +45,8 @@
 						<ul class="list-disc list-outside">
 							<li class="m-4 ml-6">A question is displayed on the screen</li>
 							<li class="m-4 ml-6">Everyone has 60 seconds to give an answer through their phone</li>
-							<li class="m-4 ml-6">Once everyone has voted, the answers are displayed anonymously on the phones</li>
-							<li class="m-4 ml-6">Everyone votes for the answer they like the most (expect their own, of course &#128521;)</li>
+							<li class="m-4 ml-6">Once everyone has answered, the answers are displayed anonymously on the phones</li>
+							<li class="m-4 ml-6">Everyone votes for the answer they like the most (except their own, of course &#128521;)</li>
 							<li class="m-4 ml-6">Every time someone votes for you, you get 1 point</li>
 						</ul>
 						<p>That was one round. Repeat for each round until the end. <br>
@@ -60,7 +60,6 @@
 						name="exitRules"
 						class="bg-indigo-600 rounded-xl shadow-xl p-4 hover:cursor-pointer hover:bg-indigo-700 ease-in-out duration-200 transition active:scale-90 "
 					><span class="text-gray-200 font-bold ">Got it !</span></button>			
-					</button>
 					</div>
 				</div>
 	
@@ -186,8 +185,10 @@
 										name="roomPin"
 										value=""
 										placeholder="Pin"
-										minlength="1"
+										minlength="4"
 										maxlength="4"
+										inputmode="numeric"
+										autocomplete="off"
 										style="-webkit-text-fill-color: currentColor;"
 										class="w-full grow rounded-md px-4 placeholder-gray-500 py-2 my-2 px-4 bg-orange-200 autofill:bg-orange-200 focus:outline-none shadow-xl"
 									/>

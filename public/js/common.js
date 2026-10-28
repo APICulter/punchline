@@ -24,6 +24,19 @@ window.addEventListener('load', function() {
 		punchlinePinElement.className += " animate-pulse";
 		punchlinePinElement.classList.replace("bg-amber-500", "bg-amber-400");
     }
+
+	// Link to the game in the rules panel
+	if (document.getElementById("gameURL")) {
+		socket.emit("getPunchlineURL");
+	}
+});
+
+// get Punchline URL (rules panel)
+socket.on("sendPunchlineURL", function (data) {
+	let gameURL = document.getElementById("gameURL");
+	if (gameURL) {
+		gameURL.setAttribute("href", data);
+	}
 });
 
 
@@ -38,14 +51,14 @@ exitRulesX.onclick = function () {
 	modalRules.classList.add("hidden");
 	mainDiv.classList.remove("hidden");
 	window.scrollTo(0, 0);
-	errorMessages.classList.add("hidden");
+	if (errorMessages) errorMessages.classList.add("hidden");
 };
 
 exitRules.onclick = function () {
 	modalRules.classList.add("hidden");
 	mainDiv.classList.remove("hidden");
 	window.scrollTo(0, 0);
-	errorMessages.classList.add("hidden");
+	if (errorMessages) errorMessages.classList.add("hidden");
 };
 
 // When the user clicks anywhere outside of the modal, close it
@@ -54,7 +67,7 @@ window.onclick = function (event) {
 		modalRules.classList.add("hidden");
 		mainDiv.classList.remove("hidden");
 		window.scrollTo(0, 0);
-		errorMessages.classList.add("hidden");
+		if (errorMessages) errorMessages.classList.add("hidden");
 	}
 };
 
@@ -63,22 +76,16 @@ window.onclick = function (event) {
 
 // To go back to the lobby
 function home() {
+	let pin = punchlinePin || sessionStorage.getItem("punchlinePin");
 	playerName = sessionStorage.getItem("playerName");
+	// the host ends the game (only if a game was created)
 	if (!playerName) {
-		socket.emit("endGame", {
-		pin: punchlinePin ? punchlinePin : punchlinePinElement.textContent,
-	});
-	sessionStorage.clear();
-	} else {
-		// socket.emit("leaveGame", {
-		// 	pin: punchlinePin,
-		// 	playerName: playerName
-		// });
-			
+		if (pin) {
+			socket.emit("endGame", { pin: pin });
+		}
+		sessionStorage.clear();
 	}
 	window.location.href = "/";
-
-	
 }
 
 
@@ -88,13 +95,20 @@ function displayErrorMessage(element, message) {
 	element.textContent = message;
 	element.classList.remove("hidden");
 	element.classList.remove("animate__fadeOutRight");
-	// Message error for 1.5 seconds display
-	setTimeout(function () {
-		// element.classList.add("hidden");
+	// Message error for 1.5 seconds display (restart the timer if a new message comes in)
+	clearTimeout(element.fadeOutTimer);
+	element.fadeOutTimer = setTimeout(function () {
 		element.classList.add("animate__fadeOutRight");
 	}, 1500);
 }
 
-socket.on("redirect", (newGameURL) => {
+// redirect the screen (the server may also send the pin / player name to keep between pages)
+socket.on("redirect", (newGameURL, pin, playerName) => {
+	if (pin) {
+		sessionStorage.setItem("punchlinePin", pin);
+	}
+	if (playerName) {
+		sessionStorage.setItem("playerName", playerName);
+	}
 	window.location = newGameURL;
 });
