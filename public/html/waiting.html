@@ -1,131 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../css/style.css" />
-    <title>Punchline</title>
-</head>
-<style>
-    #main {
-        width: 700px;
-        height: 700px;
-        
-    }
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#FF6A4D" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="Punchline" />
+		<title>Punchline</title>
+		<link rel="preload" href="../fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+		<link rel="stylesheet" href="../css/style.css" />
+		<link rel="stylesheet" href="../css/animate.min.css" />
+		<script src="/socket.io/socket.io.js"></script>
+	</head>
 
-    @media (max-width: 640px) {
-/* … */#main {
-        width: auto;
-        height: 400px;
-        
-        }
-    }
+	<body>
+		<!-- Rules -->
+		<div id="rulesModal" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+			<div class="sheet-card">
+				<div class="mb-4 flex items-center justify-between gap-4">
+					<h2 id="rulesTitle" class="text-3xl font-extrabold tracking-tight">How to play</h2>
+					<button id="closeRules" type="button" class="icon-btn" aria-label="Close">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
+					</button>
+				</div>
+				<p class="mb-5 text-lg">One big screen for the questions, one phone per player.</p>
+				<ol class="steps text-lg">
+					<li><span>Create a game on the big screen. Choose 1 to 10 rounds, or enter a premium code for extra questions.</span></li>
+					<li><span>Everyone opens <a id="gameURL" class="font-bold underline decoration-pink decoration-[3px] underline-offset-4" href="">Punchline</a> on their phone, types the PIN and picks a name.</span></li>
+					<li><span>A question appears. You have 60 seconds to write your answer.</span></li>
+					<li><span>The answers show up on every phone, without names. Vote for your favourite, just not your own.</span></li>
+					<li><span>Every vote you get is worth 1 point. Most points after the last round wins.</span></li>
+				</ol>
+				<button id="exitRules" type="button" class="btn btn-primary btn-block mt-7">Got it</button>
+			</div>
+		</div>
 
+		<div id="main" class="app">
+			<div class="app-inner">
+				<header class="topbar">
+					<div class="flex gap-2">
+						<button id="home" type="button" class="icon-btn" onclick="home()" aria-label="Back to home">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9v11h13V9" /></svg>
+						</button>
+						<button id="rules" type="button" class="icon-btn" aria-label="How to play">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 8.6a3.5 3.5 0 0 1 6.8 1.1c0 2.3-3.4 2.8-3.4 5.2" /><path d="M12 19.2h.01" /></svg>
+						</button>
+					</div>
+					<button id="punchlinePin" type="button" class="pin-badge invisible" aria-label="Game PIN">0000</button>
+				</header>
 
-</style>
-<script src="/socket.io/socket.io.js"></script>
-<body class="bg-amber-600 sm:bg-slate-900 min-h-screen overflow-y-auto overscroll-y-none
-sm:flex sm:items-center sm:justify-center sm:size-1/4">
-    
+				<section class="phone-screen phone-screen--center" aria-live="polite">
+					<div class="wait-bubble" aria-hidden="true">
+						<span class="typing-dot"></span>
+						<span class="typing-dot"></span>
+						<span class="typing-dot"></span>
+					</div>
+					<h1 id="waitTitle" class="phone-title mt-12">Hang tight!</h1>
+					<p id="waitText" class="muted mt-3 max-w-[19rem] text-xl font-semibold leading-snug">Waiting for the others. Keep an eye on the big screen.</p>
+				</section>
+			</div>
+		</div>
 
-    <div id="rulesModal" class="hidden bg-slate-400/70 w-full h-full fixed z-20 overflow-auto flex flex-col items-center">
-
-        <div class="bg-slate-300 w-full sm:w-3/4 lg:w-1/2  m-auto shadow-xl rounded-md p-4 ">
-            <div class="p-4">
-                <span id="closeRules" class="float-right hover:cursor-pointer">&times;</span>
-                <p class="text-center pb-8 text-xl font-bold">Rules of the game</p>
-                <div class="pb-6">
-                    <p>First create a room. A PIN number will be generated. You can choose the options for the game as the following: </p>
-                    <ul class="list-disc list-outside">
-                        <li class="m-4 ml-6">From 1 to 10 rounds</li>
-                        <li class="m-4 ml-6"><span class="underline underline-offset-4">Optional</span>: enter the premium code to have access to more content !</li>
-                    </ul>
-                </div>
-                
-                <div class="py-4">
-                    <p>Each participant connects to <a id="gameURL" class="underline underline-offset-4 font-bold" href="">Punchline</a>  with their phone, enters the PIN code and picks a name tag. <br>
-                            Click "Play" to start the game. It goes like this: </p>
-                    <ul class="list-disc list-outside">
-                        <li class="m-4 ml-6">A question is displayed on the screen</li>
-                        <li class="m-4 ml-6">Everyone has 60 seconds to give an answer through their phone</li>
-                        <li class="m-4 ml-6">Once everyone has answered, the answers are displayed anonymously on the phones</li>
-                        <li class="m-4 ml-6">Everyone votes for the answer they like the most (except their own, of course &#128521;)</li>
-                        <li class="m-4 ml-6">Every time someone votes for you, you get 1 point</li>
-                    </ul>
-                    <p>That was one round. Repeat for each round until the end. <br>
-                        The one with the highest number of points wins!</p>
-                </div>	
-                    
-                <div class=" flex justify-center">
-                    <button
-                    id="exitRules"
-                    type="button"
-                    name="exitRules"
-                    class="bg-indigo-600 rounded-md shadow-xl p-4 hover:cursor-pointer hover:bg-violet-500  "
-                >Got it !</button>			
-                </div>
-            </div>
-
-            
-            
-        </div>
-
-    </div>
-
-    <div id="main" class="bg-amber-600 flex flex-wrap sm:justify-center sm:m-6 sm: flex-col big-phone:items-center sm:overflow-hidden overscroll-y-none mx-auto 
-    lg:max-w-screen-md sm:border-2 sm:rounded-lg sm:border-amber-300 lg:my-4
-    2xl:max-w-screen-lg sm:items-center  sm:w-[700px] sm:h-[100px] sm:min-w-[500px]
-    transition-all duration-300 ease-in-out">
-
-
-        <section class="flex flex-row w-full flex-wrap">
-            <div class="flex flex-col justify-center">
-            <button
-            id="home"
-            type="button"
-            name="homeButton"
-            class="flex items-center justify-center bg-amber-500  rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-            onclick="home()"
-            >				
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1.5 24 24" width="28" fill="currentColor"><path d="M13 20.565v-5a3 3 0 0 0-6 0v5H2a2 2 0 0 1-2-2V7.697a2 2 0 0 1 .971-1.715l8-4.8a2 2 0 0 1 2.058 0l8 4.8A2 2 0 0 1 20 7.697v10.868a2 2 0 0 1-2 2h-5z"></path></svg>
-            </button>
-            <button
-                id="rules"
-                type="button"
-                name="rules"
-                class="flex items-center justify-center bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"
-                
-            >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="28" fill="currentColor"><path d="M11.932 9.482l3.018-3.018a1 1 0 1 0-1.414-1.414l-3.018 3.018a2.003 2.003 0 0 0-2.45 2.45L5.05 13.536a1 1 0 0 0 1.414 1.414l3.018-3.018a2.003 2.003 0 0 0 2.45-2.45zM10 20C4.477 20 0 15.523 0 10S4.477 0 10 0s10 4.477 10 10-4.477 10-10 10z"></path></svg>				</button>
-            <button id="punchlinePin" type="button" name="punchlinePin" class="font-bold bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2"><span class="invisible">0000</span></button>
-            <!-- <button id="punchlinePin" type="button" name="punchlinePin" class=" bg-amber-500 rounded-md shadow-xl p-2 hover:ease-out hover:cursor-pointer hover:bg-amber-400 m-2">0000</button> -->
-    
-        </div>
-        <div class="flex items-start  grow">
-            <h1 class="grow mt-10 text-center text-5xl font-extrabold tracking-tight ">
-            Punchline
-        </h1>
-        </div>
-        
-        </section>
-       
-        <div class=" flex flex-1  items-center justify-center">
-    
-            <button type="button" class=" m-auto align-middle inline-flex items-center px-4 py-2 leading-6 text-lg rounded-md font-semibold  transition ease-in-out duration-150 cursor-default border-none">
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Please wait...
-              </button>
-        </div>
-
-    </div>
-
-    
-</body>
-<script src="../js/common.js"></script>
-<script src="../js/waiting.js"></script>
-
+		<script src="../js/common.js"></script>
+		<script src="../js/waiting.js"></script>
+	</body>
 </html>

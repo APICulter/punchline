@@ -20,6 +20,27 @@ var pointsBoxElement = document.getElementById("pointsBox");
 var answerElement = document.getElementById("answer");
 var playerElement = document.getElementById("player");
 var pointsElement = document.getElementById("points");
+var stageElement = document.getElementById("stage");
+var phaseElement = document.getElementById("phase");
+// display only: the round number shown above the question (the server keeps the real count)
+var roundNumber = 0;
+
+// Last round shown for this game (survives a reload of the host screen)
+function readRoundNumber() {
+	try {
+		let saved = String(sessionStorage.getItem("punchlineRound") || "").split(":");
+		if (saved[0] === String(punchlinePin)) {
+			return parseInt(saved[1], 10) || 0;
+		}
+	} catch (e) {}
+	return 0;
+}
+
+// Visual phase of the big screen (ready, answering, answers, voting, votes) and its caption
+function setPhase(phase, label) {
+	stageElement.dataset.phase = phase;
+	phaseElement.textContent = label;
+}
 
 
 window.onload = function () {
@@ -53,6 +74,7 @@ function startCountdown(count, questionCount) {
 		if (count === 1) {
 			clearInterval(countdownInterval);
 			gameZoneElement.classList.remove("invisible");
+			setPhase("answering", "Round " + roundNumber + " \u00b7 Answer on your phone");
 			// countdownElement.classList.add("hidden");
 			socket.emit("startPrompt", { pin: punchlinePin });
 			startCountDownQuestion(questionCount);
@@ -68,6 +90,7 @@ function startCountDownQuestion(count) {
 	countdownIntervalQuestion = setInterval(function () {
 		count--;
 		countdownElement.innerText = count;
+		countdownElement.classList.toggle("is-urgent", count <= 10);
 
 		// Check if countdown has reached 0
 		if (count === 0) {
@@ -101,6 +124,12 @@ socket.on("question", function (data) {
 	answersDisplayed = false;
 	votesDisplayed = false;
 	document.getElementById("question").textContent = data.question;
+	roundNumber = readRoundNumber() + 1;
+	try {
+		sessionStorage.setItem("punchlineRound", punchlinePin + ":" + roundNumber);
+	} catch (e) {}
+	setPhase("ready", "Round " + roundNumber + " \u00b7 Get ready");
+	countdownElement.classList.remove("is-urgent");
 	responseBoxElement.classList.add("invisible");
 	pointsBoxElement.classList.add("invisible");
 	gameZoneElement.classList.add("invisible");
@@ -115,11 +144,13 @@ socket.on("displayAnswers", function (data) {
 	}
 	answersDisplayed = true;
 	countdownElement.classList.add("invisible");
+	setPhase("answers", "Time's up! Here are the answers");
 
 	let index = 1;
 
-	data.forEach((element) => {
+	data.forEach((element, position) => {
 		setTimeout(() => {
+			setPhase("answers", "Answer " + (position + 1) + " of " + data.length);
 			answerElement.textContent = element.textAnswer;
 			responseBoxElement.scrollIntoView({ behavior: 'smooth' });
 			responseBoxElement.classList.remove("invisible");
@@ -135,6 +166,7 @@ socket.on("displayAnswers", function (data) {
 
 	setTimeout(function () {
 		socket.emit("getVotes", { pin: punchlinePin });
+		setPhase("voting", "Vote for your favourite on your phone");
 		responseBoxElement.classList.add("invisible");
 	}, data.length * 9000 + 5000);
 });
@@ -147,9 +179,11 @@ socket.on("displayVotes", function (answers) {
 
 	// only the answers which received votes are displayed (no empty 9s pause for the others)
 	let votedAnswers = answers.filter((element) => element.votes > 0);
+	setPhase("votes", votedAnswers.length > 0 ? "And the votes go to…" : "No votes this round");
 	let index = 1;
-	votedAnswers.forEach((element) => {
+	votedAnswers.forEach((element, position) => {
 		setTimeout(() => {
+			setPhase("votes", "Votes \u00b7 " + (position + 1) + " of " + votedAnswers.length);
 			responseBoxElement.classList.remove("invisible");
 			answerElement.textContent = element.textAnswer;
 			playerElement.textContent = element.playerName;

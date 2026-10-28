@@ -414,8 +414,450 @@
 
 /* ---------- Host screens (game, scores) ---------- */
 @layer components {
+  /* ----- Background music (game screen top bar) ----- */
+
+  .volume {
+    @apply flex items-center gap-3;
+  }
+
+  .volume-btn {
+    @apply icon-btn;
+  }
+
+  /* The slider only shows where there is room; on phones the button mutes */
+  .volume-range {
+    @apply hidden w-28 sm:block lg:w-36;
+  }
+
+  /* ----- Game stage: phase caption, countdown, question, reveals ----- */
+
+  .stage {
+    @apply flex flex-1 flex-col gap-6 pb-6 pt-6 sm:pt-8 lg:gap-8;
+  }
+
+  .stage-head {
+    @apply flex min-h-[4rem] items-center justify-between gap-4;
+  }
+
+  .stage-phase {
+    @apply text-xl font-extrabold leading-tight tracking-tight sm:text-2xl lg:text-3xl;
+  }
+
+  .stage-timer {
+    @apply shrink-0 transition-colors lg:h-24 lg:w-24 lg:text-4xl;
+  }
+
+  .stage-timer.is-urgent {
+    @apply bg-pink text-white;
+    animation: stage-pulse 1s ease-in-out infinite;
+  }
+
+  /* Before the question: a big centred countdown */
+  .stage[data-phase="ready"] {
+    @apply justify-center;
+  }
+
+  .stage[data-phase="ready"] .stage-head {
+    @apply flex-col justify-center gap-6 text-center;
+  }
+
+  .stage[data-phase="ready"] .stage-timer {
+    @apply h-36 w-36 border-[3.5px] text-7xl shadow-pop-lg sm:h-44 sm:w-44 sm:text-8xl;
+  }
+
+  .stage[data-phase="ready"] .stage-zone {
+    @apply hidden;
+  }
+
+  .stage-zone {
+    @apply flex w-full flex-1 flex-col gap-8 sm:gap-10;
+  }
+
+  /* The question is the hero: a large bubble readable from across the room */
+  .stage-question {
+    @apply bubble bubble--lg -rotate-1 self-start sm:px-10 sm:py-9 lg:px-14 lg:py-12;
+    max-width: 100%;
+    animation: stage-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  }
+
+  .stage-question-text {
+    @apply font-extrabold tracking-tight;
+    font-size: clamp(1.75rem, 1rem + 3.6vw, 4.25rem);
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+    transition: font-size 0.3s ease;
+  }
+
+  /* While answers and votes are revealed the question steps back a little */
+  .stage[data-phase="answers"] .stage-question-text,
+  .stage[data-phase="voting"] .stage-question-text,
+  .stage[data-phase="votes"] .stage-question-text {
+    font-size: clamp(1.25rem, 0.9rem + 1.6vw, 2.25rem);
+  }
+
+  .stage[data-phase="answers"] .stage-question,
+  .stage[data-phase="voting"] .stage-question,
+  .stage[data-phase="votes"] .stage-question {
+    @apply sm:px-8 sm:py-6 lg:px-10 lg:py-7;
+  }
+
+  /* Answer: a butter bubble replying from the right */
+  .stage-answer {
+    @apply bubble bubble--lg bubble--right rotate-1 self-end bg-butter sm:px-10 sm:py-9;
+    max-width: min(100%, 52rem);
+  }
+
+  /* bubble--lg resets the tail to the left: put it back on the right */
+  .stage-answer::after {
+    left: auto;
+    right: 3rem;
+    transform: skewX(22deg);
+  }
+
+  .stage-answer:not(.invisible) {
+    animation: stage-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  }
+
+  .stage-answer-text {
+    @apply font-extrabold tracking-tight;
+    font-size: clamp(1.5rem, 0.9rem + 3vw, 3.5rem);
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+  }
+
+  /* Votes reveal: the answer turns pink and gets its author */
+  .stage[data-phase="votes"] .stage-answer {
+    @apply bg-pink text-white;
+  }
+
+  .stage-credit {
+    @apply -mt-2 flex items-center justify-end gap-3 self-end;
+    max-width: 100%;
+  }
+
+  .stage-author {
+    @apply min-w-0 rounded-[1.5rem] border-[2.5px] border-plum bg-plum px-5 py-2 text-xl font-extrabold leading-tight text-milk shadow-pop sm:text-2xl lg:text-3xl;
+    overflow-wrap: anywhere;
+  }
+
+  .stage-votes {
+    @apply grid h-16 min-w-[4rem] shrink-0 place-items-center rounded-full border-[3px] border-plum bg-milk px-3 text-2xl font-extrabold tabular-nums text-pink shadow-pop lg:h-20 lg:min-w-[5rem] lg:text-3xl;
+  }
+
+  /* Nothing to reveal yet: keep the layout compact */
+  .stage[data-phase="answering"] .stage-answer,
+  .stage[data-phase="voting"] .stage-answer,
+  .stage:not([data-phase="votes"]) .stage-credit {
+    @apply hidden;
+  }
+
+  @keyframes stage-pop {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+    }
+  }
+
+  @keyframes stage-pulse {
+    50% {
+      transform: scale(1.08);
+    }
+  }
+
+  /* ----- Final scores ----- */
+
+  .podium-page {
+    @apply mx-auto flex w-full max-w-2xl flex-1 flex-col items-center gap-8 pb-4 pt-6 sm:pt-10;
+  }
+
+  /* Big screen: winner on the left, ranking on the right, all above the fold */
+  @media (min-width: 1024px) {
+    .podium-page {
+      @apply grid max-w-6xl grid-cols-[1fr_1.1fr] content-center items-start gap-x-16 gap-y-6;
+    }
+
+    .podium-head {
+      @apply row-span-2 self-center pb-8;
+    }
+
+  }
+
+  .podium-head {
+    @apply flex w-full flex-col items-center gap-5 text-center;
+  }
+
+  .podium-kicker {
+    @apply text-2xl font-extrabold tracking-tight sm:text-3xl;
+  }
+
+  /* Winner: a plum speech bubble with the name in butter */
+  .podium-winner {
+    @apply relative w-full max-w-lg -rotate-2 rounded-[2rem] border-[3px] border-plum bg-plum px-6 pb-7 pt-6 text-milk shadow-pop-lg sm:px-10;
+  }
+
+  .podium-winner::after {
+    content: "";
+    @apply absolute h-0 w-0;
+    left: 18%;
+    top: 100%;
+    border-left: 0.9rem solid transparent;
+    border-right: 0.9rem solid transparent;
+    border-top: 1.9rem solid theme("colors.plum.DEFAULT");
+    transform: skewX(-22deg);
+  }
+
+  .podium-winner-label {
+    @apply text-xl font-bold sm:text-2xl;
+  }
+
+  .podium-winner-name {
+    @apply mt-1 font-extrabold tracking-tight text-butter;
+    font-size: clamp(2.25rem, 1.2rem + 5vw, 4.5rem);
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+  }
+
+  .podium-winner-points {
+    @apply mt-4 inline-flex h-10 items-center rounded-full bg-pink px-4 text-lg font-extrabold tabular-nums text-white;
+  }
+
+  .podium-table {
+    @apply w-full;
+  }
+
+  .podium-again {
+    @apply mt-auto max-w-md lg:mt-0 lg:max-w-none;
+  }
+
+  /* Score table: each row is a pill */
+  .score-table {
+    @apply w-full table-fixed border-separate text-left;
+    border-spacing: 0 0.625rem;
+  }
+
+  .score-table th {
+    @apply px-3 pb-0 text-base font-bold text-plum/70;
+  }
+
+  .score-table th:first-child {
+    @apply w-16 text-center sm:w-20;
+  }
+
+  .score-table th:last-child {
+    @apply w-20 pr-5 text-right sm:w-24;
+  }
+
+  .score-row td {
+    @apply border-y-[2.5px] border-plum bg-milk px-3 py-2 text-lg font-bold sm:text-xl;
+    box-shadow: 0 3px 0 0 theme("colors.plum.DEFAULT");
+  }
+
+  .score-row td:first-child {
+    @apply rounded-l-full border-l-[2.5px] text-center;
+  }
+
+  .score-row td:last-child {
+    @apply rounded-r-full border-r-[2.5px] pr-5 text-right text-2xl font-extrabold tabular-nums;
+  }
+
+  .score-row.is-winner td {
+    @apply bg-butter;
+  }
+
+  .score-name {
+    overflow-wrap: anywhere;
+  }
+
+  .score-rank-badge {
+    @apply inline-grid h-9 w-9 place-items-center rounded-full bg-plum text-base font-extrabold tabular-nums text-milk;
+  }
+
+  .score-row.is-winner .score-rank-badge {
+    @apply bg-pink text-white;
+  }
 }
 
 /* ---------- Phone screens (prompt, vote, waiting) ---------- */
 @layer components {
+  /* Column under the top bar; the action bar sticks to the bottom (thumb reach) */
+  .phone-screen {
+    @apply flex flex-1 flex-col pt-6 sm:pt-10;
+  }
+
+  .phone-screen--center {
+    @apply items-center justify-center pb-16 text-center;
+  }
+
+  .phone-intro {
+    @apply mb-6 flex flex-col gap-1;
+  }
+
+  .phone-title {
+    @apply text-4xl font-extrabold leading-[1.05] tracking-tight;
+  }
+
+  /* Action bar: stays visible above the on-screen keyboard and the home indicator */
+  .thumb-bar {
+    @apply sticky bottom-0 z-10 mt-auto bg-coral pt-4;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    /* absorbs the bottom padding of .app so the bar sits flush with the viewport */
+    margin-bottom: calc(-1 * max(1rem, env(safe-area-inset-bottom)));
+  }
+
+  /* ----- Prompt: the answer field is a speech bubble being filled in ----- */
+
+  .answer-bubble {
+    @apply relative mb-10 flex flex-1 flex-col rounded-[2rem] border-[3px] border-plum bg-milk shadow-pop-lg transition-shadow;
+    min-height: 10rem;
+    max-height: 26rem;
+  }
+
+  .answer-bubble::after {
+    content: "";
+    @apply absolute h-0 w-0;
+    left: 2.5rem;
+    top: 100%;
+    border-left: 0.8rem solid transparent;
+    border-right: 0.8rem solid transparent;
+    border-top: 1.6rem solid theme("colors.plum.DEFAULT");
+    transform: skewX(-22deg);
+  }
+
+  .answer-bubble:focus-within {
+    @apply ring-4 ring-butter;
+  }
+
+  .answer-field {
+    @apply block w-full flex-1 resize-none rounded-[2rem] bg-transparent px-6 pb-2 pt-5 text-2xl font-semibold leading-snug text-plum placeholder:font-medium placeholder:text-plum/40 focus:outline-none;
+    font-size: 1.5rem;
+    -webkit-text-fill-color: currentColor;
+  }
+
+  .answer-count {
+    @apply self-end px-5 pb-3 text-base font-bold tabular-nums text-plum/50;
+  }
+
+  .answer-count.is-near-limit {
+    @apply text-pink-deep;
+  }
+
+  /* Short viewport (keyboard open, small phones): give the room to the answer */
+  @media (max-height: 640px) {
+    .phone-screen {
+      @apply pt-4;
+    }
+
+    .phone-intro {
+      @apply mb-4;
+    }
+
+    .phone-intro .muted {
+      @apply hidden;
+    }
+
+    .phone-title {
+      @apply text-3xl;
+    }
+
+    .answer-bubble {
+      @apply mb-8;
+      min-height: 7.5rem;
+    }
+  }
+
+  /* ----- Vote: anonymous answers as selectable speech bubbles ----- */
+
+  .vote-list {
+    @apply flex flex-col gap-9 pb-8;
+  }
+
+  .vote-option {
+    @apply block cursor-pointer;
+  }
+
+  .vote-option .bubble {
+    @apply min-h-[56px] break-words text-xl transition duration-100;
+  }
+
+  .vote-option:hover .bubble {
+    @apply bg-white;
+  }
+
+  .vote-option:active .bubble {
+    @apply translate-y-[2px] shadow-pop-sm;
+  }
+
+  /* the checked state wins over hover */
+  input:checked + .vote-option .bubble {
+    @apply bg-pink text-white;
+  }
+
+  /* The player's own answer: visible but not selectable */
+  .vote-option.is-own {
+    @apply cursor-not-allowed;
+  }
+
+  .vote-option.is-own .bubble,
+  .vote-option.is-own:hover .bubble,
+  .vote-option.is-own:active .bubble {
+    @apply translate-y-0 border-dashed bg-milk-dim text-plum/60 shadow-none;
+  }
+
+  .vote-option.is-own .bubble::after {
+    @apply hidden;
+  }
+
+  .own-tag {
+    @apply mb-2 inline-flex h-7 items-center rounded-full bg-plum px-3 text-sm font-extrabold text-butter;
+  }
+
+  /* ----- Waiting: a speech bubble "typing" ----- */
+
+  .wait-bubble {
+    @apply relative inline-flex items-center gap-3 rounded-[2rem] border-[3px] border-plum bg-milk px-8 py-7 shadow-pop-lg;
+  }
+
+  .wait-bubble::after {
+    content: "";
+    @apply absolute h-0 w-0;
+    left: 2rem;
+    top: 100%;
+    border-left: 0.8rem solid transparent;
+    border-right: 0.8rem solid transparent;
+    border-top: 1.6rem solid theme("colors.plum.DEFAULT");
+    transform: skewX(-22deg);
+  }
+
+  .typing-dot {
+    @apply block h-4 w-4 rounded-full bg-plum;
+    animation: typing-dot 1.4s ease-in-out infinite;
+  }
+
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  @keyframes typing-dot {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.35;
+    }
+    30% {
+      transform: translateY(-0.45rem);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .typing-dot {
+      animation: none;
+      opacity: 1;
+    }
+  }
 }
