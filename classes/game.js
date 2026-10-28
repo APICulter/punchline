@@ -1,5 +1,5 @@
 class Game {
-    constructor (pin, hostSocketId, players = [], settings = "default", question = -1, questions = [], answers = [], maxAnswers = 0, nbOfPlayers, votes = [], maxVotes = 0, inGame = false, status = "", nbOfQuestions = 1, premium = false) {
+    constructor (pin, hostSocketId, players = [], settings = "default", question = -1, questions = [], answers = [], maxAnswers = 0, nbOfPlayers, votes = [], maxVotes = 0, inGame = false, status = "", nbOfQuestions = 1, premium = false, answerTime = null, revealTime = null) {
        this.pin = pin;
        this.hostSocketId = hostSocketId;
        this.players = players;
@@ -15,6 +15,8 @@ class Game {
        this.status = status; // "", "answering" or "voting"
        this.nbOfQuestions = nbOfQuestions;
        this.premium = premium;
+       this.answerTime = answerTime; // seconds to write an answer (null = questionCountDown from config)
+       this.revealTime = revealTime; // seconds per answer during the reveals (null = revealTime from config)
     }
 }
 

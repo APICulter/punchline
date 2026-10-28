@@ -8,7 +8,12 @@ maxNumberOfPlayers = 3
 # max 15 caracters for premium code
 premiumCode = change-me
 
-questionCountDown = 21
+# Default timers, in seconds. The host can change the two first ones in the lobby,
+# for each game; these values are the defaults of the lobby sliders.
+# Time to write an answer: min 30, max 150 (2:30), by steps of 10
+questionCountDown = 60
+# Time each answer stays on the big screen during the reveals: min 10, max 30
+revealTime = 10
 beforeQuestionCountDown = 6
 voteCountDown = 10
 
@@ -23,6 +28,8 @@ userExistsMessage = This name is already taken
 premiumCodeErrorMessage = Invalid code
 
 nbOfQuestionsErrorMessage = invalid number of rounds
+answerTimeErrorMessage = invalid answer time
+revealTimeErrorMessage = invalid reveal time
 premiumCodeLengthErrorMessage = length error
 
 answerEmptyErrorMessage = please answer
