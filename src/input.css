@@ -411,3 +411,11 @@
     @apply col-span-full py-6 text-center font-semibold text-plum/60;
   }
 }
+
+/* ---------- Host screens (game, scores) ---------- */
+@layer components {
+}
+
+/* ---------- Phone screens (prompt, vote, waiting) ---------- */
+@layer components {
+}
