@@ -359,7 +359,8 @@
 
   .toast {
     @apply fixed inset-x-0 z-50 mx-auto w-max max-w-[calc(100%-2rem)] rounded-2xl border-[2.5px] border-plum bg-plum px-5 py-3 text-center text-lg font-bold text-milk;
-    top: max(0.75rem, env(safe-area-inset-top));
+    /* just below the top bar, so it never hides the home / rules buttons */
+    top: calc(max(0.75rem, env(safe-area-inset-top)) + 3.75rem);
     box-shadow: 0 4px 0 0 theme("colors.pink.DEFAULT");
   }
 

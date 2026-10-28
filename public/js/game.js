@@ -204,6 +204,9 @@ socket.on("displayVotes", function (answers) {
 		return;
 	}
 	votesDisplayed = true;
+	// no countdown during the votes reveal
+	clearInterval(countdownIntervalQuestion);
+	countdownElement.classList.add("invisible");
 
 	// only the answers which received votes are displayed (no empty 9s pause for the others)
 	let votedAnswers = answers.filter((element) => element.votes > 0);

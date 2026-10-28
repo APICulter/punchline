@@ -1208,7 +1208,8 @@ video {
   font-weight: 700;
   --tw-text-opacity: 1;
   color: rgb(255 247 240 / var(--tw-text-opacity, 1));
-    top: max(0.75rem, env(safe-area-inset-top));
+    /* just below the top bar, so it never hides the home / rules buttons */
+    top: calc(max(0.75rem, env(safe-area-inset-top)) + 3.75rem);
     box-shadow: 0 4px 0 0 #FF4F8C;
 }
 
