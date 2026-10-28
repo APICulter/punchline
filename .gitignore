@@ -1,6 +1,32 @@
+# Dependencies
 node_modules/
+
+# Local configuration / secrets (copy config.properties.example to config.properties)
+config.properties
+.env
+.env.*
+!.env.example
+db/env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Personal notes and data
 feuille_de_route.txt
 idees_UseYourWords.txt
 images ecran Use Your Words/
 db/example.csv
-db/env

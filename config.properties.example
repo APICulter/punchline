@@ -1,0 +1,28 @@
+databaseUrl = mongodb://127.0.0.1:27017/punchline
+punchlineURL = http://localhost:3000
+applicationPort = 3000
+maxNumberOfPlayers = 3
+# max 15 caracters for premium code
+premiumCode = change-me
+
+questionCountDown = 21
+beforeQuestionCountDown = 6
+voteCountDown = 10
+
+errorRoomFullMessage = The room is full !
+noGameFoundMessage = Invalid PIN
+emptyPinMessage = Empty PIN
+onlyNumbersMessage = Only numbers 1
+fourDigitPinMessage = 4 digit PIN
+botName = bot
+unauthorizedNameMessage = Unauthorized name
+userExistsMessage = This name is already taken
+premiumCodeErrorMessage = Invalid code
+
+nbOfQuestionsErrorMessage = invalid number of rounds
+premiumCodeLengthErrorMessage = length error
+
+answerEmptyErrorMessage = please answer
+answerTooLongErrorMessage = answer too long
+
+

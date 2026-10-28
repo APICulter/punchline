@@ -1,11 +1,16 @@
 {
   "name": "punchline",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Multiplayer party game inspired by \"Use Your Words\" (Node.js, Express, Socket.io, MongoDB)",
+  "main": "app.js",
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "postcss ./src/input.css -o ./public/css/style.css --watch"
+    "start": "node app.js",
+    "build:css": "postcss ./src/input.css -o ./public/css/style.css",
+    "dev": "postcss ./src/input.css -o ./public/css/style.css --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -19,16 +24,17 @@
   },
   "homepage": "https://github.com/APICulter/punchline#readme",
   "dependencies": {
-    "animate.css": "^4.1.1",
-    "express": "^4.18.2",
-    "mongodb": "^5.7.0",
-    "mongoose": "^7.3.4",
-    "socket.io": "^4.6.1"
+    "express": "^4.22.3",
+    "isomorphic-dompurify": "^4.6.0",
+    "mongoose": "^7.8.13",
+    "properties-reader": "^2.3.0",
+    "socket.io": "^4.8.4",
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.14",
-    "postcss": "^8.4.24",
+    "autoprefixer": "^10.6.2",
+    "postcss": "^8.5.32",
     "postcss-cli": "^10.1.0",
-    "tailwindcss": "^3.3.2"
+    "tailwindcss": "^3.4.19"
   }
 }
