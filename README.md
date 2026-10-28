@@ -9,7 +9,7 @@ This game is called "Punchline". It is a copy of the game "Use Your Words".
 Open the site on a shared screen and create a room. Each participant opens the game URL on a phone, enters the generated code to join the room and picks a name tag. Once the settings are made and the participants are ready, the game starts and goes through a number of rounds that go like this:
 
 - A question, image or video appears on the screen with a theme of some sort.
-- Everyone has 60 seconds to give an answer on their phone.
+- Everyone has a limited time to give an answer on their phone (60 seconds by default, set by the host in the lobby).
 - Once everyone has answered, the answers are displayed anonymously on the phones.
 - Everyone votes for an answer (except their own).
 - Each player gets one point per vote received.
@@ -52,6 +52,9 @@ Open the site on a shared screen and create a room. Each participant opens the g
    | `questionCountDown` | Default time to write an answer, in seconds (default `60`, min `30`, max `150`). The host can change it in the lobby for each game |
    | `revealTime` | Default time each answer stays on the big screen during the reveals, in seconds (default `10`, min `10`, max `30`). The host can change it in the lobby for each game |
    | `beforeQuestionCountDown`, `voteCountDown` | Other round timers, in seconds |
+   | `botName` | Name players cannot take (reserved for the bot) |
+
+   Messages shown to players are not configured here anymore: see [Language](#language).
 
    `config.properties` is ignored by git: do not commit real codes or passwords.
 
@@ -82,6 +85,15 @@ PUBLIC_URL=https://punchline.example.com PORT=8080 npm start
 Behind a reverse proxy, `PUBLIC_URL` is the address players type; without it the server falls back to the `Host` / `X-Forwarded-Host` headers.
 
 In VS Code, the "Launch Punchline" configuration in `.vscode/launch.json` starts `app.js` under the debugger.
+
+## Language
+
+The interface is available in English and French. Each device (the big screen and every phone) has its own language: the "FR" / "EN" button in the top bar switches it instantly, and the choice is remembered in the browser (`localStorage`, key `punchline.lang`). The first time, the browser language is used (French for `fr*`, English otherwise).
+
+- All texts live in `public/js/i18n.js` (one dictionary per language). Static HTML is marked with `data-i18n="key"` (text), `data-i18n-placeholder`, `data-i18n-aria-label`, `data-i18n-title` or `data-i18n-empty`; scripts use `t(key, params)`, or `i18nText(element, key, params)` so that the text follows a language change.
+- The server sends message keys (e.g. `error.roomFull`) on the same events as before; the browser translates them. A message that is not a known key is displayed as is.
+- To add a language: add a dictionary next to `en` and `fr` in `i18n.js` (same keys; plural entries are `{ one, other }` objects), then adapt the switch button (it currently toggles between the two languages).
+- Questions are not translated: their language depends on the content of the MongoDB database.
 
 ## Seeding the database
 

@@ -656,6 +656,15 @@ video {
   width: 1.5rem;
 }
 
+  /* Language switch (i18n.js): an icon button showing the target language code */
+  .lang-btn {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.025em;
+}
+
   /* Game PIN shown in the top bar */
   .pin-badge {
   display: inline-flex;
@@ -2107,7 +2116,7 @@ video {
   /* Winner: a plum speech bubble with the name in butter */
   .podium-winner {
   position: relative;
-  width: 100%;
+  width: calc(100% - 1rem);
   max-width: 32rem;
   --tw-rotate: -2deg;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -2690,6 +2699,9 @@ video {
 }
 .invisible {
   visibility: hidden;
+}
+.static {
+  position: static;
 }
 .mx-auto {
   margin-left: auto;

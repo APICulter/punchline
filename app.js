@@ -131,6 +131,31 @@ mongoose.connect(databaseUrl).catch((err) => {
 	console.error("MongoDB initial connection error:", err);
 });
 
+// Messages sent to the clients: stable keys translated by the browser (public/js/i18n.js).
+// Event names are unchanged; older clients simply display the key.
+const MESSAGES = {
+	pinEmpty: "error.pinEmpty",
+	pinDigitsOnly: "error.pinDigitsOnly",
+	pinLength: "error.pinLength",
+	gameNotFound: "error.gameNotFound",
+	roomFull: "error.roomFull",
+	nameEmpty: "error.nameEmpty",
+	nameTooLong: "error.nameTooLong",
+	nameUnauthorized: "error.nameUnauthorized",
+	nameTaken: "error.nameTaken",
+	roundsInvalid: "error.roundsInvalid",
+	answerTimeInvalid: "error.answerTimeInvalid",
+	revealTimeInvalid: "error.revealTimeInvalid",
+	premiumCodeLength: "error.premiumCodeLength",
+	premiumCodeInvalid: "error.premiumCodeInvalid",
+	questionsUnavailable: "error.questionsUnavailable",
+	answerEmpty: "error.answerEmpty",
+	answerTooLong: "error.answerTooLong",
+};
+
+// Name reserved for the bot (case insensitive)
+const BOT_NAME = String(global.botName || "bot");
+
 // Per-game timers (seconds): bounds of the lobby sliders, defaults from config.properties
 const ANSWER_TIME_MIN = 30;
 const ANSWER_TIME_MAX = 150;
@@ -267,13 +292,13 @@ io.on("connection", function (socket) {
 		data.pin = clean(data.pin).trim();
 
 		if (data.pin.length == 0) {
-			socket.emit("findRoomByIdErrorMessages", emptyPinMessage);
+			socket.emit("findRoomByIdErrorMessages", MESSAGES.pinEmpty);
 			return;
 		} else if (!/^[0-9]+$/.test(data.pin)) {
-			socket.emit("findRoomByIdErrorMessages", onlyNumbersMessage);
+			socket.emit("findRoomByIdErrorMessages", MESSAGES.pinDigitsOnly);
 			return;
 		} else if (data.pin.length != 4) {
-			socket.emit("findRoomByIdErrorMessages", fourDigitPinMessage);
+			socket.emit("findRoomByIdErrorMessages", MESSAGES.pinLength);
 			return;
 		} else {
 
@@ -281,7 +306,7 @@ io.on("connection", function (socket) {
 			if (typeof game !== "undefined") {
 				// We prevent max number of joigners before the game starts
 				if (game.players.length >= Number(maxNumberOfPlayers) && game.inGame == false) {
-					socket.emit("errorRoomFull", errorRoomFullMessage);
+					socket.emit("errorRoomFull", MESSAGES.roomFull);
 					return;
 				} else {
 					socket.emit(
@@ -292,7 +317,7 @@ io.on("connection", function (socket) {
 					);
 				}
 			} else {
-				socket.emit("findRoomByIdErrorMessages", noGameFoundMessage);
+				socket.emit("findRoomByIdErrorMessages", MESSAGES.gameNotFound);
 			}
 		}
 	});
@@ -332,7 +357,7 @@ io.on("connection", function (socket) {
 			// Only an existing, currently unlocked (disconnected) player can be taken over
 			let player = game.players.find((player) => player.name === playerName);
 			if (typeof player === "undefined" || player.lock) {
-				socket.emit("findRoomByIdErrorMessages", noGameFoundMessage);
+				socket.emit("findRoomByIdErrorMessages", MESSAGES.gameNotFound);
 				return;
 			}
 			player.socketId = socket.id;
@@ -361,13 +386,13 @@ io.on("connection", function (socket) {
 		data.playerName = clean(data.playerName).trim();
 
 		if (data.playerName.length == 0) {
-			socket.emit("setUsernameErrorMessages", emptyPlayerNameMessage);
+			socket.emit("setUsernameErrorMessages", MESSAGES.nameEmpty);
 			return;
 		} else if (data.playerName.length > 25) {
-			socket.emit("setUsernameErrorMessages", tooLongPlayerNameMessage);
+			socket.emit("setUsernameErrorMessages", MESSAGES.nameTooLong);
 			return;
-		} else if (data.playerName.toLowerCase() == String(botName).toLowerCase()) {
-			socket.emit("setUsernameErrorMessages", unauthorizedNameMessage);
+		} else if (data.playerName.toLowerCase() == BOT_NAME.toLowerCase()) {
+			socket.emit("setUsernameErrorMessages", MESSAGES.nameUnauthorized);
 			return;
 		}
 
@@ -378,7 +403,7 @@ io.on("connection", function (socket) {
 		if (roomName && typeof game !== "undefined") {
 			// New players can only join the lobby, within the max number of players
 			if (game.inGame || game.players.length >= Number(maxNumberOfPlayers)) {
-				socket.emit("setUsernameErrorMessages", errorRoomFullMessage);
+				socket.emit("setUsernameErrorMessages", MESSAGES.roomFull);
 				return;
 			}
 
@@ -401,7 +426,7 @@ io.on("connection", function (socket) {
 				});
 				socket.emit("userSet", data, "/html/waiting.html");
 			} else {
-				socket.emit("setUsernameErrorMessages", userExistsMessage);
+				socket.emit("setUsernameErrorMessages", MESSAGES.nameTaken);
 			}
 		}
 	});
@@ -503,7 +528,7 @@ io.on("connection", function (socket) {
 			data.premiumMode = clean(data.premiumMode);
 
 			if (!Number.isInteger(Number(data.nbOfQuestions)) || Number(data.nbOfQuestions) < 1 || Number(data.nbOfQuestions) > 10) {
-				socket.emit("startGameErrorMessages", nbOfQuestionsErrorMessage);
+				socket.emit("startGameErrorMessages", MESSAGES.roundsInvalid);
 				return;
 			}
 
@@ -511,13 +536,13 @@ io.on("connection", function (socket) {
 			const answerTime = parseTimeSetting(data.answerTime, ANSWER_TIME_MIN, ANSWER_TIME_MAX, DEFAULT_ANSWER_TIME);
 			const revealTime = parseTimeSetting(data.revealTime, REVEAL_TIME_MIN, REVEAL_TIME_MAX, DEFAULT_REVEAL_TIME);
 			if (answerTime === null) {
-				socket.emit("startGameErrorMessages", global.answerTimeErrorMessage || "invalid answer time");
+				socket.emit("startGameErrorMessages", MESSAGES.answerTimeInvalid);
 				return;
 			} else if (revealTime === null) {
-				socket.emit("startGameErrorMessages", global.revealTimeErrorMessage || "invalid reveal time");
+				socket.emit("startGameErrorMessages", MESSAGES.revealTimeInvalid);
 				return;
 			} else if ((data.secretCode.length == 0 || data.secretCode.length > 15) && data.premiumMode === "true") {
-				socket.emit("startGameErrorMessages", premiumCodeLengthErrorMessage);
+				socket.emit("startGameErrorMessages", MESSAGES.premiumCodeLength);
 				return;
 			}
 
@@ -530,7 +555,7 @@ io.on("connection", function (socket) {
 				) {
 					game.premium = true;
 				} else {
-					socket.emit("startGameErrorMessages", premiumCodeErrorMessage);
+					socket.emit("startGameErrorMessages", MESSAGES.premiumCodeInvalid);
 					return;
 				}
 			}
@@ -547,7 +572,7 @@ io.on("connection", function (socket) {
 			if (game.questions.length === 0) {
 				game.inGame = false;
 				game.premium = false;
-				socket.emit("startGameErrorMessages", "Unable to load questions");
+				socket.emit("startGameErrorMessages", MESSAGES.questionsUnavailable);
 				return;
 			}
 			initBot(game);
@@ -640,10 +665,10 @@ io.on("connection", function (socket) {
 		data.answer = clean(data.answer).trim();
 
 		if (data.answer.length == 0) {
-			socket.emit("answerErrorMessages", answerEmptyErrorMessage);
+			socket.emit("answerErrorMessages", MESSAGES.answerEmpty);
 			return;
 		} else if (data.answer.length >= 100) {
-			socket.emit("answerErrorMessages", answerTooLongErrorMessage);
+			socket.emit("answerErrorMessages", MESSAGES.answerTooLong);
 			return;
 		}
 

@@ -15,8 +15,11 @@ window.onload = function () {
 	});
 };
 
-function pointsLabel(points) {
-	return points + (Number(points) === 1 ? " point" : " points");
+// Last scores received, to render the page again when the language changes
+let lastScores = null;
+
+function joinNames(names) {
+	return names.length > 1 ? names.slice(0, -1).join(", ") + t("common.and") + names[names.length - 1] : names[0];
 }
 
 // Winner banner above the table (several names when there is a tie)
@@ -29,10 +32,9 @@ function displayWinner(scores) {
 	const winners = scores.filter((element) => element.points === topPoints);
 	const names = winners.map((element) => element.name);
 
-	document.getElementById("winnerLabel").textContent = winners.length > 1 ? "It's a tie!" : "The winner is";
-	document.getElementById("winnerName").textContent =
-		names.length > 1 ? names.slice(0, -1).join(", ") + " & " + names[names.length - 1] : names[0];
-	document.getElementById("winnerPoints").textContent = pointsLabel(topPoints);
+	i18nText(document.getElementById("winnerLabel"), winners.length > 1 ? "scores.tie" : "scores.winner");
+	document.getElementById("winnerName").textContent = joinNames(names);
+	i18nText(document.getElementById("winnerPoints"), "scores.pointsLabel", { count: topPoints });
 
 	if (window.PunchlineAudio && winner.classList.contains("invisible")) PunchlineAudio.sfx("fanfare");
 	winner.classList.remove("invisible");
@@ -41,20 +43,24 @@ function displayWinner(scores) {
 
 // Displays the final results
 socket.on("scores", function (scores) {
+	if (!Array.isArray(scores)) {
+		return;
+	}
+	lastScores = scores;
 	const table = document.createElement("table");
 	table.className = "score-table";
 
 	const caption = document.createElement("caption");
 	caption.className = "sr-only";
-	caption.textContent = "Final scores";
+	i18nText(caption, "scores.caption");
 	table.appendChild(caption);
 
 	const head = document.createElement("thead");
 	const headRow = head.insertRow();
-	["Rank", "Player", "Points"].forEach((label) => {
+	["scores.rank", "scores.player", "scores.points"].forEach((key) => {
 		const th = document.createElement("th");
 		th.scope = "col";
-		th.textContent = label;
+		i18nText(th, key);
 		headRow.appendChild(th);
 	});
 	table.appendChild(head);
@@ -94,4 +100,13 @@ socket.on("scores", function (scores) {
 	// avoids a duplicated table if the event is received twice
 	scoreTable.replaceChildren(table);
 	displayWinner(scores);
+});
+
+
+// The winner's names are joined with "&" / "et": render it again in the new language
+onLangChange(function () {
+	if (lastScores && lastScores.length > 0) {
+		const names = lastScores.filter((element) => element.points === lastScores[0].points).map((element) => element.name);
+		document.getElementById("winnerName").textContent = joinNames(names);
+	}
 });

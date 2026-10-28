@@ -121,6 +121,11 @@
     @apply h-6 w-6;
   }
 
+  /* Language switch (i18n.js): an icon button showing the target language code */
+  .lang-btn {
+    @apply text-base font-extrabold leading-none tracking-wide;
+  }
+
   /* Game PIN shown in the top bar */
   .pin-badge {
     @apply inline-flex h-12 items-center rounded-full bg-plum px-5 text-lg font-extrabold tabular-nums tracking-[0.18em] text-butter;
@@ -629,7 +634,7 @@
 
   /* Winner: a plum speech bubble with the name in butter */
   .podium-winner {
-    @apply relative w-full max-w-lg -rotate-2 rounded-[2rem] border-[3px] border-plum bg-plum px-6 pb-7 pt-6 text-milk shadow-pop-lg sm:px-10;
+    @apply relative w-[calc(100%-1rem)] max-w-lg -rotate-2 rounded-[2rem] border-[3px] border-plum bg-plum px-6 pb-7 pt-6 text-milk shadow-pop-lg sm:px-10;
   }
 
   .podium-winner::after {

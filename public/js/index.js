@@ -26,16 +26,16 @@ function setUsername() {
 	playerName.value = playerName.value.trim();
 
 	if (playerName.value.length == 0) {
-		displayErrorMessage(error, "Enter a name to join");
+		displayErrorMessage(error, "error.nameEmpty");
 		return;
 	} else if ( playerName.value.length > 22) {
-		displayErrorMessage(error, "Name too long");
+		displayErrorMessage(error, "error.nameTooLong");
 		return;
 	} else {
 
 		var result = forbiddenCaracters.filter((caracter) => playerName.value.includes(caracter));
 		if (result.length > 0) {
-			displayErrorMessage(error, "Invalid character(s): " + result.join(" "));
+			displayErrorMessage(error, "error.nameInvalidChars", { chars: result.join(" ") });
 			return;
 		} else {
 			socket.emit("setUsername", {
@@ -105,6 +105,7 @@ function createGame() {
 	document.getElementById("tagline").classList.add("hidden");
 	document.getElementById("hero").classList.remove("flex-1");
 	document.getElementById("lobby").classList.remove("hidden");
+	setRulesAnswerTime(document.getElementById("answerTime").value);
 	socket.emit("getPunchlineURL");
 }
 
@@ -161,13 +162,13 @@ function joinRoom() {
 	
 	// Validation
 	if (roomPin.value.length == 0) {
-		displayErrorMessage(error, "Enter the 4-digit PIN");
+		displayErrorMessage(error, "error.pinEmpty");
 		return;
 	} else if (!/^[0-9]+$/.test(roomPin.value)) {
-		displayErrorMessage(error, "The PIN only has numbers");
+		displayErrorMessage(error, "error.pinDigitsOnly");
 		return;
 	} else if (roomPin.value.length != 4) {
-		displayErrorMessage(error, "The PIN has 4 digits");
+		displayErrorMessage(error, "error.pinLength");
 		return;
 	} else {
 		socket.emit("findRoomById", {
@@ -218,8 +219,8 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 	errorContainer.className = "toast pointer-events-none hidden animate__animated animate__fadeInDown";
 
 	if (!inGame) {
-		title.textContent = "What should we call you?";
-		hint.textContent = "Up to 21 characters. Your friends will see it on the scoreboard.";
+		i18nText(title, "name.title");
+		i18nText(hint, "name.hint");
 
 		let playerName = document.createElement("input");
 		playerName.id = "player-name";
@@ -227,11 +228,11 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		playerName.name = "player-name";
 		playerName.value = "";
 		playerName.maxLength = 21;
-		playerName.placeholder = "Your name";
+		i18nAttr(playerName, "placeholder", "name.placeholder");
 		playerName.autocomplete = "nickname";
 		playerName.setAttribute("autocapitalize", "words");
 		playerName.setAttribute("enterkeyhint", "go");
-		playerName.setAttribute("aria-label", "Your name");
+		i18nAttr(playerName, "aria-label", "name.placeholder");
 		playerName.className = "field";
 		panel.append(playerName);
 
@@ -239,7 +240,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		nameButton.id = "name-button";
 		nameButton.type = "button";
 		nameButton.name = "button";
-		nameButton.textContent = "Let's go";
+		i18nText(nameButton, "name.go");
 		nameButton.setAttribute("onclick", "setUsername()");
 		nameButton.className = "btn btn-primary btn-block";
 		panel.append(nameButton);
@@ -247,8 +248,8 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 
 		playerName.focus();
 	} else {
-		title.textContent = "Who are you?";
-		hint.textContent = "The game has already started. Pick your name to jump back in.";
+		i18nText(title, "rejoin.title");
+		i18nText(hint, "rejoin.hint");
 
 		let availablePlayers = document.createElement("div");
 		availablePlayers.id = "nameList";
@@ -282,7 +283,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		nameButton.id = "name-button";
 		nameButton.type = "button";
 		nameButton.name = "button";
-		nameButton.textContent = "Rejoin";
+		i18nText(nameButton, "rejoin.button");
 		nameButton.className = "btn btn-primary btn-block";
 		panel.append(nameButton);
 		panel.append(errorContainer);
@@ -290,7 +291,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		nameButton.addEventListener("click", function () {
 			let checkedPlayer = document.querySelector("input[name=player]:checked");
 			if (!checkedPlayer) {
-				displayErrorMessage(errorContainer, "Pick your name first");
+				displayErrorMessage(errorContainer, "error.pickName");
 				return;
 			}
 			socket.emit("joinGame", document.querySelector("#pin").value, checkedPlayer.value);
@@ -320,7 +321,8 @@ socket.on("newJoiner", function (data) {
 		let deleteButton = document.createElement("button");
 		deleteButton.type = "button";
 		deleteButton.className = "chip-remove";
-		deleteButton.setAttribute("aria-label", "Remove " + data.playerName);
+		// the player's name only goes through the translation parameters (set as an attribute, never as HTML)
+		i18nAttr(deleteButton, "aria-label", "lobby.remove", { name: data.playerName });
 		deleteButton.setAttribute("onclick", "deletePlayer(this)");
 		deleteButton.innerHTML =
 			'<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
@@ -340,7 +342,13 @@ function deletePlayer(selfElement) {
 
 function updateNbOfPlayers() {
 	document.getElementById("playerCounter").textContent = nbOfPlayers;
+	i18nText(document.getElementById("playerCounterLabel"), "lobby.joined", { count: nbOfPlayers });
 }
+
+// Lobby sliders: the answer time chosen by the host is also shown in the rules
+document.getElementById("answerTime").addEventListener("input", function () {
+	setRulesAnswerTime(this.value);
+});
 
 
 // deletes the display of a player (front end side)
@@ -367,16 +375,16 @@ function startGame() {
 
 	if (premiumCode.value.length == 0 &&
 		isPremiumMode()) {
-		displayErrorMessage(error, "Enter the premium code");
+		displayErrorMessage(error, "error.premiumCodeEmpty");
 		return;
 	
 	// check the number of players
 	} else if (premiumCode.value.length > 15 &&
 		isPremiumMode()) {
-		displayErrorMessage(error, "Code too long");
+		displayErrorMessage(error, "error.premiumCodeTooLong");
 		return;
 	} else if (nbOfPlayers < minNbOfPlayers) {
-		displayErrorMessage(error, "You need at least 2 players");
+		displayErrorMessage(error, "error.notEnoughPlayers", { count: minNbOfPlayers });
 		return;
 
 	} else {

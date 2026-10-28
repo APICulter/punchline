@@ -1095,6 +1095,21 @@
 	var ICON_SFX_OFF =
 		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3" /><path d="M5 5l14 14" /></svg>';
 
+	// Labels of the controls (i18n.js when loaded, English otherwise)
+	var LABELS = {
+		"sound.volume": "Music volume",
+		"sound.unlock": "Tap to enable sound",
+		"sound.enable": "Enable sound",
+		"sound.mute": "Mute",
+		"sound.unmute": "Unmute",
+		"sound.sfx": "Sound effects",
+		"sound.sfxOn": "Sound effects on",
+		"sound.sfxOff": "Sound effects off",
+	};
+	function label(key) {
+		return typeof window.t === "function" ? window.t(key) : LABELS[key];
+	}
+
 	function mountControls() {
 		var root = document.getElementById("soundControls");
 		if (!root || ui) return;
@@ -1104,8 +1119,8 @@
 		}
 		root.innerHTML =
 			'<button type="button" class="icon-btn sound-sfx" data-sound="sfx"></button>' +
-			'<input type="range" min="0" max="100" step="1" class="range sound-range" data-sound="volume" aria-label="Music volume" />' +
-			'<button type="button" class="sound-unlock" data-sound="unlock">Tap to enable sound</button>' +
+			'<input type="range" min="0" max="100" step="1" class="range sound-range" data-sound="volume" />' +
+			'<button type="button" class="sound-unlock" data-sound="unlock"></button>' +
 			'<button type="button" class="icon-btn sound-btn" data-sound="toggle"></button>';
 		ui = {
 			root: root,
@@ -1147,6 +1162,8 @@
 			ensureContext();
 		}
 		updateUI();
+		// labels follow the language switch (i18n.js)
+		if (typeof window.onLangChange === "function") window.onLangChange(updateUI);
 	}
 
 	function updateUI() {
@@ -1155,12 +1172,14 @@
 		var state = locked ? "locked" : settings.muted ? "muted" : "on";
 		ui.root.dataset.state = state;
 		ui.toggle.innerHTML = state === "on" ? ICON_ON : ICON_OFF;
-		ui.toggle.setAttribute("aria-label", locked ? "Enable sound" : settings.muted ? "Unmute" : "Mute");
-		ui.toggle.setAttribute("title", locked ? "Tap to enable sound" : settings.muted ? "Unmute" : "Mute");
+		ui.toggle.setAttribute("aria-label", label(locked ? "sound.enable" : settings.muted ? "sound.unmute" : "sound.mute"));
+		ui.toggle.setAttribute("title", label(locked ? "sound.unlock" : settings.muted ? "sound.unmute" : "sound.mute"));
 		ui.sfx.innerHTML = settings.sfx ? ICON_SFX : ICON_SFX_OFF;
 		ui.sfx.setAttribute("aria-pressed", settings.sfx ? "true" : "false");
-		ui.sfx.setAttribute("aria-label", "Sound effects");
-		ui.sfx.setAttribute("title", settings.sfx ? "Sound effects on" : "Sound effects off");
+		ui.sfx.setAttribute("aria-label", label("sound.sfx"));
+		ui.sfx.setAttribute("title", label(settings.sfx ? "sound.sfxOn" : "sound.sfxOff"));
+		ui.volume.setAttribute("aria-label", label("sound.volume"));
+		ui.unlock.textContent = label("sound.unlock");
 		ui.volume.value = Math.round(settings.volume * 100);
 	}
 

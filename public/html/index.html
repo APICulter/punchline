@@ -19,20 +19,20 @@
 		<div id="rulesModal" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
 			<div class="sheet-card">
 				<div class="mb-4 flex items-center justify-between gap-4">
-					<h2 id="rulesTitle" class="text-3xl font-extrabold tracking-tight">How to play</h2>
-					<button id="closeRules" type="button" class="icon-btn" aria-label="Close">
+					<h2 id="rulesTitle" class="text-3xl font-extrabold tracking-tight" data-i18n="rules.title">How to play</h2>
+					<button id="closeRules" type="button" class="icon-btn" aria-label="Close" data-i18n-aria-label="common.close">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
 					</button>
 				</div>
-				<p class="mb-5 text-lg">One big screen for the questions, one phone per player.</p>
+				<p class="mb-5 text-lg" data-i18n="rules.intro">One big screen for the questions, one phone per player.</p>
 				<ol class="steps text-lg">
-					<li><span>Create a game on the big screen. Choose 1 to 10 rounds, or enter a premium code for extra questions.</span></li>
-					<li><span>Everyone opens <a id="gameURL" class="font-bold underline decoration-pink decoration-[3px] underline-offset-4" href="">Punchline</a> on their phone, types the PIN and picks a name.</span></li>
-					<li><span>A question appears. You have 60 seconds to write your answer.</span></li>
-					<li><span>The answers show up on every phone, without names. Vote for your favourite, just not your own.</span></li>
-					<li><span>Every vote you get is worth 1 point. Most points after the last round wins.</span></li>
+					<li><span data-i18n="rules.step1">Create a game on the big screen. Choose 1 to 10 rounds, or enter a premium code for extra questions.</span></li>
+					<li><span><span data-i18n="rules.step2.before">Everyone opens </span><a id="gameURL" class="font-bold underline decoration-pink decoration-[3px] underline-offset-4" href="">Punchline</a><span data-i18n="rules.step2.after"> on their phone, types the PIN and picks a name.</span></span></li>
+					<li><span id="rulesAnswerTime" data-i18n="rules.step3">A question appears. Write your answer before the clock runs out: the host sets how long you get.</span></li>
+					<li><span data-i18n="rules.step4">The answers show up on every phone, without names. Vote for your favourite, just not your own.</span></li>
+					<li><span data-i18n="rules.step5">Every vote you get is worth 1 point. Most points after the last round wins.</span></li>
 				</ol>
-				<button id="exitRules" type="button" class="btn btn-primary btn-block mt-7">Got it</button>
+				<button id="exitRules" type="button" class="btn btn-primary btn-block mt-7" data-i18n="rules.gotIt">Got it</button>
 			</div>
 		</div>
 
@@ -40,18 +40,21 @@
 			<div class="app-inner app-inner--wide">
 				<header class="topbar">
 					<div class="flex gap-2">
-						<button id="home" type="button" class="icon-btn" onclick="home()" aria-label="Back to home">
+						<button id="home" type="button" class="icon-btn" onclick="home()" aria-label="Back to home" data-i18n-aria-label="common.home">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9v11h13V9" /></svg>
 						</button>
-						<button id="rules" type="button" class="icon-btn" aria-label="How to play">
+						<button id="rules" type="button" class="icon-btn" aria-label="How to play" data-i18n-aria-label="common.rules">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 8.6a3.5 3.5 0 0 1 6.8 1.1c0 2.3-3.4 2.8-3.4 5.2" /><path d="M12 19.2h.01" /></svg>
+						</button>
+						<button id="langToggle" type="button" class="icon-btn lang-btn" data-lang-toggle aria-label="Switch to French" title="Switch to French">
+							<span data-lang-code lang="fr">FR</span>
 						</button>
 					</div>
 					<div class="flex min-w-0 items-center gap-2">
 						<!-- Music and sound effects (audio.js), shown once the host created a game -->
 						<div id="soundControls" class="sound hidden"></div>
 
-						<button id="punchlinePin" type="button" class="pin-badge invisible" aria-label="Game PIN">0000</button>
+						<button id="punchlinePin" type="button" class="pin-badge invisible" aria-label="Game PIN" data-i18n-aria-label="common.gamePin">0000</button>
 					</div>
 				</header>
 
@@ -59,7 +62,7 @@
 					<div class="animate__animated animate__bounceIn">
 						<h1 class="wordmark">Punchline</h1>
 					</div>
-					<p id="tagline" class="mt-9 max-w-[18rem] text-xl font-semibold leading-snug sm:max-w-sm sm:text-2xl">
+					<p id="tagline" class="mt-9 max-w-[18rem] text-xl font-semibold leading-snug sm:max-w-sm sm:text-2xl" data-i18n="home.tagline">
 						Write the funniest answer. Vote for the best one.
 					</p>
 				</section>
@@ -75,21 +78,21 @@
 							<div id="pinLabel"></div>
 
 							<div id="startButtons" class="mx-auto flex w-full max-w-md flex-col gap-4">
-								<button id="createGame" type="button" class="btn btn-primary btn-lg btn-block" onclick="createGame()">
+								<button id="createGame" type="button" class="btn btn-primary btn-lg btn-block" onclick="createGame()" data-i18n="home.create">
 									Create a game
 								</button>
-								<button id="joinGameInit" type="button" class="btn btn-secondary btn-lg btn-block" onclick="joinGameInit()">
+								<button id="joinGameInit" type="button" class="btn btn-secondary btn-lg btn-block" onclick="joinGameInit()" data-i18n="home.join">
 									Join a game
 								</button>
-								<p class="muted mt-2 text-center">Create on the big screen, join from your phone.</p>
+								<p class="muted mt-2 text-center" data-i18n="home.hint">Create on the big screen, join from your phone.</p>
 							</div>
 
 							<!-- Player: enter the PIN -->
 							<div id="join" class="mx-auto hidden w-full max-w-md">
 								<div class="panel flex flex-col gap-4">
 									<div>
-										<label for="roomPin" class="panel-title">Enter the game PIN</label>
-										<p class="muted mt-1">You'll find it on the big screen.</p>
+										<label for="roomPin" class="panel-title" data-i18n="join.title">Enter the game PIN</label>
+										<p class="muted mt-1" data-i18n="join.hint">You'll find it on the big screen.</p>
 									</div>
 									<input
 										id="roomPin"
@@ -104,7 +107,7 @@
 										autocomplete="off"
 										class="field field--pin"
 									/>
-									<button id="joinRoomButton" type="button" class="btn btn-primary btn-block" onclick="joinRoom()">Join</button>
+									<button id="joinRoomButton" type="button" class="btn btn-primary btn-block" onclick="joinRoom()" data-i18n="join.button">Join</button>
 								</div>
 							</div>
 
@@ -112,17 +115,17 @@
 							<div id="lobby" class="hidden w-full">
 							<div class="gap-6 lg:grid lg:grid-cols-[1.15fr_1fr] lg:items-start">
 								<div class="panel panel--plum mb-6 flex flex-col gap-5 p-7 lg:mb-0 lg:p-10">
-									<p class="text-2xl font-bold leading-tight lg:text-4xl">On your phone, open</p>
+									<p class="text-2xl font-bold leading-tight lg:text-4xl" data-i18n="lobby.openOnPhone">On your phone, open</p>
 									<p id="lobbyURL" class="break-all text-2xl font-extrabold leading-tight text-butter lg:text-4xl">&nbsp;</p>
-									<p class="text-2xl font-bold leading-tight lg:text-4xl">and enter this PIN</p>
-									<div id="lobbyPin" class="flex gap-2 sm:gap-3" aria-label="Game PIN"></div>
+									<p class="text-2xl font-bold leading-tight lg:text-4xl" data-i18n="lobby.enterPin">and enter this PIN</p>
+									<div id="lobbyPin" class="flex gap-2 sm:gap-3" aria-label="Game PIN" data-i18n-aria-label="common.gamePin"></div>
 								</div>
 
 								<div class="flex flex-col gap-6">
 									<div id="optionMenu" class="panel flex flex-col gap-6">
 										<div>
 											<div class="flex items-baseline justify-between">
-												<label for="nbOfQuestions" class="panel-title">Rounds</label>
+												<label for="nbOfQuestions" class="panel-title" data-i18n="lobby.rounds">Rounds</label>
 												<output id="nbOfQuestionsValue" for="nbOfQuestions" class="text-2xl font-extrabold tabular-nums">5</output>
 											</div>
 											<input
@@ -139,7 +142,7 @@
 
 										<div>
 											<div class="flex items-baseline justify-between">
-												<label for="answerTime" class="panel-title">Time to answer</label>
+												<label for="answerTime" class="panel-title" data-i18n="lobby.answerTime">Time to answer</label>
 												<output id="answerTimeValue" for="answerTime" class="text-2xl font-extrabold tabular-nums">1:00</output>
 											</div>
 											<input
@@ -157,7 +160,7 @@
 
 										<div>
 											<div class="flex items-baseline justify-between">
-												<label for="revealTime" class="panel-title">Time per reveal</label>
+												<label for="revealTime" class="panel-title" data-i18n="lobby.revealTime">Time per reveal</label>
 												<output id="revealTimeValue" for="revealTime" class="text-2xl font-extrabold tabular-nums">0:10</output>
 											</div>
 											<input
@@ -174,12 +177,12 @@
 										</div>
 
 										<fieldset>
-											<legend class="panel-title mb-3">Questions</legend>
+											<legend class="panel-title mb-3" data-i18n="lobby.questions">Questions</legend>
 											<div class="segmented">
 												<input type="radio" id="normalMode" name="modeSelection" value="normal" onclick="changeMode()" checked />
-												<label for="normalMode">Classic</label>
+												<label for="normalMode" data-i18n="lobby.classic">Classic</label>
 												<input type="radio" id="premiumMode" name="modeSelection" value="premium" onclick="changeMode()" />
-												<label for="premiumMode">Premium</label>
+												<label for="premiumMode" data-i18n="lobby.premium">Premium</label>
 											</div>
 											<input
 												id="secretCode"
@@ -187,8 +190,10 @@
 												name="secretCode"
 												value=""
 												placeholder="Premium code"
+												data-i18n-placeholder="lobby.premiumCode"
 												autocomplete="off"
 												aria-label="Premium code"
+												data-i18n-aria-label="lobby.premiumCode"
 												class="field mt-3 hidden"
 											/>
 										</fieldset>
@@ -196,13 +201,13 @@
 
 									<div id="players-table" class="panel">
 										<div class="mb-4 flex items-baseline justify-between gap-3">
-											<h2 class="panel-title">Players</h2>
-											<p class="muted font-bold"><span id="playerCounter">0</span> joined</p>
+											<h2 class="panel-title" data-i18n="lobby.players">Players</h2>
+											<p class="muted font-bold"><span id="playerCounter">0</span> <span id="playerCounterLabel" data-i18n="lobby.joined" data-i18n-params='{"count":0}'>joined</span></p>
 										</div>
-										<div id="players" class="no-scrollbar grid max-h-72 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2" data-empty="Waiting for players to join…"></div>
+										<div id="players" class="no-scrollbar grid max-h-72 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2" data-empty="Waiting for players to join…" data-i18n-empty="lobby.empty"></div>
 									</div>
 
-									<button id="startGame" type="button" class="btn btn-pink btn-lg btn-block" onclick="startGame()">Start the game</button>
+									<button id="startGame" type="button" class="btn btn-pink btn-lg btn-block" onclick="startGame()" data-i18n="lobby.start">Start the game</button>
 								</div>
 							</div>
 							</div>
@@ -220,6 +225,7 @@
 			</div>
 		</div>
 
+		<script src="../js/i18n.js"></script>
 		<script src="../js/common.js"></script>
 		<script src="../js/audio.js"></script>
 		<script src="../js/thrid-party/purify.min.js"></script>

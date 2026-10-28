@@ -58,9 +58,10 @@ function readRoundNumber() {
 }
 
 // Visual phase of the big screen (ready, answering, answers, voting, votes) and its caption
-function setPhase(phase, label) {
+// (a translation key + parameters, translated again if the language changes)
+function setPhase(phase, labelKey, params) {
 	stageElement.dataset.phase = phase;
-	phaseElement.textContent = label;
+	i18nText(phaseElement, labelKey, params);
 }
 
 
@@ -97,7 +98,7 @@ function startCountdown(count, questionCount) {
 		if (count === 1) {
 			clearInterval(countdownInterval);
 			gameZoneElement.classList.remove("invisible");
-			setPhase("answering", "Round " + roundNumber + " \u00b7 Answer on your phone");
+			setPhase("answering", "game.roundAnswering", { round: roundNumber });
 			if (window.PunchlineAudio) { PunchlineAudio.setPhase("answering"); PunchlineAudio.sfx("go"); }
 			// countdownElement.classList.add("hidden");
 			socket.emit("startPrompt", { pin: punchlinePin });
@@ -153,7 +154,7 @@ socket.on("question", function (data) {
 	try {
 		sessionStorage.setItem("punchlineRound", punchlinePin + ":" + roundNumber);
 	} catch (e) {}
-	setPhase("ready", "Round " + roundNumber + " \u00b7 Get ready");
+	setPhase("ready", "game.roundReady", { round: roundNumber });
 	countdownElement.classList.remove("is-urgent");
 	responseBoxElement.classList.add("invisible");
 	pointsBoxElement.classList.add("invisible");
@@ -169,14 +170,14 @@ socket.on("displayAnswers", function (data) {
 	}
 	answersDisplayed = true;
 	countdownElement.classList.add("invisible");
-	setPhase("answers", "Time's up! Here are the answers");
+	setPhase("answers", "game.timesUp");
 	if (window.PunchlineAudio) PunchlineAudio.setPhase("reveal");
 
 	let index = 1;
 
 	data.forEach((element, position) => {
 		setTimeout(() => {
-			setPhase("answers", "Answer " + (position + 1) + " of " + data.length);
+			setPhase("answers", "game.answerOf", { index: position + 1, total: data.length });
 			answerElement.textContent = element.textAnswer;
 			responseBoxElement.scrollIntoView({ behavior: 'smooth' });
 			responseBoxElement.classList.remove("invisible");
@@ -193,7 +194,7 @@ socket.on("displayAnswers", function (data) {
 
 	setTimeout(function () {
 		socket.emit("getVotes", { pin: punchlinePin });
-		setPhase("voting", "Vote for your favourite on your phone");
+		setPhase("voting", "game.voting");
 		responseBoxElement.classList.add("invisible");
 	}, revealEnd(data.length));
 });
@@ -206,11 +207,11 @@ socket.on("displayVotes", function (answers) {
 
 	// only the answers which received votes are displayed (no empty 9s pause for the others)
 	let votedAnswers = answers.filter((element) => element.votes > 0);
-	setPhase("votes", votedAnswers.length > 0 ? "And the votes go to…" : "No votes this round");
+	setPhase("votes", votedAnswers.length > 0 ? "game.votesIntro" : "game.noVotes");
 	let index = 1;
 	votedAnswers.forEach((element, position) => {
 		setTimeout(() => {
-			setPhase("votes", "Votes \u00b7 " + (position + 1) + " of " + votedAnswers.length);
+			setPhase("votes", "game.votesOf", { index: position + 1, total: votedAnswers.length });
 			responseBoxElement.classList.remove("invisible");
 			answerElement.textContent = element.textAnswer;
 			playerElement.textContent = element.playerName;

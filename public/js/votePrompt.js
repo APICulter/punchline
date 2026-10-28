@@ -48,7 +48,7 @@ socket.on("postAnswers", function (data) {
 			label.classList.add("is-own");
 			let ownTag = document.createElement("span");
 			ownTag.className = "own-tag";
-			ownTag.textContent = "Yours";
+			i18nText(ownTag, "vote.yours");
 			label.append(ownTag);
 		}
 
@@ -65,7 +65,7 @@ button.addEventListener("click", function () {
 	if (!answer) {
 		let error = document.getElementById("voteError");
 		if (error) {
-			displayErrorMessage(error, "Tap an answer first");
+			displayErrorMessage(error, "error.pickAnswer");
 		}
 		return;
 	}

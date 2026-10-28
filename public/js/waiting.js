@@ -16,18 +16,20 @@
 		// storage unavailable: keep the default copy
 	}
 	let from = document.referrer || "";
+	let copy = null;
 	if (lastAction === "answer") {
-		title.textContent = "Answer sent!";
-		text.textContent = "Waiting for the others to finish writing…";
+		copy = "wait.answer";
 	} else if (lastAction === "vote") {
-		title.textContent = "Vote counted!";
-		text.textContent = "Waiting for everyone to vote. Results on the big screen.";
+		copy = "wait.vote";
 	} else if (from.includes("/html/prompt.html")) {
-		title.textContent = "Time's up!";
-		text.textContent = "Too late for this one. Get ready to vote…";
+		copy = "wait.late";
 	} else if (from.endsWith("/") || from.includes("/html/index.html")) {
-		title.textContent = "You're in!";
-		text.textContent = "The game starts soon. Keep an eye on the big screen.";
+		copy = "wait.in";
+	}
+	// translation keys: the copy follows a language change
+	if (copy) {
+		i18nText(title, copy + ".title");
+		i18nText(text, copy + ".text");
 	}
 })();
 

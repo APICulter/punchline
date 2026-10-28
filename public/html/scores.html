@@ -19,20 +19,20 @@
 		<div id="rulesModal" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
 			<div class="sheet-card">
 				<div class="mb-4 flex items-center justify-between gap-4">
-					<h2 id="rulesTitle" class="text-3xl font-extrabold tracking-tight">How to play</h2>
-					<button id="closeRules" type="button" class="icon-btn" aria-label="Close">
+					<h2 id="rulesTitle" class="text-3xl font-extrabold tracking-tight" data-i18n="rules.title">How to play</h2>
+					<button id="closeRules" type="button" class="icon-btn" aria-label="Close" data-i18n-aria-label="common.close">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
 					</button>
 				</div>
-				<p class="mb-5 text-lg">One big screen for the questions, one phone per player.</p>
+				<p class="mb-5 text-lg" data-i18n="rules.intro">One big screen for the questions, one phone per player.</p>
 				<ol class="steps text-lg">
-					<li><span>Create a game on the big screen. Choose 1 to 10 rounds, or enter a premium code for extra questions.</span></li>
-					<li><span>Everyone opens <a id="gameURL" class="font-bold underline decoration-pink decoration-[3px] underline-offset-4" href="">Punchline</a> on their phone, types the PIN and picks a name.</span></li>
-					<li><span>A question appears. You have 60 seconds to write your answer.</span></li>
-					<li><span>The answers show up on every phone, without names. Vote for your favourite, just not your own.</span></li>
-					<li><span>Every vote you get is worth 1 point. Most points after the last round wins.</span></li>
+					<li><span data-i18n="rules.step1">Create a game on the big screen. Choose 1 to 10 rounds, or enter a premium code for extra questions.</span></li>
+					<li><span><span data-i18n="rules.step2.before">Everyone opens </span><a id="gameURL" class="font-bold underline decoration-pink decoration-[3px] underline-offset-4" href="">Punchline</a><span data-i18n="rules.step2.after"> on their phone, types the PIN and picks a name.</span></span></li>
+					<li><span id="rulesAnswerTime" data-i18n="rules.step3">A question appears. Write your answer before the clock runs out: the host sets how long you get.</span></li>
+					<li><span data-i18n="rules.step4">The answers show up on every phone, without names. Vote for your favourite, just not your own.</span></li>
+					<li><span data-i18n="rules.step5">Every vote you get is worth 1 point. Most points after the last round wins.</span></li>
 				</ol>
-				<button id="exitRules" type="button" class="btn btn-primary btn-block mt-7">Got it</button>
+				<button id="exitRules" type="button" class="btn btn-primary btn-block mt-7" data-i18n="rules.gotIt">Got it</button>
 			</div>
 		</div>
 
@@ -40,11 +40,14 @@
 			<div class="app-inner app-inner--wide">
 				<header class="topbar">
 					<div class="flex gap-2">
-						<button id="home" type="button" class="icon-btn" onclick="home()" aria-label="Back to home">
+						<button id="home" type="button" class="icon-btn" onclick="home()" aria-label="Back to home" data-i18n-aria-label="common.home">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9v11h13V9" /></svg>
 						</button>
-						<button id="rules" type="button" class="icon-btn" aria-label="How to play">
+						<button id="rules" type="button" class="icon-btn" aria-label="How to play" data-i18n-aria-label="common.rules">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 8.6a3.5 3.5 0 0 1 6.8 1.1c0 2.3-3.4 2.8-3.4 5.2" /><path d="M12 19.2h.01" /></svg>
+						</button>
+						<button id="langToggle" type="button" class="icon-btn lang-btn" data-lang-toggle aria-label="Switch to French" title="Switch to French">
+							<span data-lang-code lang="fr">FR</span>
 						</button>
 					</div>
 
@@ -52,27 +55,28 @@
 						<!-- Music and sound effects (audio.js) -->
 						<div id="soundControls" class="sound" data-autostart></div>
 
-						<button id="punchlinePin" type="button" class="pin-badge invisible" aria-label="Game PIN">0000</button>
+						<button id="punchlinePin" type="button" class="pin-badge invisible" aria-label="Game PIN" data-i18n-aria-label="common.gamePin">0000</button>
 					</div>
 				</header>
 
 				<main id="finalScores" class="podium-page">
 					<div class="podium-head">
-						<p class="podium-kicker">That's a wrap!</p>
+						<p class="podium-kicker" data-i18n="scores.kicker">That's a wrap!</p>
 						<div id="winner" class="podium-winner invisible" aria-live="polite">
-							<p id="winnerLabel" class="podium-winner-label">The winner is</p>
+							<p id="winnerLabel" class="podium-winner-label" data-i18n="scores.winner">The winner is</p>
 							<p id="winnerName" class="podium-winner-name"></p>
 							<p id="winnerPoints" class="podium-winner-points"></p>
 						</div>
 					</div>
 
-					<div id="scoreTable" class="podium-table" data-empty="Counting the votes…"></div>
+					<div id="scoreTable" class="podium-table" data-empty="Counting the votes…" data-i18n-empty="scores.counting"></div>
 
-					<button id="playAgain" type="button" onclick="home()" class="btn btn-primary btn-lg btn-block podium-again">Play again</button>
+					<button id="playAgain" type="button" onclick="home()" class="btn btn-primary btn-lg btn-block podium-again" data-i18n="scores.again">Play again</button>
 				</main>
 			</div>
 		</div>
 
+		<script src="../js/i18n.js"></script>
 		<script src="../js/common.js"></script>
 		<script src="../js/audio.js"></script>
 		<script src="../js/scores.js"></script>

@@ -27,6 +27,32 @@ window.addEventListener('load', function() {
 	if (document.getElementById("gameURL")) {
 		socket.emit("getPunchlineURL");
 	}
+
+	// Answer time of the current game, shown in the rules (and on the answer screen)
+	if (punchlinePin) {
+		socket.emit("getConfig", { pin: punchlinePin });
+	}
+});
+
+// Rules step 3: the actual answer time when it is known, otherwise a generic sentence
+function setRulesAnswerTime(seconds) {
+	let step = document.getElementById("rulesAnswerTime");
+	if (!step) {
+		return;
+	}
+	seconds = Number(seconds);
+	if (seconds > 0) {
+		i18nText(step, "rules.step3.known", { seconds: seconds });
+	} else {
+		i18nText(step, "rules.step3");
+	}
+}
+
+// [answer time, before question countdown, vote countdown, reveal time] in seconds
+socket.on("getConfigResponse", function (data) {
+	if (Array.isArray(data) && data[0]) {
+		setRulesAnswerTime(data[0]);
+	}
 });
 
 // get Punchline URL (rules panel)
@@ -87,10 +113,20 @@ function home() {
 }
 
 
-// Displays error messages
-function displayErrorMessage(element, message) {
+// Displays error messages. "message" is a translation key (from this page or sent by the
+// server, e.g. "error.roomFull"), translated again if the language changes while it is shown;
+// any other string (older server) is displayed as is.
+function displayErrorMessage(element, message, params) {
+	if (!element) {
+		return;
+	}
 	document.getElementById("errorMessages").classList.remove("hidden");
-	element.textContent = message;
+	if (window.PunchlineI18n && PunchlineI18n.has(message)) {
+		i18nText(element, message, params);
+	} else {
+		i18nClear(element);
+		element.textContent = message == null ? "" : String(message);
+	}
 	element.classList.remove("hidden");
 	element.classList.remove("animate__fadeOutRight");
 	// Message error for 1.5 seconds display (restart the timer if a new message comes in)
