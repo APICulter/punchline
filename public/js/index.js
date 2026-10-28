@@ -98,6 +98,7 @@ function createGame() {
 	}
 	gameCreationRequested = true;
 
+	if (window.PunchlineAudio) PunchlineAudio.start("lobby");
 	socket.emit("createGame");
 	document.getElementById("startButtons").classList.add("hidden");
 	document.getElementById("join").classList.add("hidden");
@@ -305,6 +306,7 @@ socket.on("newJoiner", function (data) {
 		// }
 		nbOfPlayers += 1;
 		updateNbOfPlayers();
+		if (window.PunchlineAudio) PunchlineAudio.sfx("join");
 		let playerBlock = document.createElement("div");
 		playerBlock.id = data.playerId;
 		playerBlock.className = "chip animate__animated animate__bounceIn";
@@ -386,6 +388,9 @@ function startGame() {
 			secretCode: DOMPurify.sanitize(premiumCode.value),
 			premiumMode:
 			DOMPurify.sanitize(isPremiumMode()),
+			// timers in seconds
+			answerTime: DOMPurify.sanitize(document.getElementById("answerTime").value),
+			revealTime: DOMPurify.sanitize(document.getElementById("revealTime").value),
 		});
 	}
 

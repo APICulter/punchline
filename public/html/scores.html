@@ -48,7 +48,12 @@
 						</button>
 					</div>
 
-					<button id="punchlinePin" type="button" class="pin-badge invisible" aria-label="Game PIN">0000</button>
+					<div class="flex min-w-0 items-center gap-2">
+						<!-- Music and sound effects (audio.js) -->
+						<div id="soundControls" class="sound" data-autostart></div>
+
+						<button id="punchlinePin" type="button" class="pin-badge invisible" aria-label="Game PIN">0000</button>
+					</div>
 				</header>
 
 				<main id="finalScores" class="podium-page">
@@ -69,6 +74,7 @@
 		</div>
 
 		<script src="../js/common.js"></script>
+		<script src="../js/audio.js"></script>
 		<script src="../js/scores.js"></script>
 	</body>
 </html>

@@ -49,16 +49,8 @@
 					</div>
 
 					<div class="flex min-w-0 items-center gap-2">
-						<!-- Background music (index-audio.js) -->
-						<div id="volume-box" class="volume">
-							<button id="volume-icon" type="button" class="volume-btn" aria-label="Mute or unmute the music">
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-									<path d="M11 5.27L6.59 9H4a1 1 0 00-1 1v4a1 1 0 001 1h2.59L11 18.73a1 1 0 001.71-.71V6a1 1 0 00-1.71-.73zM14.83 7.17a1 1 0 011.41 0A7.17 7.17 0 0120 12a7.17 7.17 0 01-3.76 6.83 1 1 0 01-1.41-1.41A5.17 5.17 0 0018 12a5.17 5.17 0 00-2.76-4.42 1 1 0 01-.41-.41zm1.42-4.24a1 1 0 011.41 0A11.16 11.16 0 0124 12a11.16 11.16 0 01-6.34 9.83 1 1 0 01-1.41-1.41A9.16 9.16 0 0022 12a9.16 9.16 0 00-5.09-8.08 1 1 0 01-.66-.99z" />
-								</svg>
-							</button>
-							<input id="volume-slider" type="range" min="0" max="100" value="20" class="range volume-range" aria-label="Music volume" />
-							<audio id="audio-player" src="../summer-memories-270159.mp3" loop></audio>
-						</div>
+						<!-- Music and sound effects (audio.js) -->
+						<div id="soundControls" class="sound" data-autostart></div>
 
 						<button id="punchlinePin" type="button" class="pin-badge invisible" aria-label="Game PIN">0000</button>
 					</div>
@@ -89,7 +81,7 @@
 		</div>
 
 		<script src="../js/common.js"></script>
+		<script src="../js/audio.js"></script>
 		<script src="../js/game.js"></script>
-		<script src="../js/index-audio.js"></script>
 	</body>
 </html>

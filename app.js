@@ -21,6 +21,34 @@ app.get("/", function (req, res) {
 	res.sendFile(__dirname + "/public/html/index.html");
 });
 app.use(express.static(publicPath));
+
+// Optional custom music for the host screens: audio files in public/music/<phase>/
+// GET /api/music -> { lobby: ["/music/lobby/a.mp3", ...], countdown: [], ... }
+const MUSIC_PHASES = ["lobby", "countdown", "answering", "reveal", "scores"];
+const MUSIC_EXTENSIONS = [".mp3", ".ogg", ".m4a", ".wav"];
+app.get("/api/music", function (req, res) {
+	const musicPath = path.join(publicPath, "music");
+	const tracks = {};
+	MUSIC_PHASES.forEach(function (phase) {
+		tracks[phase] = [];
+		try {
+			require("fs")
+				.readdirSync(path.join(musicPath, phase), { withFileTypes: true })
+				.forEach(function (entry) {
+					// plain files only (no folders or links), allowed audio types, no hidden files
+					if (!entry.isFile() || entry.name.startsWith(".") || /[\/\\]/.test(entry.name)) return;
+					if (!MUSIC_EXTENSIONS.includes(path.extname(entry.name).toLowerCase())) return;
+					tracks[phase].push("/music/" + phase + "/" + encodeURIComponent(entry.name));
+				});
+			tracks[phase].sort();
+		} catch (e) {
+			// missing or unreadable folder: no custom track for this phase
+		}
+	});
+	res.set("Cache-Control", "no-store");
+	res.json(tracks);
+});
+
 app.all("*", function (req, res) {
 	res.redirect("/");
 });
@@ -102,6 +130,38 @@ db.once("open", function () {
 mongoose.connect(databaseUrl).catch((err) => {
 	console.error("MongoDB initial connection error:", err);
 });
+
+// Per-game timers (seconds): bounds of the lobby sliders, defaults from config.properties
+const ANSWER_TIME_MIN = 30;
+const ANSWER_TIME_MAX = 150;
+const REVEAL_TIME_MIN = 10;
+const REVEAL_TIME_MAX = 30;
+
+// Integer config value kept within [min, max], or fallback if missing / not a number
+function boundedSetting(value, min, max, fallback) {
+	const number = Math.round(Number(value));
+	if (value === undefined || value === null || String(value).trim() === "" || !Number.isFinite(number)) {
+		return fallback;
+	}
+	return Math.min(max, Math.max(min, number));
+}
+
+const DEFAULT_ANSWER_TIME = boundedSetting(global.questionCountDown, ANSWER_TIME_MIN, ANSWER_TIME_MAX, 60);
+const DEFAULT_REVEAL_TIME = boundedSetting(global.revealTime, REVEAL_TIME_MIN, REVEAL_TIME_MAX, 10);
+
+// Validates a timer sent by the host: undefined / empty => default, otherwise an integer
+// within [min, max]; returns null when invalid
+function parseTimeSetting(value, min, max, fallback) {
+	const text = clean(value).trim();
+	if (text.length === 0) {
+		return fallback;
+	}
+	if (!/^[0-9]+$/.test(text)) {
+		return null;
+	}
+	const number = Number(text);
+	return number >= min && number <= max ? number : null;
+}
 
 // Rooms dictionary
 const rooms = {};
@@ -401,12 +461,20 @@ io.on("connection", function (socket) {
 	});
 
 
-	socket.on("getConfig", function () {
+	socket.on("getConfig", function (data) {
+		data = asObject(data);
+		// timers of the game linked to the PIN (set in the lobby), or the config defaults
+		let game = findGame(clean(data.pin));
+		let answerTime = game && game.answerTime ? game.answerTime : DEFAULT_ANSWER_TIME;
+		let revealTime = game && game.revealTime ? game.revealTime : DEFAULT_REVEAL_TIME;
+
 		// get the different variables
+		// [answer time, before question countdown, vote countdown, reveal time] in seconds
 		let configurationVariables = [];
-		configurationVariables.push(questionCountDown);
+		configurationVariables.push(answerTime);
 		configurationVariables.push(beforeQuestionCountDown);
 		configurationVariables.push(voteCountDown);
+		configurationVariables.push(revealTime);
 
 		// emit to the sender
 		socket.emit("getConfigResponse", configurationVariables);
@@ -437,6 +505,17 @@ io.on("connection", function (socket) {
 			if (!Number.isInteger(Number(data.nbOfQuestions)) || Number(data.nbOfQuestions) < 1 || Number(data.nbOfQuestions) > 10) {
 				socket.emit("startGameErrorMessages", nbOfQuestionsErrorMessage);
 				return;
+			}
+
+			// Timers chosen in the lobby (seconds); missing => config defaults
+			const answerTime = parseTimeSetting(data.answerTime, ANSWER_TIME_MIN, ANSWER_TIME_MAX, DEFAULT_ANSWER_TIME);
+			const revealTime = parseTimeSetting(data.revealTime, REVEAL_TIME_MIN, REVEAL_TIME_MAX, DEFAULT_REVEAL_TIME);
+			if (answerTime === null) {
+				socket.emit("startGameErrorMessages", global.answerTimeErrorMessage || "invalid answer time");
+				return;
+			} else if (revealTime === null) {
+				socket.emit("startGameErrorMessages", global.revealTimeErrorMessage || "invalid reveal time");
+				return;
 			} else if ((data.secretCode.length == 0 || data.secretCode.length > 15) && data.premiumMode === "true") {
 				socket.emit("startGameErrorMessages", premiumCodeLengthErrorMessage);
 				return;
@@ -459,6 +538,8 @@ io.on("connection", function (socket) {
 			game.nbOfPlayers = game.players.length;
 			game.inGame = true;
 			game.nbOfQuestions = Number(data.nbOfQuestions);
+			game.answerTime = answerTime;
+			game.revealTime = revealTime;
 
 			// Questions must be loaded before the host goes to the game page,
 			// otherwise the first "getQuestion" finds an empty pool and ends the game

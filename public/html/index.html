@@ -47,7 +47,12 @@
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 8.6a3.5 3.5 0 0 1 6.8 1.1c0 2.3-3.4 2.8-3.4 5.2" /><path d="M12 19.2h.01" /></svg>
 						</button>
 					</div>
-					<button id="punchlinePin" type="button" class="pin-badge invisible" aria-label="Game PIN">0000</button>
+					<div class="flex min-w-0 items-center gap-2">
+						<!-- Music and sound effects (audio.js), shown once the host created a game -->
+						<div id="soundControls" class="sound hidden"></div>
+
+						<button id="punchlinePin" type="button" class="pin-badge invisible" aria-label="Game PIN">0000</button>
+					</div>
 				</header>
 
 				<section id="hero" class="flex flex-1 flex-col items-center justify-center pb-10 pt-8 text-center sm:flex-none sm:pt-12">
@@ -132,6 +137,42 @@
 											/>
 										</div>
 
+										<div>
+											<div class="flex items-baseline justify-between">
+												<label for="answerTime" class="panel-title">Time to answer</label>
+												<output id="answerTimeValue" for="answerTime" class="text-2xl font-extrabold tabular-nums">1:00</output>
+											</div>
+											<input
+												id="answerTime"
+												type="range"
+												name="answerTime"
+												min="30"
+												max="150"
+												step="10"
+												value="60"
+												class="range mt-4"
+												oninput="document.getElementById('answerTimeValue').value = Math.floor(this.value / 60) + ':' + String(this.value % 60).padStart(2, '0')"
+											/>
+										</div>
+
+										<div>
+											<div class="flex items-baseline justify-between">
+												<label for="revealTime" class="panel-title">Time per reveal</label>
+												<output id="revealTimeValue" for="revealTime" class="text-2xl font-extrabold tabular-nums">0:10</output>
+											</div>
+											<input
+												id="revealTime"
+												type="range"
+												name="revealTime"
+												min="10"
+												max="30"
+												step="5"
+												value="10"
+												class="range mt-4"
+												oninput="document.getElementById('revealTimeValue').value = Math.floor(this.value / 60) + ':' + String(this.value % 60).padStart(2, '0')"
+											/>
+										</div>
+
 										<fieldset>
 											<legend class="panel-title mb-3">Questions</legend>
 											<div class="segmented">
@@ -180,6 +221,7 @@
 		</div>
 
 		<script src="../js/common.js"></script>
+		<script src="../js/audio.js"></script>
 		<script src="../js/thrid-party/purify.min.js"></script>
 		<script src="../js/index.js"></script>
 	</body>

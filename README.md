@@ -49,7 +49,9 @@ Open the site on a shared screen and create a room. Each participant opens the g
    | `punchlineURL` | Address shown to players in the lobby. Leave empty on a local network: the server shows the address the host opened, with `localhost` replaced by the machine's network IP. In production set it here or with the `PUBLIC_URL` environment variable (which wins), e.g. `https://punchline.example.com` |
    | `maxNumberOfPlayers` | Maximum number of players per room |
    | `premiumCode` | Code that unlocks premium (explicit) questions, 15 characters max |
-   | `questionCountDown`, `beforeQuestionCountDown`, `voteCountDown` | Round timers, in seconds |
+   | `questionCountDown` | Default time to write an answer, in seconds (default `60`, min `30`, max `150`). The host can change it in the lobby for each game |
+   | `revealTime` | Default time each answer stays on the big screen during the reveals, in seconds (default `10`, min `10`, max `30`). The host can change it in the lobby for each game |
+   | `beforeQuestionCountDown`, `voteCountDown` | Other round timers, in seconds |
 
    `config.properties` is ignored by git: do not commit real codes or passwords.
 

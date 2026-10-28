@@ -414,19 +414,56 @@
 
 /* ---------- Host screens (game, scores) ---------- */
 @layer components {
-  /* ----- Background music (game screen top bar) ----- */
+  /* ----- Sound controls (host top bars, filled by audio.js) ----- */
 
-  .volume {
-    @apply flex items-center gap-3;
+  .sound {
+    @apply flex items-center gap-2 sm:gap-3;
   }
 
-  .volume-btn {
-    @apply icon-btn;
+  /* The slider and the effects toggle only show where there is room */
+  .sound-range {
+    @apply hidden w-24 sm:block lg:w-36;
   }
 
-  /* The slider only shows where there is room; on phones the button mutes */
-  .volume-range {
-    @apply hidden w-28 sm:block lg:w-36;
+  .sound-sfx {
+    @apply hidden md:grid;
+  }
+
+  .sound-sfx[aria-pressed="false"] {
+    @apply bg-milk-dim text-plum/60;
+  }
+
+  /* Browser blocked autoplay: a clear call to action until the first tap */
+  .sound-unlock {
+    @apply hidden h-12 items-center whitespace-nowrap rounded-full border-[2.5px] border-plum bg-butter px-4 text-base font-extrabold text-plum shadow-pop-sm transition duration-100 active:translate-y-[2px] active:shadow-none;
+  }
+
+  .sound[data-state="locked"] .sound-unlock {
+    @apply hidden sm:inline-flex;
+  }
+
+  .sound[data-state="locked"] .sound-range,
+  .sound[data-state="locked"] .sound-sfx {
+    @apply hidden;
+  }
+
+  .sound[data-state="locked"] .sound-btn {
+    @apply bg-butter;
+    animation: sound-nudge 1.6s ease-in-out infinite;
+  }
+
+  .sound[data-state="muted"] .sound-range {
+    @apply opacity-40;
+  }
+
+  @keyframes sound-nudge {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.08);
+    }
   }
 
   /* ----- Game stage: phase caption, countdown, question, reveals ----- */

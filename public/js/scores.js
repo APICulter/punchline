@@ -9,6 +9,7 @@ window.onload = function () {
 		return;
 	}
 	socket.emit("joinRoom", punchlinePin);
+	if (window.PunchlineAudio) PunchlineAudio.setPhase("scores");
 	socket.emit("getScores", {
 		pin: punchlinePin,
 	});
@@ -33,6 +34,7 @@ function displayWinner(scores) {
 		names.length > 1 ? names.slice(0, -1).join(", ") + " & " + names[names.length - 1] : names[0];
 	document.getElementById("winnerPoints").textContent = pointsLabel(topPoints);
 
+	if (window.PunchlineAudio && winner.classList.contains("invisible")) PunchlineAudio.sfx("fanfare");
 	winner.classList.remove("invisible");
 	winner.classList.add("animate__animated", "animate__tada");
 }
