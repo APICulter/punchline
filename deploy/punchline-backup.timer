@@ -1,0 +1,11 @@
+# Punchline - nightly MongoDB backup at 4:30 (catches up after a reboot)
+[Unit]
+Description=Nightly Punchline MongoDB backup
+
+[Timer]
+OnCalendar=*-*-* 04:30:00
+RandomizedDelaySec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -198,13 +198,44 @@ Games in progress are saved before the restart and resumed after it (the screens
 
 ### Backups
 
-The questions (and the admin data) are in MongoDB. A daily dump, kept 14 days (`sudo crontab -e`):
+The questions, the premium code and the admin history are in MongoDB. `deploy/backup.sh` makes a compressed dump, checks that it can be read back, keeps 14 daily and 8 weekly (Sunday) copies, and can send a copy off the VPS. In-progress games (`games`) and admin logins (`admin_sessions`) are left out: the server rebuilds them.
+
+1. Install the MongoDB Database Tools (`mongodump` / `mongorestore`): `sudo apt install mongodb-database-tools` (from the MongoDB apt repository added when installing MongoDB).
+2. Create the folder: `sudo mkdir -p /var/backups/punchline && sudo chown punchline: /var/backups/punchline`
+3. Enable the nightly run (4:30, caught up after a reboot):
+
+   ```bash
+   sudo cp deploy/punchline-backup.service deploy/punchline-backup.timer /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now punchline-backup.timer
+   sudo systemctl start punchline-backup.service   # one backup now, to check
+   journalctl -u punchline-backup.service          # its log
+   ```
+
+   Without systemd, a cron line does the same: `30 4 * * * /srv/punchline/deploy/backup.sh >> /var/log/punchline-backup.log 2>&1`
+
+Settings (in `/etc/punchline/punchline.env` or the environment): `MONGODB_URI`, `BACKUP_DIR` (default `/var/backups/punchline`), `BACKUP_KEEP_DAILY` (14), `BACKUP_KEEP_WEEKLY` (8), `BACKUP_RCLONE_REMOTE`.
+
+**Keep a copy off the VPS**: a backup stored only on the VPS disappears with it. Install [rclone](https://rclone.org), configure a remote (`rclone config`: Backblaze B2, S3, Google Drive, another server over SFTP…) and set for example `BACKUP_RCLONE_REMOTE=b2:my-bucket/punchline`. Or fetch them from your own computer: `rsync -av user@vps:/var/backups/punchline/ ~/punchline-backups/`.
+
+**Restore** (stop the game first: `pm2 stop punchline` or `sudo systemctl stop punchline`):
 
 ```bash
-30 4 * * * mongodump --uri="mongodb://127.0.0.1:27017/punchline" --gzip --archive=/var/backups/punchline/punchline-$(date +\%F).gz && find /var/backups/punchline -name '*.gz' -mtime +14 -delete
+# everything, replacing the current data
+mongorestore --uri="mongodb://127.0.0.1:27017" --gzip --drop \
+  --archive=/var/backups/punchline/daily/punchline-2026-10-29_0430.gz
+
+# only the questions
+mongorestore --uri="mongodb://127.0.0.1:27017" --gzip --drop --nsInclude='punchline.questions' \
+  --archive=/var/backups/punchline/daily/punchline-2026-10-29_0430.gz
+
+# into another database, to look at an old backup without touching the game
+mongorestore --uri="mongodb://127.0.0.1:27017" --gzip \
+  --nsFrom='punchline.$c$' --nsTo='punchline_old.$c$' \
+  --archive=/var/backups/punchline/daily/punchline-2026-10-29_0430.gz
 ```
 
-Create the folder first (`sudo mkdir -p /var/backups/punchline`) and copy the dumps off the VPS from time to time. Restore with `mongorestore --gzip --archive=/var/backups/punchline/punchline-2026-01-31.gz --drop`. The `games` collection only holds games in progress: it does not need to be restored.
+Test a restore once (the third command is harmless): a backup that was never restored is only a hope.
 
 ### Logs
 

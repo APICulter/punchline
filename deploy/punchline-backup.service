@@ -1,0 +1,17 @@
+# Punchline - one MongoDB backup (started every night by punchline-backup.timer)
+#   sudo cp deploy/punchline-backup.service deploy/punchline-backup.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now punchline-backup.timer
+#   Run one now:  sudo systemctl start punchline-backup.service
+#   Logs:         journalctl -u punchline-backup.service
+[Unit]
+Description=Punchline MongoDB backup
+After=network-online.target mongod.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=punchline
+# edit the path if the game is installed elsewhere
+ExecStart=/srv/punchline/deploy/backup.sh
+Nice=10
+IOSchedulingClass=idle
