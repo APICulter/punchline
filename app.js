@@ -100,6 +100,7 @@ require("./admin")(app, {
 	mongoose,
 	getGames: () => games,
 	abortGame: (pin, reasonKey) => abortGame(pin, reasonKey),
+	log: (level, msg, fields) => log(level, msg, fields),
 });
 
 app.all("*", function (req, res) {
@@ -187,8 +188,9 @@ if (global.premiumCode != null && String(global.premiumCode).length > 0) {
 
 // Database connexion: a single shared connection, kept open for the server's lifetime
 // (queries issued before it is open are buffered by mongoose).
-const YourSchema = new mongoose.Schema({});
-const YourModel = mongoose.model("Question", YourSchema, "questions");
+// Questions: one model shared with the admin panel and the seed script (db/question-bank.js)
+const questionBank = require("./db/question-bank");
+const YourModel = questionBank.getModel(mongoose);
 let db = mongoose.connection;
 
 db.on("error", (err) => log("error", "MongoDB connection error", { error: err }));
@@ -229,6 +231,8 @@ const MESSAGES = {
 	premiumCodeLength: "error.premiumCodeLength",
 	premiumCodeInvalid: "error.premiumCodeInvalid",
 	questionsUnavailable: "error.questionsUnavailable",
+	notEnoughQuestions: "error.notEnoughQuestions",
+	fewerQuestions: "notice.fewerQuestions",
 	answerEmpty: "error.answerEmpty",
 	answerTooLong: "error.answerTooLong",
 	gameCrashed: "error.gameCrashed",
@@ -523,6 +527,7 @@ function serializeGame(game) {
 		status: game.status,
 		nbOfQuestions: game.nbOfQuestions,
 		premium: game.premium,
+		lang: game.lang,
 		answerTime: game.answerTime,
 		revealTime: game.revealTime,
 	};
@@ -1085,15 +1090,24 @@ io.on("connection", function (socket) {
 			game.nbOfQuestions = Number(data.nbOfQuestions);
 			game.answerTime = answerTime;
 			game.revealTime = revealTime;
+			// Language of the questions: the host's interface language (fr | en, default fr)
+			const lang = clean(data.lang).trim().toLowerCase();
+			game.lang = questionBank.LANGS.includes(lang) ? lang : "fr";
 
 			// Questions must be loaded before the host goes to the game page,
 			// otherwise the first "getQuestion" finds an empty pool and ends the game
-			await initQuestions(YourModel, game);
+			const selection = await initQuestions(YourModel, game);
 			if (game.questions.length === 0) {
 				game.inGame = false;
 				game.premium = false;
-				socket.emit("startGameErrorMessages", MESSAGES.questionsUnavailable);
+				socket.emit("startGameErrorMessages", selection && !selection.error ? MESSAGES.notEnoughQuestions : MESSAGES.questionsUnavailable);
 				return;
+			}
+			if (game.questions.length < game.nbOfQuestions) {
+				// not enough questions in this language: a shorter game, the host is told on the next page
+				log("warn", "not enough questions, shorter game", { pin: game.pin, lang: game.lang, requested: game.nbOfQuestions, selected: game.questions.length });
+				game.nbOfQuestions = game.questions.length;
+				socket.emit("startGameNotice", MESSAGES.fewerQuestions, { count: game.questions.length });
 			}
 			initBot(game);
 
@@ -1423,6 +1437,12 @@ process.on("SIGINT", () => shutdown("SIGINT"));
 async function start() {
 	try {
 		await connectMongo();
+		// questions: migration of old documents, indexes, bank seeded when a language is nearly empty
+		try {
+			await questionBank.prepare(mongoose, log);
+		} catch (error) {
+			log("error", "questions preparation failed", { error: error });
+		}
 		await restoreGames();
 	} catch (error) {
 		log("error", "games not restored", { error: error });

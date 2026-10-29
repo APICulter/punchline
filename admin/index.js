@@ -8,7 +8,8 @@
  * Everything lives under /admin:
  *   GET  /admin                    login page, or the panel when signed in
  *   POST /admin/api/login|logout   session (cookie "punchline_admin", Path=/admin)
- *   /admin/api/questions…          questions CRUD, import / export, duplicates
+ *   /admin/api/questions…          questions CRUD, review, import / export, duplicates
+ *   /admin/api/ai/…                AI question generation (admin/ai.js, needs ANTHROPIC_API_KEY)
  *   /admin/api/games…              live games, end a game
  *   GET  /admin/api/log            audit log
  *   /admin/*.js|css                assets of public/admin
@@ -25,6 +26,7 @@ const express = require("express");
 const auth = require("./auth");
 const questionsRouter = require("./questions");
 const gamesRouter = require("./games");
+const ai = require("./ai");
 
 const PAGES_DIR = path.join(__dirname, "..", "public", "admin");
 const LOG_LIMIT_MAX = 200;
@@ -165,14 +167,51 @@ function clientIp(req) {
 	return String(req.ip || (req.socket && req.socket.remoteAddress) || "").slice(0, 64);
 }
 
+// Audit log entries (collection admin_log), kept one year
+function logModel(mongoose) {
+	if (mongoose.models.AdminLogEntry) return mongoose.models.AdminLogEntry;
+	const logSchema = new mongoose.Schema(
+		{
+			at: { type: Date, required: true },
+			action: { type: String, required: true },
+			user: { type: String, default: "" },
+			ip: { type: String, default: "" },
+			details: { type: mongoose.Schema.Types.Mixed, default: {} },
+		},
+		{ collection: "admin_log", versionKey: false }
+	);
+	logSchema.index({ at: -1 });
+	// entries are kept one year
+	logSchema.index({ at: 1 }, { expireAfterSeconds: 365 * 24 * 60 * 60 });
+	return mongoose.model("AdminLogEntry", logSchema);
+}
+
+function defaultLog(level, msg, fields) {
+	const line = JSON.stringify(Object.assign({ time: new Date().toISOString(), level, msg }, fields || {}));
+	(level === "error" || level === "warn" ? process.stderr : process.stdout).write(line + "\n");
+}
+
 // ---------------------------------------------------------------------------
 // Mount
 // ---------------------------------------------------------------------------
 
 module.exports = function mountAdmin(app, options) {
 	const { mongoose, getGames, abortGame } = options || {};
+	const log = (options && options.log) || defaultLog;
 	const credentials = loadCredentials();
 	const router = express.Router();
+	const LogEntry = logModel(mongoose);
+
+	// AI generation: the background top-up (AI_AUTO_TOPUP=true) runs even without admin credentials
+	const aiService = ai.createService({ mongoose, log });
+	ai.startTopup(aiService, {
+		mongoose,
+		log,
+		auditSystem: (action, details) =>
+			LogEntry.create({ at: new Date(), action, user: "system", ip: "", details }).catch((error) =>
+				console.error("Admin: cannot write the audit log", error)
+			),
+	});
 
 	router.use(securityHeaders);
 
@@ -206,21 +245,6 @@ module.exports = function mountAdmin(app, options) {
 	// ----- Storage -----
 
 	const sessions = auth.createSessionStore(mongoose, () => credentials.fingerprint);
-
-	const logSchema = new mongoose.Schema(
-		{
-			at: { type: Date, required: true },
-			action: { type: String, required: true },
-			user: { type: String, default: "" },
-			ip: { type: String, default: "" },
-			details: { type: mongoose.Schema.Types.Mixed, default: {} },
-		},
-		{ collection: "admin_log", versionKey: false }
-	);
-	logSchema.index({ at: -1 });
-	// entries are kept one year
-	logSchema.index({ at: 1 }, { expireAfterSeconds: 365 * 24 * 60 * 60 });
-	const LogEntry = mongoose.models.AdminLogEntry || mongoose.model("AdminLogEntry", logSchema);
 
 	// Appends an action to the audit log; never fails the request because of the log
 	async function audit(req, action, details = {}, user) {
@@ -349,6 +373,7 @@ module.exports = function mountAdmin(app, options) {
 	});
 
 	api.use(questionsRouter({ mongoose, audit }));
+	api.use(ai.aiRouter({ service: aiService, audit, toClient: questionsRouter.toClient }));
 	api.use(gamesRouter({ getGames, abortGame, audit }));
 
 	api.use((req, res) => res.status(404).json({ error: "admin.error.notFound" }));

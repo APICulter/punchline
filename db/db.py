@@ -1,4 +1,10 @@
-"""Seed the Punchline `questions` collection from a semicolon-separated CSV file.
+"""DEPRECATED: use `npm run db:seed` (db/seed.js, no Python needed). It reads the
+6-column bank files db/questions/<lang>.csv, sets the language, category and status, and
+does not insert duplicates. This script is kept for old 5-column files: the documents it
+inserts get their language and dedupe key at the next server start (a question that is
+already in the database makes the insert fail on the unique index).
+
+Seed the Punchline `questions` collection from a semicolon-separated CSV file.
 
 Usage (from anywhere):
     python db/db.py [path/to/questions.csv]
@@ -39,6 +45,7 @@ def read_database_url():
 
 
 def main():
+    print("db/db.py is deprecated: use `npm run db:seed` instead (see README, \"Questions\")", file=sys.stderr)
     csv_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "example.csv")
 
     objects = []

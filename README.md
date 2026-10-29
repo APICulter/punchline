@@ -22,7 +22,6 @@ Open the site on a shared screen and create a room. Each participant opens the g
 
 - [Node.js](https://nodejs.org/) 22.22.2 or later (or 24.15+), with npm. `isomorphic-dompurify` 4.x requires it.
 - [MongoDB](https://www.mongodb.com/try/download/community), running locally on `mongodb://127.0.0.1:27017` by default.
-- Optional: Python 3 and `pymongo` (`pip install pymongo`) to seed the question database.
 
 ### Steps
 
@@ -58,7 +57,7 @@ Open the site on a shared screen and create a room. Each participant opens the g
 
    `config.properties` is ignored by git: do not commit real codes or passwords.
 
-3. Load questions into MongoDB (see [Seeding the database](#seeding-the-database)).
+3. Load the question bank into MongoDB: `npm run db:seed` (see [Questions](#questions)). The server also does it by itself at startup when a language has fewer than 50 questions.
 
 4. Build the CSS (Tailwind through PostCSS):
 
@@ -94,6 +93,7 @@ Environment variables (they win over `config.properties`):
 | `MONGODB_URI` | MongoDB connection string (default: `databaseUrl`) |
 | `TRUST_PROXY` | Set it **only** behind a reverse proxy, so that `X-Forwarded-*` headers are trusted: `loopback` for nginx on the same machine (also accepts a number of hops, a list of addresses / subnets, or `true`). Not set: these headers are ignored |
 | `NODE_ENV` | `production` on a server |
+| `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `AI_*` | Optional AI question generation, see [Generating questions with AI](#generating-questions-with-ai) |
 
 For a real server, see [Deploying on a VPS](#deploying-on-a-vps).
 
@@ -142,7 +142,7 @@ sudo -u punchline npm ci --omit=dev
 sudo -u punchline cp config.properties.example config.properties   # then edit it (premium code, timers…)
 ```
 
-`public/css/style.css` is committed, so the server does not need the CSS build tools. Load the questions as explained in [Seeding the database](#seeding-the-database).
+`public/css/style.css` is committed, so the server does not need the CSS build tools. The question bank is loaded at the first start (or run `sudo -u punchline npm run db:seed`, see [Questions](#questions)).
 
 ### 3a. Run it with PM2
 
@@ -230,37 +230,80 @@ The interface is available in English and French. Each device (the big screen an
 - All texts live in `public/js/i18n.js` (one dictionary per language). Static HTML is marked with `data-i18n="key"` (text), `data-i18n-placeholder`, `data-i18n-aria-label`, `data-i18n-title` or `data-i18n-empty`; scripts use `t(key, params)`, or `i18nText(element, key, params)` so that the text follows a language change.
 - The server sends message keys (e.g. `error.roomFull`) on the same events as before; the browser translates them. A message that is not a known key is displayed as is.
 - To add a language: add a dictionary next to `en` and `fr` in `i18n.js` (same keys; plural entries are `{ one, other }` objects), then adapt the switch button (it currently toggles between the two languages).
-- Questions are not translated: their language depends on the content of the MongoDB database.
+- Questions are not translated: each question has a language (`fr` or `en`) and a game only uses the questions of the **host's language** (the language of the big screen when "Start" is pressed). See [Questions](#questions).
 
-## Seeding the database
+## Questions
 
-The game reads its questions from the `questions` collection. `db/db.py` imports them from a semicolon-separated CSV file with no header row:
+### The bank
+
+The game reads its questions from the MongoDB collection `questions`. The project ships an original bank of about 500 questions per language in `db/questions/fr.csv` and `db/questions/en.csv`: semicolon-separated, no header, one question per line, the language comes from the file name:
 
 ```text
-question;reponse_1;reponse_2;reponse_3;explicit
+question;reponse_1;reponse_2;reponse_3;explicit;category
 ```
 
-- `reponse_1` to `reponse_3` are the answers used by the bot player.
-- `explicit` is `true` or `false`. Games without the premium code only use questions where `explicit` is `false`. If the column is missing, `false` is assumed.
+- `reponse_1` to `reponse_3` are the answers used by the bot player (at least one).
+- `explicit` is `true` or `false`. Games without the premium code only use questions where `explicit` is `false`.
+- `category` is one of `quotidien`, `travail`, `couple`, `famille`, `nourriture`, `voyage`, `ecole`, `tech`, `pop`, `absurde`, `animaux`, `sport`, `fete` (or empty).
+- No `;` and no line break inside a text; questions are 300 characters max, bot answers 100 max.
 
-Run it from the project root:
+Each document also has `lang` (`fr` / `en`), `status` (`approved`, `pending`, `rejected`: only approved questions are played), `source` (`bank`, `ai`, `admin`, `import`), `playCount`, `lastPlayedAt`, `createdAt` and `norm`, the text used to find duplicates (lowercase, no accents, no punctuation, single spaces; unique per language). `explicit` stays the string `"true"` / `"false"`.
+
+### Seeding
 
 ```bash
-pip install pymongo
-python db/db.py path/to/questions.csv   # defaults to db/example.csv
+npm run db:seed                       # db/questions/*.csv
+npm run db:seed -- path/to/fr.csv     # other files (named fr.csv / en.csv)
 ```
 
-The script uses the `MONGO_URL` environment variable if set, otherwise `databaseUrl` from `config.properties`. It adds to the existing documents, so running it twice inserts duplicates.
+The script (`db/seed.js`, Node only) uses `MONGODB_URI`, otherwise `databaseUrl` from `config.properties`, like the server. It can be run as often as needed: a question already in the database for that language is skipped, existing documents are never modified (play counts and admin edits are kept), and neither the original text of a bank question edited in the admin panel nor a bank question deleted there is added back. It prints the number of questions inserted, already present and the invalid lines (with their line number and the reason).
+
+At startup, the server migrates old documents (missing fields get `status: approved`, `source: import`, `playCount: 0`; the language is guessed from the text: French accents and common French words → `fr`, otherwise `en`), builds the indexes, and seeds a language automatically (logged) when it has fewer than 50 approved questions, so a fresh install has content.
+
+`db/db.py` (Python, old 5-column format) is **deprecated**: use `npm run db:seed`.
+
+### No repetition
+
+When a game starts, the server picks the questions (`initQuestions` in `functions.js`):
+
+1. approved questions of the game's language; classic games only take `explicit: "false"`, premium games take all of them;
+2. a random sample among the questions never played or not played in the last 30 days;
+3. if that is not enough, the least recently played ones (random among those played at the same time);
+4. `playCount` and `lastPlayedAt` of the chosen questions are updated.
+
+So consecutive games don't repeat a question until the pool of that language is used up. Every query goes through an index (`$match` + `$sample`, nothing is loaded in memory): about 15 ms with 20,000 questions. When the language has fewer questions than the rounds asked, the game starts with what there is and the host sees "Not enough questions in this language"; with none at all, the lobby shows an error.
+
+### Generating questions with AI
+
+Optional, **off by default**. In the admin panel, tab **To review** → **Generate with AI**: choose the language, how many (1 to 50), a category or a free theme, classic or premium. The server (`admin/ai.js`) calls the Anthropic Messages API (`POST /v1/messages`) with a JSON schema ([structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)), a system prompt with the game rules and the content rules (original, short, no hate or slurs, nothing about minors, no real private people, premium = cheeky but not graphic), a few existing questions of that language as style examples and the latest questions to avoid. Every item is validated like the admin form (lengths, no `;` or line break, category), duplicates are dropped, and the rest is saved as `pending` / `ai`: nothing comes up in a game before an admin approves it (approve / reject / edit one by one, or approve all / reject all). Games never wait for the API.
+
+| Variable | Purpose |
+| --- | --- |
+| `ANTHROPIC_API_KEY` | Turns the feature on. Without it the button explains how to turn it on |
+| `ANTHROPIC_MODEL` | Model, default `claude-sonnet-5-5` |
+| `ANTHROPIC_EFFORT` | `output_config.effort`: `low`, `medium` (default), `high`… or `default` to let the model decide |
+| `AI_MAX_PER_HOUR` | Generations per hour (manual and automatic together), default `10` |
+| `AI_AUTO_TOPUP` | `true` to generate in the background when a language runs low (default off) |
+| `AI_TOPUP_THRESHOLD` | Top-up when a language has fewer approved questions not played for 30 days, default `100` |
+| `AI_TOPUP_BATCH` | Questions per automatic batch, default `20` |
+| `AI_AUTO_APPROVE` | `true` to approve automatic batches directly (default: they wait in To review) |
+
+The same keys can be set in `config.properties` (`anthropicApiKey`, `anthropicModel`, `anthropicEffort`, `aiMaxPerHour`, `aiAutoTopup`, `aiTopupThreshold`, `aiTopupBatch`, `aiAutoApprove`); environment variables win. `ANTHROPIC_BASE_URL` (default `https://api.anthropic.com`) and `ANTHROPIC_TIMEOUT_MS` (default `60000`) are only meant for tests against a mock server.
+
+The automatic top-up checks every 10 minutes and generates at most one batch per hour (one language at a time, not while 60 AI questions are already waiting for review). A request times out after 60 seconds; errors (bad key, rate limit, invalid answer…) are shown in the panel with the API's reason and written to the activity log, like every generation.
+
+**Costs**: each generation is billed to your Anthropic account. With Claude Sonnet 5.5 (2 $ per million input tokens, 10 $ per million output tokens at the time of writing) a batch of 20 questions uses roughly 2,000–3,000 input tokens and a few thousand output tokens (thinking included): a few cents. Check the [pricing page](https://platform.claude.com/docs/en/about-claude/pricing) and set a spending limit in the Anthropic console. Behind nginx, keep `proxy_read_timeout` above 60 s (the provided config uses 120 s).
 
 ## Admin panel
 
 `/admin` lets the owner manage the database from a browser, without scripts:
 
-- **Questions**: list with search (case and accent insensitive, in the question and the bot answers), filter (all / classic / premium), pagination; add, edit, delete (with an in-page confirmation); CSV import with a preview (same format as `db/db.py`, 1 MB max, questions already in the database or repeated in the file are skipped, errors reported per line); CSV export of every question; duplicate finder.
+- **Questions**: list with search (case and accent insensitive, in the question and the bot answers), filters (all / classic / premium, language, category, status), pagination; each card shows its language, category, status, source, play count and last game; add, edit (text, bot answers, type, language, category), delete (with an in-page confirmation); CSV import with a preview (`question;reponse_1;reponse_2;reponse_3;explicit[;category[;lang]]`, the old 5-column files still work, a line without `lang` gets the language chosen in the dialog; 1 MB max, questions already in the database for that language or repeated in the file are skipped, errors reported per line); CSV export of the filtered questions (7 columns, can be imported again); duplicate finder.
+- **To review**: questions waiting for approval (generated by AI), with approve / reject / edit, approve all / reject all, and **Generate with AI** (see [Generating questions with AI](#generating-questions-with-ai)).
 - **Live games**: games in memory with their PIN, phase (lobby, answering, voting…), round, players and scores, premium or not; refreshed every 5 seconds; "End this game" sends the big screen and the players back home.
 - **Activity**: audit log of the admin actions (sign-ins, failed sign-ins, changes, imports, ended games), stored in the `admin_log` collection for one year.
 
-Two duplicates are the same question text ignoring case, spacing and apostrophe style. A text can't contain `;` (the CSV separator) or line breaks; questions are 300 characters max, bot answers 100 max, at least one bot answer.
+Two duplicates are the same question text in the same language, ignoring case, accents, spacing and punctuation. A text can't contain `;` (the CSV separator) or line breaks; questions are 300 characters max, bot answers 100 max, at least one bot answer.
 
 ### Turning it on
 

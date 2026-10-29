@@ -33,7 +33,7 @@
 	// Tabs
 	// ======================================================================
 
-	var TABS = ["questions", "games", "activity"];
+	var TABS = ["questions", "review", "games", "activity"];
 	var currentTab = "questions";
 
 	function selectTab(name, focus) {
@@ -53,6 +53,10 @@
 		if (name === "games") loadGames();
 		if (name === "activity") loadLog();
 		if (name === "questions" && !questions.data) loadQuestions();
+		if (name === "review") {
+			loadReview();
+			loadAiStatus();
+		}
 	}
 
 	TABS.forEach(function (tab, index) {
@@ -77,15 +81,52 @@
 	// Questions: list, search, filter, pagination
 	// ======================================================================
 
-	var questions = { q: "", filter: "all", page: 1, pageSize: 20, data: null, request: 0 };
+	var questions = { q: "", filter: "all", lang: "all", category: "all", status: "approved", page: 1, pageSize: 20, data: null, request: 0 };
+
+	var CATEGORIES = ["quotidien", "travail", "couple", "famille", "nourriture", "voyage", "ecole", "tech", "pop", "absurde", "animaux", "sport", "fete"];
+	var LANGS = ["fr", "en"];
+
+	// <select> of categories; kind: "filter" (all / none / ...), "edit" (none / ...), "generate" (mix / ...)
+	function fillCategorySelect(select, kind) {
+		var current = select.value;
+		select.replaceChildren();
+		var first = kind === "filter" ? [["all", "admin.cat.all"], ["none", "admin.cat.none"]] : kind === "edit" ? [["", "admin.cat.none"]] : [["", "admin.cat.mix"]];
+		first.concat(
+			CATEGORIES.map(function (name) {
+				return [name, "admin.cat." + name];
+			})
+		).forEach(function (entry) {
+			select.appendChild(el("option", { i18n: entry[1], attrs: { value: entry[0] } }));
+		});
+		if (current) select.value = current;
+		if (select.selectedIndex < 0) select.selectedIndex = 0;
+	}
+	Array.prototype.forEach.call(document.querySelectorAll("[data-category-select]"), function (select) {
+		fillCategorySelect(select, select.getAttribute("data-category-select"));
+	});
+
+	function filtersQuery(state) {
+		return (
+			"q=" + encodeURIComponent(state.q) +
+			"&filter=" + encodeURIComponent(state.filter) +
+			"&lang=" + encodeURIComponent(state.lang) +
+			"&category=" + encodeURIComponent(state.category) +
+			"&status=" + encodeURIComponent(state.status)
+		);
+	}
+
+	// the export follows the filters of the list
+	function updateExportLink() {
+		$("exportButton").setAttribute("href", "/admin/api/questions/export?" + filtersQuery(questions));
+	}
 
 	function loadQuestions() {
 		var request = ++questions.request;
 		var list = $("questionsList");
 		list.setAttribute("aria-busy", "true");
+		updateExportLink();
 		var url =
-			"/admin/api/questions?q=" + encodeURIComponent(questions.q) +
-			"&filter=" + encodeURIComponent(questions.filter) +
+			"/admin/api/questions?" + filtersQuery(questions) +
 			"&page=" + questions.page +
 			"&pageSize=" + questions.pageSize;
 		return Admin.api("GET", url)
@@ -131,7 +172,44 @@
 		]);
 	}
 
-	function questionCard(item) {
+	// Tags of a card: type, language, category, status (if not approved)
+	// (badge--lang badge--cat badge--pending badge--rejected: full names kept for the Tailwind build)
+	function badges(item) {
+		var nodes = [badge(item.explicit)];
+		if (item.lang) nodes.push(el("span", { className: "badge badge--lang", text: item.lang.toUpperCase(), attrs: { lang: item.lang, title: t("admin.lang." + item.lang) } }));
+		if (item.category) nodes.push(el("span", { className: "badge badge--cat", i18n: "admin.cat." + item.category }));
+		if (item.status === "pending") nodes.push(el("span", { className: "badge badge--pending", i18n: "admin.status.pending" }));
+		if (item.status === "rejected") nodes.push(el("span", { className: "badge badge--rejected", i18n: "admin.status.rejected" }));
+		return el("div", { className: "q-badges" }, nodes);
+	}
+
+	// "Bank · played 3 times · last 2 days ago"
+	function metaLine(item) {
+		var parts = [el("span", { i18n: "admin.source." + item.source })];
+		if (item.playCount > 0) {
+			parts.push(el("span", { i18n: "admin.q.played", params: { count: item.playCount } }));
+			if (item.lastPlayedAt) {
+				parts.push(
+					el("span", {
+						i18n: "admin.q.lastPlayed",
+						params: { when: Admin.relativeTime(item.lastPlayedAt) },
+						attrs: { title: Admin.formatDate(item.lastPlayedAt) },
+					})
+				);
+			}
+		} else {
+			parts.push(el("span", { i18n: "admin.q.neverPlayed" }));
+		}
+		var nodes = [];
+		parts.forEach(function (part, index) {
+			if (index) nodes.push(el("span", { className: "q-meta-sep", text: "·", attrs: { "aria-hidden": "true" } }));
+			nodes.push(part);
+		});
+		return el("p", { className: "q-meta" }, nodes);
+	}
+
+	function questionCard(item, options) {
+		options = options || {};
 		var editButton = el(
 			"button",
 			{
@@ -158,11 +236,80 @@
 			},
 			[Admin.icon("trash")]
 		);
+		var foot = null;
+		if (options.review) {
+			foot = el("div", { className: "q-card-foot" }, [
+				el(
+					"button",
+					{
+						className: "btn btn-secondary btn-sm",
+						attrs: { type: "button" },
+						on: {
+							click: function (event) {
+								setStatus(item, "rejected", event.currentTarget);
+							},
+						},
+					},
+					[Admin.icon("close"), el("span", { i18n: "admin.review.reject" })]
+				),
+				el(
+					"button",
+					{
+						className: "btn btn-primary btn-sm",
+						attrs: { type: "button" },
+						on: {
+							click: function (event) {
+								setStatus(item, "approved", event.currentTarget);
+							},
+						},
+					},
+					[Admin.icon("check"), el("span", { i18n: "admin.review.approve" })]
+				),
+			]);
+		} else if (item.status === "rejected") {
+			foot = el("div", { className: "q-card-foot" }, [
+				el(
+					"button",
+					{
+						className: "btn btn-secondary btn-sm",
+						attrs: { type: "button" },
+						on: {
+							click: function (event) {
+								setStatus(item, "approved", event.currentTarget);
+							},
+						},
+					},
+					[Admin.icon("check"), el("span", { i18n: "admin.review.approve" })]
+				),
+			]);
+		}
 		return el("article", { className: "q-card", attrs: { "data-id": item.id } }, [
-			el("div", { className: "q-card-head" }, [badge(item.explicit), el("div", { className: "q-card-actions" }, [editButton, deleteButton])]),
-			el("p", { className: "q-text", text: item.question }),
+			el("div", { className: "q-card-head" }, [badges(item), el("div", { className: "q-card-actions" }, [editButton, deleteButton])]),
+			el("p", { className: "q-text", text: item.question, attrs: { lang: item.lang || null } }),
 			answersBlock(item),
+			metaLine(item),
+			foot,
 		]);
+	}
+
+	// Approve / reject one question (review tab, or a rejected one in the list)
+	function setStatus(item, status, button) {
+		if (button) button.disabled = true;
+		return Admin.api("POST", "/admin/api/questions/" + encodeURIComponent(item.id) + "/status", { status: status })
+			.then(function () {
+				Admin.toast(status === "approved" ? "admin.review.approved" : "admin.review.rejected");
+				refreshLists();
+			})
+			.catch(function (error) {
+				if (button) button.disabled = false;
+				Admin.toast(Admin.errorText(error));
+			});
+	}
+
+	// After a change: the lists that are loaded
+	function refreshLists() {
+		loadQuestions();
+		if (review.data || currentTab === "review") loadReview();
 	}
 
 	function renderQuestions() {
@@ -175,7 +322,12 @@
 		setCount($("countAll"), data.counts.all);
 		setCount($("countClassic"), data.counts.classic);
 		setCount($("countPremium"), data.counts.premium);
-		if (!questions.q) setCount($("tabCountQuestions"), data.counts.all);
+		if (data.counts.approved) {
+			setCount($("countLangFr"), data.counts.approved.fr);
+			setCount($("countLangEn"), data.counts.approved.en);
+			setCount($("tabCountQuestions"), (data.counts.approved.fr || 0) + (data.counts.approved.en || 0));
+		}
+		setCount($("tabCountReview"), data.counts.pending || null);
 
 		var summary = $("questionsSummary");
 		if (questions.q) {
@@ -224,6 +376,27 @@
 		});
 	});
 
+	Array.prototype.forEach.call(document.querySelectorAll('input[name="langFilter"]'), function (radio) {
+		radio.addEventListener("change", function () {
+			if (!radio.checked) return;
+			questions.lang = radio.value;
+			questions.page = 1;
+			loadQuestions();
+		});
+	});
+
+	$("categoryFilter").addEventListener("change", function (event) {
+		questions.category = event.target.value;
+		questions.page = 1;
+		loadQuestions();
+	});
+
+	$("statusFilter").addEventListener("change", function (event) {
+		questions.status = event.target.value;
+		questions.page = 1;
+		loadQuestions();
+	});
+
 	function goToPage(page) {
 		questions.page = page;
 		loadQuestions().then(function () {
@@ -250,6 +423,8 @@
 		{ name: "reponse_1", input: "fieldR1", error: "errorR1" },
 		{ name: "reponse_2", input: "fieldR2", error: "errorR2" },
 		{ name: "reponse_3", input: "fieldR3", error: "errorR3" },
+		{ name: "lang", input: "editLangFr", error: "errorLang" },
+		{ name: "category", input: "fieldCategory", error: "errorCategory" },
 	];
 
 	function updateCounter() {
@@ -297,6 +472,10 @@
 		$("fieldR2").value = item ? item.reponse_2 : "";
 		$("fieldR3").value = item ? item.reponse_3 : "";
 		$(item && item.explicit ? "typePremium" : "typeClassic").checked = true;
+		// a new question: the language shown in the list, otherwise the panel's language
+		var lang = item && item.lang ? item.lang : questions.lang !== "all" ? questions.lang : getLang() === "en" ? "en" : "fr";
+		$(lang === "en" ? "editLangEn" : "editLangFr").checked = true;
+		$("fieldCategory").value = item ? item.category || "" : CATEGORIES.indexOf(questions.category) >= 0 ? questions.category : "";
 		updateCounter();
 		Admin.openSheet(editSheet, $("fieldQuestion"));
 	}
@@ -327,6 +506,8 @@
 			reponse_2: $("fieldR2").value,
 			reponse_3: $("fieldR3").value,
 			explicit: $("typePremium").checked,
+			lang: $("editLangEn").checked ? "en" : "fr",
+			category: $("fieldCategory").value,
 		};
 		if (showFieldErrors(localErrors(value))) return;
 
@@ -341,7 +522,7 @@
 				Admin.closeSheet(editSheet);
 				Admin.toast(wasEditing ? "admin.q.saved" : "admin.q.added");
 				if (!wasEditing) questions.page = 1;
-				loadQuestions();
+				refreshLists();
 			})
 			.catch(function (error) {
 				if (!showFieldErrors(error.data && error.data.fields)) {
@@ -400,7 +581,7 @@
 			action: function () {
 				return Admin.api("DELETE", "/admin/api/questions/" + encodeURIComponent(item.id)).then(function () {
 					Admin.toast("admin.q.deleted");
-					loadQuestions();
+					refreshLists();
 					if (after) after();
 				});
 			},
@@ -432,6 +613,7 @@
 
 	function resetImport() {
 		importFile.value = "";
+		$(questions.lang === "en" || (questions.lang === "all" && getLang() === "en") ? "importLangEn" : "importLangFr").checked = true;
 		lastReport = null;
 		setImportError(null);
 		importReport.replaceChildren();
@@ -581,7 +763,8 @@
 		importCheck.disabled = true;
 		importRun.disabled = true;
 		importReport.setAttribute("aria-busy", "true");
-		return Admin.api("POST", "/admin/api/questions/import" + (dryRun ? "?dryRun=1" : ""), file, { type: "text/csv" })
+		var lang = $("importLangEn").checked ? "en" : "fr";
+		return Admin.api("POST", "/admin/api/questions/import?lang=" + lang + (dryRun ? "&dryRun=1" : ""), file, { type: "text/csv" })
 			.then(function (report) {
 				lastReport = report;
 				renderImportReport(report);
@@ -606,6 +789,12 @@
 	}
 
 	importCheck.addEventListener("click", checkImport);
+	// another default language: check the file again
+	Array.prototype.forEach.call(document.querySelectorAll('input[name="importLang"]'), function (radio) {
+		radio.addEventListener("change", function () {
+			if (radio.checked && importFile.files && importFile.files[0]) checkImport();
+		});
+	});
 	importRun.addEventListener("click", function () {
 		if (lastReport && lastReport.dryRun && lastReport.toInsert > 0) sendImport(false);
 	});
@@ -635,7 +824,7 @@
 							group.map(function (item) {
 								return el("li", { className: "dup-item" }, [
 									el("div", { className: "min-w-0 flex-1" }, [
-										el("div", { className: "mb-1 flex flex-wrap items-center gap-2" }, [badge(item.explicit)]),
+										el("div", { className: "mb-1" }, [badges(item)]),
 										el("p", { className: "q-text", text: item.question }),
 										answersBlock(item),
 									]),
@@ -670,6 +859,266 @@
 		$("duplicatesList").replaceChildren(el("p", { className: "muted", i18n: "admin.loading" }));
 		Admin.openSheet(duplicatesSheet);
 		loadDuplicates();
+	});
+
+	// ======================================================================
+	// To review: pending questions (AI generation)
+	// ======================================================================
+
+	var review = { lang: "all", page: 1, pageSize: 20, data: null, request: 0 };
+
+	function loadReview() {
+		var request = ++review.request;
+		var list = $("reviewList");
+		list.setAttribute("aria-busy", "true");
+		var url = "/admin/api/questions?status=pending&lang=" + encodeURIComponent(review.lang) + "&page=" + review.page + "&pageSize=" + review.pageSize;
+		return Admin.api("GET", url)
+			.then(function (data) {
+				if (request !== review.request) return;
+				review.data = data;
+				review.page = data.page;
+				renderReview();
+			})
+			.catch(function (error) {
+				if (request !== review.request) return;
+				list.setAttribute("aria-busy", "false");
+				Admin.toast(Admin.errorText(error));
+			});
+	}
+
+	function renderReview() {
+		var data = review.data;
+		if (!data) return;
+		var list = $("reviewList");
+		list.replaceChildren();
+		list.setAttribute("aria-busy", "false");
+		setCount($("tabCountReview"), data.counts.pending || null);
+		i18nText($("reviewSummary"), "admin.review.count", { count: data.total });
+		$("approveAllButton").disabled = data.total === 0;
+		$("rejectAllButton").disabled = data.total === 0;
+		if (data.items.length === 0) {
+			list.appendChild(
+				el("div", { className: "q-empty panel" }, [
+					el("p", { className: "panel-title", i18n: "admin.review.empty" }),
+					el("p", { className: "muted mt-1", i18n: ai.status && ai.status.enabled ? "admin.review.emptyHint" : "admin.review.emptyHintOff" }),
+				])
+			);
+		} else {
+			data.items.forEach(function (item) {
+				list.appendChild(questionCard(item, { review: true }));
+			});
+		}
+		var pager = $("reviewPager");
+		pager.classList.toggle("hidden", data.pages <= 1);
+		i18nText($("reviewPageInfo"), "admin.pager.info", { page: data.page, pages: data.pages });
+		$("reviewPrev").disabled = data.page <= 1;
+		$("reviewNext").disabled = data.page >= data.pages;
+	}
+
+	Array.prototype.forEach.call(document.querySelectorAll('input[name="reviewLang"]'), function (radio) {
+		radio.addEventListener("change", function () {
+			if (!radio.checked) return;
+			review.lang = radio.value;
+			review.page = 1;
+			loadReview();
+		});
+	});
+	$("reviewPrev").addEventListener("click", function () {
+		if (review.data && review.page > 1) {
+			review.page -= 1;
+			loadReview();
+		}
+	});
+	$("reviewNext").addEventListener("click", function () {
+		if (review.data && review.page < review.data.pages) {
+			review.page += 1;
+			loadReview();
+		}
+	});
+
+	function reviewAll(action) {
+		var count = review.data ? review.data.total : 0;
+		if (!count) return;
+		var approve = action === "approve";
+		confirmDialog({
+			title: approve ? "admin.review.approveAllTitle" : "admin.review.rejectAllTitle",
+			text: approve ? "admin.review.approveAllText" : "admin.review.rejectAllText",
+			params: { count: count },
+			ok: approve ? "admin.review.approveAll" : "admin.review.rejectAll",
+			action: function () {
+				return Admin.api("POST", "/admin/api/questions/review", { action: action, lang: review.lang }).then(function (result) {
+					Admin.toast(approve ? "admin.review.approvedCount" : "admin.review.rejectedCount", { count: result.count });
+					review.page = 1;
+					refreshLists();
+				});
+			},
+		});
+	}
+	$("approveAllButton").addEventListener("click", function () {
+		reviewAll("approve");
+	});
+	$("rejectAllButton").addEventListener("click", function () {
+		reviewAll("reject");
+	});
+
+	// ======================================================================
+	// Generate with AI
+	// ======================================================================
+
+	var ai = { status: null, running: false };
+	var generateSheet = $("generateSheet");
+
+	function loadAiStatus() {
+		return Admin.api("GET", "/admin/api/ai/status")
+			.then(function (status) {
+				ai.status = status;
+				renderAiStatus();
+			})
+			.catch(function () {});
+	}
+
+	function renderAiStatus() {
+		var status = ai.status;
+		var text = $("aiStatusText");
+		if (!status) return;
+		if (status.enabled) {
+			i18nText(text, status.autoTopup ? "admin.ai.statusOnAuto" : "admin.ai.statusOn", { model: status.model, remaining: status.remaining, perHour: status.perHour });
+		} else {
+			i18nText(text, "admin.ai.statusOff");
+		}
+		// the dialog: form disabled with an explanation when the feature is off
+		$("aiOff").classList.toggle("hidden", status.enabled);
+		Array.prototype.forEach.call($("generateForm").querySelectorAll("input, select"), function (node) {
+			node.disabled = !status.enabled || ai.running;
+		});
+		$("generateRun").disabled = !status.enabled || ai.running || status.remaining <= 0;
+		if (status.enabled) {
+			i18nText($("generateInfo"), status.remaining > 0 ? "admin.ai.info" : "admin.ai.noneLeft", { model: status.model, remaining: status.remaining, perHour: status.perHour });
+		} else {
+			i18nClear($("generateInfo"));
+			$("generateInfo").textContent = "";
+		}
+		if (review.data && review.data.items.length === 0) renderReview();
+	}
+
+	function setGenerateError(key, reason) {
+		var node = $("generateError");
+		if (!key) {
+			node.classList.add("hidden");
+			i18nClear(node);
+			node.textContent = "";
+			return;
+		}
+		if (reason) i18nText(node, "admin.ai.error.withReason", { message: t(key), reason: reason });
+		else i18nText(node, key);
+		node.classList.remove("hidden");
+	}
+
+	function setGenerateFieldError(id, key) {
+		var node = $(id);
+		if (!key) {
+			node.classList.add("hidden");
+			i18nClear(node);
+			node.textContent = "";
+			return;
+		}
+		i18nText(node, PunchlineI18n.has(key) ? key : "admin.error.invalid", { max: 80 });
+		node.classList.remove("hidden");
+	}
+
+	$("generateButton").addEventListener("click", function () {
+		if (!ai.running) {
+			setGenerateError(null);
+			setGenerateFieldError("errorGenCount", null);
+			setGenerateFieldError("errorGenTheme", null);
+			$("generateReport").classList.add("hidden");
+			$("generateReview").classList.add("hidden");
+			var lang = review.lang !== "all" ? review.lang : getLang() === "en" ? "en" : "fr";
+			$(lang === "en" ? "genLangEn" : "genLangFr").checked = true;
+		}
+		Admin.openSheet(generateSheet, $("genCount"));
+		loadAiStatus();
+	});
+
+	$("generateReview").addEventListener("click", function () {
+		Admin.closeSheet(generateSheet);
+		selectTab("review");
+	});
+
+	function renderGenerateReport(report) {
+		var node = $("generateReport");
+		node.replaceChildren();
+		node.classList.remove("hidden");
+		node.appendChild(el("p", { className: "panel-title", i18n: "admin.ai.doneTitle", params: { count: report.inserted } }));
+		node.appendChild(
+			el("ul", { className: "import-stats" }, [
+				stat(report.inserted, "admin.ai.stat.added", report.inserted ? "ok" : null),
+				stat(report.duplicates, "admin.import.stat.duplicates", report.duplicates ? "warn" : null),
+				stat(report.invalid, "admin.ai.stat.invalid", report.invalid ? "error" : null),
+			])
+		);
+		node.appendChild(
+			el("p", { className: "muted text-sm", i18n: "admin.ai.usage", params: { model: report.model, input: report.usage.input || 0, output: report.usage.output || 0 } })
+		);
+		$("generateReview").classList.toggle("hidden", report.inserted === 0);
+	}
+
+	$("generateForm").addEventListener("submit", function (event) {
+		event.preventDefault();
+		if (ai.running || !ai.status || !ai.status.enabled) return;
+		setGenerateError(null);
+		setGenerateFieldError("errorGenCount", null);
+		setGenerateFieldError("errorGenTheme", null);
+		var count = Number($("genCount").value);
+		if (!Number.isInteger(count) || count < 1 || count > 50) {
+			setGenerateFieldError("errorGenCount", "admin.ai.error.count");
+			$("genCount").focus();
+			return;
+		}
+		var theme = $("genTheme").value;
+		if (theme.indexOf(";") >= 0) {
+			setGenerateFieldError("errorGenTheme", "admin.error.semicolon");
+			$("genTheme").focus();
+			return;
+		}
+		var body = {
+			lang: $("genLangEn").checked ? "en" : "fr",
+			count: count,
+			category: $("genCategory").value,
+			theme: theme,
+			premium: $("genPremium").checked,
+		};
+		ai.running = true;
+		$("generateReport").classList.add("hidden");
+		$("generateReview").classList.add("hidden");
+		$("generateForm").setAttribute("aria-busy", "true");
+		i18nText($("generateRunLabel"), "admin.ai.running");
+		renderAiStatus();
+		Admin.api("POST", "/admin/api/ai/generate", body)
+			.then(function (report) {
+				renderGenerateReport(report);
+				Admin.toast("admin.ai.doneTitle", { count: report.inserted });
+				if (ai.status) ai.status.remaining = report.remaining;
+				review.page = 1;
+				refreshLists();
+			})
+			.catch(function (error) {
+				var key = Admin.errorText(error);
+				var reason = error.data && typeof error.data.reason === "string" ? error.data.reason : "";
+				if (error.data && error.data.fields) {
+					if (error.data.fields.count) setGenerateFieldError("errorGenCount", error.data.fields.count);
+					if (error.data.fields.theme) setGenerateFieldError("errorGenTheme", error.data.fields.theme);
+				}
+				setGenerateError(key, reason);
+				if (reason) Admin.toast("admin.ai.error.withReason", { message: t(key), reason: reason });
+				else Admin.toast(key);
+			})
+			.then(function () {
+				ai.running = false;
+				$("generateForm").setAttribute("aria-busy", "false");
+				i18nText($("generateRunLabel"), "admin.ai.run");
+				loadAiStatus();
+			});
 	});
 
 	// ======================================================================
@@ -814,6 +1263,21 @@
 		if (entry.action === "question.import") {
 			return t("admin.log.detail.import", { inserted: d.inserted || 0, duplicates: d.duplicates || 0, errors: d.errors || 0 });
 		}
+		if (entry.action === "ai.generate" || entry.action === "ai.topup") {
+			return t("admin.log.detail.ai", {
+				lang: String(d.lang || "").toUpperCase(),
+				inserted: d.inserted || 0,
+				duplicates: d.duplicates || 0,
+				invalid: d.invalid || 0,
+			});
+		}
+		if (entry.action === "ai.error") {
+			var key = String(d.error || "");
+			return (PunchlineI18n.has(key) ? t(key) : key) + (d.reason ? " (" + d.reason + ")" : "");
+		}
+		if (entry.action === "question.approveAll" || entry.action === "question.rejectAll") {
+			return t("admin.log.detail.count", { count: d.count || 0 });
+		}
 		return "";
 	}
 
@@ -854,6 +1318,8 @@
 
 	onLangChange(function () {
 		renderQuestions();
+		renderReview();
+		renderAiStatus();
 		renderGames();
 		renderLog();
 	});
@@ -866,4 +1332,5 @@
 	selectTab(TABS.indexOf(initial) >= 0 ? initial : "questions");
 	if (currentTab !== "questions") loadQuestions();
 	if (currentTab !== "games") loadGames();
+	if (currentTab !== "review") loadAiStatus();
 })();

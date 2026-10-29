@@ -1,92 +1,30 @@
 /**
- * Questions management: validation, search, CRUD, CSV import / export, duplicates.
+ * Questions management: search, filters, CRUD, review (pending AI questions), CSV import /
+ * export, duplicates. Rules and model: db/question-bank.js (shared with the game and the seed).
  *
  * Documents of the "questions" collection (read by the game, see functions.js):
- *   { question, reponse_1, reponse_2, reponse_3, explicit: "true" | "false" }
+ *   { question, reponse_1, reponse_2, reponse_3, explicit: "true" | "false", lang, category,
+ *     status, source, playCount, lastPlayedAt, createdAt, norm }
  * reponse_1..3 are the bot's answers. explicit stays a STRING (the game matches "false").
  *
- * CSV format (same as db/db.py): no header, one question per line,
- *   question;reponse_1;reponse_2;reponse_3;explicit
- * no quoting, so a field can't contain ";" or a line break.
+ * CSV format: no header, one question per line, no quoting (a field can't contain ";" or a
+ * line break):
+ *   question;reponse_1;reponse_2;reponse_3;explicit[;category[;lang]]
+ * The old 5-field format is accepted; a missing lang is the one chosen in the import dialog.
  */
 "use strict";
 
 const express = require("express");
+const bank = require("../db/question-bank");
 
-const QUESTION_MAX = 300;
-const ANSWER_MAX = 100;
-const ANSWER_FIELDS = ["reponse_1", "reponse_2", "reponse_3"];
+const { LANGS, CATEGORIES, STATUSES, ANSWER_FIELDS, QUESTION_MAX, ANSWER_MAX, tidy, normKey, validateQuestion } = bank;
 const PAGE_SIZE_DEFAULT = 20;
 const PAGE_SIZE_MAX = 100;
 const SEARCH_MAX = 100;
 const IMPORT_MAX_BYTES = 1024 * 1024;
 const IMPORT_MAX_LINES = 10000;
 const REPORT_MAX_ITEMS = 200; // per-line details returned to the browser
-
-// ---------------------------------------------------------------------------
-// Normalisation and validation
-// ---------------------------------------------------------------------------
-
-// Collapses any whitespace (line breaks, tabs, non-breaking spaces…) into single spaces
-function tidy(value) {
-	return String(value).normalize("NFC").replace(/\s+/g, " ").trim();
-}
-
-// Validates one text field; returns [value, errorKey|null]
-function checkText(raw, max, required) {
-	if (raw === undefined || raw === null) raw = "";
-	if (typeof raw !== "string") return ["", "admin.error.invalid"];
-	const value = tidy(raw);
-	if (required && value.length === 0) return [value, "admin.error.required"];
-	if (Array.from(value).length > max) return [value, "admin.error.tooLong"];
-	// eslint-disable-next-line no-control-regex
-	if (/[\u0000-\u001f\u007f�]/.test(value)) return [value, "admin.error.badChars"];
-	if (value.includes(";")) return [value, "admin.error.semicolon"];
-	return [value, null];
-}
-
-/**
- * Validates a question sent by the panel (JSON) or read from the CSV.
- * explicit must be a boolean. Returns { value, errors } where errors maps a field
- * name to a translation key (empty object when valid) and value is the document.
- */
-function validateQuestion(input) {
-	const errors = {};
-	const value = {};
-	if (input === null || typeof input !== "object" || Array.isArray(input)) {
-		return { value, errors: { form: "admin.error.invalid" } };
-	}
-
-	let [text, error] = checkText(input.question, QUESTION_MAX, true);
-	value.question = text;
-	if (error) errors.question = error;
-
-	ANSWER_FIELDS.forEach((field) => {
-		[text, error] = checkText(input[field], ANSWER_MAX, false);
-		value[field] = text;
-		if (error) errors[field] = error;
-	});
-	// the bot needs at least one answer
-	if (!ANSWER_FIELDS.some((field) => value[field].length > 0) && !ANSWER_FIELDS.some((field) => errors[field])) {
-		errors.reponse_1 = "admin.error.answerRequired";
-	}
-
-	if (typeof input.explicit !== "boolean") {
-		errors.explicit = "admin.error.invalid";
-	}
-	value.explicit = input.explicit === true ? "true" : "false";
-
-	return { value, errors };
-}
-
-// Key used to detect duplicates: same question, ignoring case, spacing and apostrophe style
-function duplicateKey(question) {
-	return tidy(question)
-		.toLowerCase()
-		.replace(/[‘’ʼ`´]/g, "'")
-		.replace(/\s*([?!:;.,…])/g, "$1")
-		.trim();
-}
+const REVIEW_MAX = 1000; // "approve all" / "reject all": at most this many at once
 
 // Accent-insensitive, case-insensitive regular expression for a search text
 const ACCENT_CLASSES = {
@@ -118,8 +56,9 @@ function searchRegex(search) {
 	return new RegExp(source, "i");
 }
 
-// Document from the database -> safe JSON for the panel (only the known fields, as strings)
+// Document from the database -> safe JSON for the panel (only the known fields)
 function toClient(doc) {
+	const date = (value) => (value instanceof Date && !isNaN(value.getTime()) ? value.toISOString() : null);
 	return {
 		id: String(doc._id),
 		question: doc.question == null ? "" : String(doc.question),
@@ -127,6 +66,13 @@ function toClient(doc) {
 		reponse_2: doc.reponse_2 == null ? "" : String(doc.reponse_2),
 		reponse_3: doc.reponse_3 == null ? "" : String(doc.reponse_3),
 		explicit: String(doc.explicit) === "true",
+		lang: LANGS.includes(doc.lang) ? doc.lang : "",
+		category: CATEGORIES.includes(doc.category) ? doc.category : "",
+		status: STATUSES.includes(doc.status) ? doc.status : "approved",
+		source: bank.SOURCES.includes(doc.source) ? doc.source : "import",
+		playCount: Number.isFinite(doc.playCount) ? doc.playCount : 0,
+		lastPlayedAt: date(doc.lastPlayedAt),
+		createdAt: date(doc.createdAt),
 	};
 }
 
@@ -135,68 +81,8 @@ function shorten(text, max = 80) {
 	return chars.length > max ? chars.slice(0, max - 1).join("") + "…" : chars.join("");
 }
 
-// ---------------------------------------------------------------------------
-// CSV
-// ---------------------------------------------------------------------------
-
-/**
- * Parses an import file like db/db.py does (";" separator, no quoting, blank lines skipped,
- * missing explicit = "false"), but strictly: extra columns or an unknown explicit value
- * are reported as errors instead of being silently dropped.
- * Returns { rows: [{ line, value }], errors: [{ line, errors: [key] }], lines }.
- */
-function parseCsv(text) {
-	const rows = [];
-	const errors = [];
-	const lines = String(text).replace(/^﻿/, "").split(/\r\n|\n|\r/);
-	if (lines.length > IMPORT_MAX_LINES) {
-		return { rows, errors: [{ line: 0, errors: ["admin.import.tooManyLines"] }], lines: lines.length, tooMany: true };
-	}
-	lines.forEach((raw, index) => {
-		const line = index + 1;
-		if (raw.trim() === "") return;
-		const cells = raw.split(";");
-		if (cells.length > 5) {
-			errors.push({ line, errors: ["admin.import.tooManyColumns"] });
-			return;
-		}
-		const explicitText = (cells[4] || "").trim().toLowerCase() || "false";
-		if (explicitText !== "true" && explicitText !== "false") {
-			errors.push({ line, errors: ["admin.import.badExplicit"] });
-			return;
-		}
-		const { value, errors: fieldErrors } = validateQuestion({
-			question: cells[0],
-			reponse_1: cells[1],
-			reponse_2: cells[2],
-			reponse_3: cells[3],
-			explicit: explicitText === "true",
-		});
-		const keys = Object.keys(fieldErrors);
-		if (keys.length > 0) {
-			errors.push({ line, errors: keys.map((field) => field + ":" + fieldErrors[field]) });
-			return;
-		}
-		rows.push({ line, value });
-	});
-	return { rows, errors, lines: lines.length };
-}
-
-// One CSV line; old documents may contain characters the format can't hold: replaced by spaces
-function csvCell(value) {
-	return String(value == null ? "" : value)
-		.replace(/[;\r\n]+/g, " ")
-		.trim();
-}
-
-function toCsvLine(doc) {
-	return [
-		csvCell(doc.question),
-		csvCell(doc.reponse_1),
-		csvCell(doc.reponse_2),
-		csvCell(doc.reponse_3),
-		String(doc.explicit) === "true" ? "true" : "false",
-	].join(";");
+function isDuplicateKeyError(error) {
+	return Boolean(error && (error.code === 11000 || error.code === 11001));
 }
 
 // ---------------------------------------------------------------------------
@@ -204,18 +90,8 @@ function toCsvLine(doc) {
 // ---------------------------------------------------------------------------
 
 module.exports = function questionsRouter({ mongoose, audit }) {
-	const schema = new mongoose.Schema(
-		{
-			question: { type: String, required: true, trim: true, maxlength: QUESTION_MAX },
-			reponse_1: { type: String, trim: true, maxlength: ANSWER_MAX, default: "" },
-			reponse_2: { type: String, trim: true, maxlength: ANSWER_MAX, default: "" },
-			reponse_3: { type: String, trim: true, maxlength: ANSWER_MAX, default: "" },
-			explicit: { type: String, enum: ["true", "false"], required: true, default: "false" },
-		},
-		// "Question" is registered by app.js with an empty schema; this model uses the same collection
-		{ collection: "questions", versionKey: false, strict: true }
-	);
-	const Question = mongoose.models.AdminQuestion || mongoose.model("AdminQuestion", schema);
+	const Question = bank.getModel(mongoose);
+	const Removed = bank.getRemovedModel(mongoose);
 
 	const router = express.Router();
 	const json = express.json({ limit: "16kb", strict: true });
@@ -225,48 +101,67 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 		return typeof id === "string" && /^[a-f0-9]{24}$/i.test(id);
 	}
 
-	// Map duplicateKey -> [ids] of every question in the database
-	async function existingKeys(excludeId) {
-		const keys = new Map();
-		const docs = await Question.find({}, { question: 1 }).lean();
-		docs.forEach((doc) => {
-			if (excludeId && String(doc._id) === excludeId) return;
-			const key = duplicateKey(doc.question || "");
-			if (!keys.has(key)) keys.set(key, []);
-			keys.get(key).push(String(doc._id));
-		});
-		return keys;
-	}
-
 	function badRequest(res, errors) {
 		res.status(400).json({ error: "admin.error.validation", fields: errors });
 	}
 
-	// GET /questions?q=&filter=all|classic|premium&page=1&pageSize=20
+	function duplicate(res) {
+		res.status(409).json({ error: "admin.error.duplicate", fields: { question: "admin.error.duplicate" } });
+	}
+
+	// Another question with the same {lang, norm}?
+	async function isDuplicate(value, excludeId) {
+		const filter = { lang: value.lang, norm: value.norm };
+		if (excludeId) filter._id = { $ne: excludeId };
+		return Boolean(await Question.exists(filter));
+	}
+
+	// Query string -> filters shared by the list and the export
+	function readFilters(query) {
+		const lang = LANGS.includes(query.lang) ? query.lang : "all";
+		const category = query.category === "none" || CATEGORIES.includes(query.category) ? query.category : "all";
+		const status = STATUSES.includes(query.status) || query.status === "all" ? query.status : "approved";
+		const filter = ["classic", "premium"].includes(query.filter) ? query.filter : "all";
+		const search = typeof query.q === "string" ? query.q : "";
+		return { lang, category, status, filter, search };
+	}
+
+	function baseQuery(filters) {
+		const base = {};
+		if (filters.lang !== "all") base.lang = filters.lang;
+		if (filters.status !== "all") base.status = filters.status;
+		if (filters.category === "none") base.category = { $in: ["", null] };
+		else if (filters.category !== "all") base.category = filters.category;
+		const regex = searchRegex(filters.search);
+		if (regex) {
+			base.$or = ["question", ...ANSWER_FIELDS].map((field) => ({ [field]: regex }));
+		}
+		return base;
+	}
+
+	// GET /questions?q=&filter=all|classic|premium&lang=all|fr|en&category=all|none|<cat>
+	//               &status=approved|pending|rejected|all&page=1&pageSize=20
 	router.get("/questions", async (req, res, next) => {
 		try {
-			const search = typeof req.query.q === "string" ? req.query.q : "";
-			const filter = ["classic", "premium"].includes(req.query.filter) ? req.query.filter : "all";
+			const filters = readFilters(req.query);
 			let pageSize = parseInt(req.query.pageSize, 10);
 			if (!Number.isInteger(pageSize) || pageSize < 1) pageSize = PAGE_SIZE_DEFAULT;
 			pageSize = Math.min(pageSize, PAGE_SIZE_MAX);
 			let page = parseInt(req.query.page, 10);
 			if (!Number.isInteger(page) || page < 1) page = 1;
 
-			const base = {};
-			const regex = searchRegex(search);
-			if (regex) {
-				base.$or = ["question", ...ANSWER_FIELDS].map((field) => ({ [field]: regex }));
-			}
+			const base = baseQuery(filters);
 			const classic = { ...base, explicit: "false" };
 			const premium = { ...base, explicit: "true" };
-			const query = filter === "classic" ? classic : filter === "premium" ? premium : base;
+			const query = filters.filter === "classic" ? classic : filters.filter === "premium" ? premium : base;
 
-			const [all, classicCount, premiumCount, total] = await Promise.all([
+			const [all, classicCount, premiumCount, total, pending, approvedByLang] = await Promise.all([
 				Question.countDocuments(base),
 				Question.countDocuments(classic),
 				Question.countDocuments(premium),
 				Question.countDocuments(query),
+				Question.countDocuments({ status: "pending" }),
+				Question.aggregate([{ $match: { status: "approved" } }, { $group: { _id: "$lang", count: { $sum: 1 } } }]),
 			]);
 			const pages = Math.max(1, Math.ceil(total / pageSize));
 			page = Math.min(page, pages);
@@ -275,6 +170,11 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 				.skip((page - 1) * pageSize)
 				.limit(pageSize)
 				.lean();
+			const approved = {};
+			LANGS.forEach((lang) => {
+				const row = approvedByLang.find((item) => item._id === lang);
+				approved[lang] = row ? row.count : 0;
+			});
 
 			res.json({
 				items: docs.map(toClient),
@@ -282,57 +182,61 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 				page,
 				pages,
 				pageSize,
-				counts: { all, classic: classicCount, premium: premiumCount },
+				counts: { all, classic: classicCount, premium: premiumCount, pending, approved },
 			});
 		} catch (error) {
 			next(error);
 		}
 	});
 
-	// POST /questions  { question, reponse_1, reponse_2, reponse_3, explicit: boolean }
+	// POST /questions  { question, reponse_1, reponse_2, reponse_3, explicit: boolean, lang, category }
 	router.post("/questions", json, async (req, res, next) => {
 		try {
-			const { value, errors } = validateQuestion(req.body);
+			const { value, errors } = validateQuestion(req.body, { requireLang: true });
 			if (Object.keys(errors).length > 0) return badRequest(res, errors);
-			const keys = await existingKeys();
-			if (keys.has(duplicateKey(value.question))) {
-				return res.status(409).json({ error: "admin.error.duplicate", fields: { question: "admin.error.duplicate" } });
-			}
-			const doc = await Question.create(value);
-			await audit(req, "question.create", { id: String(doc._id), question: shorten(value.question) });
+			if (await isDuplicate(value)) return duplicate(res);
+			const doc = await Question.create(
+				Object.assign(value, { status: "approved", source: "admin", playCount: 0, lastPlayedAt: null, createdAt: new Date() })
+			);
+			await audit(req, "question.create", { id: String(doc._id), lang: value.lang, question: shorten(value.question) });
 			res.status(201).json({ item: toClient(doc.toObject()) });
 		} catch (error) {
+			if (isDuplicateKeyError(error)) return duplicate(res);
 			next(error);
 		}
 	});
 
-	// PUT /questions/:id
+	// PUT /questions/:id  (same body as POST; status, source and play counts are kept)
 	router.put("/questions/:id", json, async (req, res, next) => {
 		try {
 			const id = req.params.id;
 			if (!isObjectId(id)) return res.status(404).json({ error: "admin.error.notFound" });
-			const { value, errors } = validateQuestion(req.body);
+			const { value, errors } = validateQuestion(req.body, { requireLang: true });
 			if (Object.keys(errors).length > 0) return badRequest(res, errors);
-			const keys = await existingKeys(id);
-			if (keys.has(duplicateKey(value.question))) {
-				return res.status(409).json({ error: "admin.error.duplicate", fields: { question: "admin.error.duplicate" } });
-			}
+			if (await isDuplicate(value, id)) return duplicate(res);
 			const doc = await Question.findByIdAndUpdate(id, { $set: value }, { new: true, runValidators: true }).lean();
 			if (!doc) return res.status(404).json({ error: "admin.error.notFound" });
-			await audit(req, "question.update", { id, question: shorten(value.question) });
+			await audit(req, "question.update", { id, lang: value.lang, question: shorten(value.question) });
 			res.json({ item: toClient(doc) });
 		} catch (error) {
+			if (isDuplicateKeyError(error)) return duplicate(res);
 			next(error);
 		}
 	});
 
-	// DELETE /questions/:id
+	// DELETE /questions/:id  (a bank question is remembered so that the seed does not add it back)
 	router.delete("/questions/:id", async (req, res, next) => {
 		try {
 			const id = req.params.id;
 			if (!isObjectId(id)) return res.status(404).json({ error: "admin.error.notFound" });
 			const doc = await Question.findByIdAndDelete(id).lean();
 			if (!doc) return res.status(404).json({ error: "admin.error.notFound" });
+			if (doc.source === "bank" && LANGS.includes(doc.lang)) {
+				const norm = doc.seedKey || doc.norm;
+				if (norm) {
+					await Removed.updateOne({ lang: doc.lang, norm }, { $set: { at: new Date() } }, { upsert: true }).catch(() => {});
+				}
+			}
 			await audit(req, "question.delete", { id, question: shorten(doc.question) });
 			res.json({ ok: true });
 		} catch (error) {
@@ -340,13 +244,50 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 		}
 	});
 
-	// GET /questions/duplicates -> groups of questions sharing the same duplicate key
+	// POST /questions/:id/status  { status: "approved" | "rejected" | "pending" }
+	router.post("/questions/:id/status", json, async (req, res, next) => {
+		try {
+			const id = req.params.id;
+			if (!isObjectId(id)) return res.status(404).json({ error: "admin.error.notFound" });
+			const status = req.body && req.body.status;
+			if (!STATUSES.includes(status)) return badRequest(res, { status: "admin.error.invalid" });
+			const doc = await Question.findByIdAndUpdate(id, { $set: { status } }, { new: true }).lean();
+			if (!doc) return res.status(404).json({ error: "admin.error.notFound" });
+			const action = status === "approved" ? "question.approve" : status === "rejected" ? "question.reject" : "question.pending";
+			await audit(req, action, { id, question: shorten(doc.question) });
+			res.json({ item: toClient(doc) });
+		} catch (error) {
+			next(error);
+		}
+	});
+
+	// POST /questions/review  { action: "approve" | "reject", lang: "all" | "fr" | "en" }
+	// approves / rejects every pending question (of that language)
+	router.post("/questions/review", json, async (req, res, next) => {
+		try {
+			const body = req.body && typeof req.body === "object" ? req.body : {};
+			if (body.action !== "approve" && body.action !== "reject") return badRequest(res, { action: "admin.error.invalid" });
+			const filter = { status: "pending" };
+			if (LANGS.includes(body.lang)) filter.lang = body.lang;
+			else if (body.lang !== undefined && body.lang !== "all") return badRequest(res, { lang: "admin.error.invalid" });
+			const ids = (await Question.find(filter, { _id: 1 }).sort({ _id: 1 }).limit(REVIEW_MAX).lean()).map((doc) => doc._id);
+			const status = body.action === "approve" ? "approved" : "rejected";
+			const result = ids.length ? await Question.updateMany({ _id: { $in: ids }, status: "pending" }, { $set: { status } }) : { modifiedCount: 0 };
+			const count = result.modifiedCount || 0;
+			await audit(req, body.action === "approve" ? "question.approveAll" : "question.rejectAll", { count, lang: filter.lang || "all" });
+			res.json({ ok: true, count });
+		} catch (error) {
+			next(error);
+		}
+	});
+
+	// GET /questions/duplicates -> groups of questions sharing the same language and normalized text
 	router.get("/questions/duplicates", async (req, res, next) => {
 		try {
 			const docs = await Question.find({}).sort({ _id: 1 }).lean();
 			const groups = new Map();
 			docs.forEach((doc) => {
-				const key = duplicateKey(doc.question || "");
+				const key = (doc.lang || "") + "|" + normKey(doc.question || "");
 				if (!groups.has(key)) groups.set(key, []);
 				groups.get(key).push(toClient(doc));
 			});
@@ -357,39 +298,65 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 		}
 	});
 
-	// POST /questions/import?dryRun=1   body: the CSV file (text/csv, max 1 MB)
+	// POST /questions/import?dryRun=1&lang=fr   body: the CSV file (text/csv, max 1 MB)
 	router.post("/questions/import", csvBody, async (req, res, next) => {
 		try {
 			if (typeof req.body !== "string") {
 				return res.status(415).json({ error: "admin.import.badType" });
 			}
 			const dryRun = req.query.dryRun === "1" || req.query.dryRun === "true";
-			const parsed = parseCsv(req.body);
-			const keys = await existingKeys();
+			if (!LANGS.includes(req.query.lang)) {
+				return badRequest(res, { lang: "admin.error.invalid" });
+			}
+			const parsed = bank.parseCsv(req.body, { defaultLang: req.query.lang, maxLines: IMPORT_MAX_LINES });
+
+			// questions already in the database: indexed lookups on {lang, norm}, by chunks
+			const known = new Set();
+			for (const lang of LANGS) {
+				const norms = parsed.rows.filter((row) => row.value.lang === lang).map((row) => row.value.norm);
+				for (let i = 0; i < norms.length; i += 1000) {
+					const found = await Question.find({ lang, norm: { $in: norms.slice(i, i + 1000) } }, { norm: 1 }).lean();
+					found.forEach((doc) => known.add(lang + "|" + doc.norm));
+				}
+			}
+
 			const seen = new Map(); // key -> first line in the file
 			const duplicatesDb = [];
 			const duplicatesFile = [];
 			const toInsert = [];
+			const byLang = { fr: 0, en: 0 };
 			parsed.rows.forEach(({ line, value }) => {
-				const key = duplicateKey(value.question);
-				if (keys.has(key)) {
+				const key = value.lang + "|" + value.norm;
+				if (known.has(key)) {
 					duplicatesDb.push({ line, question: shorten(value.question) });
 				} else if (seen.has(key)) {
 					duplicatesFile.push({ line, sameAs: seen.get(key), question: shorten(value.question) });
 				} else {
 					seen.set(key, line);
+					byLang[value.lang]++;
 					toInsert.push(value);
 				}
 			});
 
 			let inserted = 0;
 			if (!dryRun && toInsert.length > 0) {
-				const result = await Question.insertMany(toInsert, { ordered: true });
-				inserted = result.length;
+				const now = new Date();
+				const docs = toInsert.map((value) =>
+					Object.assign({}, value, { status: "approved", source: "import", playCount: 0, lastPlayedAt: null, createdAt: now })
+				);
+				try {
+					const result = await Question.insertMany(docs, { ordered: false });
+					inserted = result.length;
+				} catch (error) {
+					// a question added meanwhile (unique index): the others are inserted
+					if (!isDuplicateKeyError(error) && !(error && error.writeErrors)) throw error;
+					inserted = error.insertedDocs ? error.insertedDocs.length : (error.result && error.result.insertedCount) || 0;
+				}
 				await audit(req, "question.import", {
 					inserted,
 					duplicates: duplicatesDb.length + duplicatesFile.length,
 					errors: parsed.errors.length,
+					lang: req.query.lang,
 				});
 			}
 
@@ -398,6 +365,7 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 				lines: parsed.lines,
 				valid: parsed.rows.length,
 				toInsert: toInsert.length,
+				toInsertByLang: byLang,
 				inserted,
 				duplicatesDb: duplicatesDb.slice(0, REPORT_MAX_ITEMS),
 				duplicatesDbCount: duplicatesDb.length,
@@ -412,14 +380,25 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 		}
 	});
 
-	// GET /questions/export -> every question as a CSV file (db/db.py format)
+	// GET /questions/export?lang=&status=&category=&filter=&q= -> CSV
+	//   question;reponse_1;reponse_2;reponse_3;explicit;category;lang
+	// (default: every approved question; status=all for everything)
 	router.get("/questions/export", async (req, res, next) => {
 		try {
-			const docs = await Question.find({}).sort({ _id: 1 }).lean();
+			const filters = readFilters(req.query);
+			const query = baseQuery(filters);
+			if (filters.filter === "classic") query.explicit = "false";
+			if (filters.filter === "premium") query.explicit = "true";
 			const date = new Date().toISOString().slice(0, 10);
+			const suffix = filters.lang === "all" ? "" : "-" + filters.lang;
 			res.set("Content-Type", "text/csv; charset=utf-8");
-			res.set("Content-Disposition", `attachment; filename="punchline-questions-${date}.csv"`);
-			res.send(docs.map(toCsvLine).join("\n") + (docs.length ? "\n" : ""));
+			res.set("Content-Disposition", `attachment; filename="punchline-questions${suffix}-${date}.csv"`);
+			const cursor = Question.find(query).sort({ _id: 1 }).lean().cursor();
+			let body = "";
+			for await (const doc of cursor) {
+				body += bank.toCsvLine(doc) + "\n";
+			}
+			res.send(body);
 		} catch (error) {
 			next(error);
 		}
@@ -429,7 +408,10 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 };
 
 module.exports.validateQuestion = validateQuestion;
-module.exports.duplicateKey = duplicateKey;
-module.exports.parseCsv = parseCsv;
+module.exports.duplicateKey = normKey;
+module.exports.parseCsv = bank.parseCsv;
 module.exports.searchRegex = searchRegex;
+module.exports.toClient = toClient;
 module.exports.IMPORT_MAX_BYTES = IMPORT_MAX_BYTES;
+module.exports.QUESTION_MAX = QUESTION_MAX;
+module.exports.ANSWER_MAX = ANSWER_MAX;

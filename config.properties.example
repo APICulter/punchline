@@ -28,3 +28,23 @@ botName = bot
 # Create the hash with: npm run admin:password   (never put the password itself here)
 adminUser =
 adminPasswordHash =
+
+# Optional AI question generation in the admin panel (README, "Questions"). Leave the key
+# empty to turn it off. Environment variables (ANTHROPIC_API_KEY, ANTHROPIC_MODEL,
+# ANTHROPIC_EFFORT, AI_MAX_PER_HOUR, AI_AUTO_TOPUP, AI_TOPUP_THRESHOLD, AI_TOPUP_BATCH,
+# AI_AUTO_APPROVE) take precedence over these keys.
+anthropicApiKey =
+# default claude-sonnet-5-5
+anthropicModel =
+# low | medium (default) | high | xhigh | max | default
+anthropicEffort =
+# generations per hour, default 10
+aiMaxPerHour =
+# true: background top-up when a language runs low (default off)
+aiAutoTopup =
+# default 100 approved questions not played for 30 days
+aiTopupThreshold =
+# questions per automatic batch, default 20
+aiTopupBatch =
+# true: automatic batches are approved without review (default: pending)
+aiAutoApprove =
