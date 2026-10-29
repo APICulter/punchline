@@ -1,4 +1,77 @@
-const socket = io();
+// Reconnections (network loss, server restart): the socket id changes, so the page tells the
+// server again which game / player it belongs to. The handshake carries the PIN and the player
+// name (the server rejoins before handling any event sent while offline), then "joinRoom" is sent
+// again, as on page load. No player name = the host's screen.
+let socketConnectedOnce = false;
+function storedSession() {
+	try {
+		return {
+			pin: sessionStorage.getItem("punchlinePin"),
+			playerName: sessionStorage.getItem("playerName"),
+		};
+	} catch (e) {
+		return { pin: null, playerName: null };
+	}
+}
+const socket = io({
+	auth: function (cb) {
+		const session = storedSession();
+		cb(socketConnectedOnce && session.pin ? { rejoin: true, pin: session.pin, playerName: session.playerName || "" } : {});
+	},
+});
+socket.on("connect", function () {
+	if (socketConnectedOnce) {
+		const session = storedSession();
+		if (session.pin) {
+			socket.emit("joinRoom", session.pin, session.playerName || undefined);
+		}
+	}
+	socketConnectedOnce = true;
+});
+
+// Message to show once the next page is loaded (game stopped by an error or by an admin,
+// game resumed after a server restart). Read before index.js clears the session storage.
+var NOTICE_KEY = "punchlineNotice";
+var pendingNotice = null;
+try {
+	pendingNotice = sessionStorage.getItem(NOTICE_KEY);
+	sessionStorage.removeItem(NOTICE_KEY);
+} catch (e) {}
+
+function rememberNotice(key) {
+	if (typeof key !== "string" || key.length === 0 || key.length > 100) {
+		return;
+	}
+	try {
+		sessionStorage.setItem(NOTICE_KEY, key);
+	} catch (e) {}
+}
+
+// The server stops this game (bug in the game, or an admin ended it); a "redirect" home follows
+socket.on("gameAborted", rememberNotice);
+// The server restarted and picks the game up again; a "redirect" follows
+socket.on("gameResumed", rememberNotice);
+
+// Toast at the top of the page for a few seconds ("key" is translated, any other text shown as is)
+function showNotice(key) {
+	let toast = document.createElement("div");
+	toast.id = "notice";
+	toast.setAttribute("role", "status");
+	toast.className = "toast pointer-events-none animate__animated animate__fadeInDown";
+	if (window.PunchlineI18n && PunchlineI18n.has(key)) {
+		i18nText(toast, key);
+	} else {
+		toast.textContent = String(key);
+	}
+	document.body.append(toast);
+	setTimeout(function () {
+		toast.classList.remove("animate__fadeInDown");
+		toast.classList.add("animate__fadeOutRight");
+		setTimeout(function () {
+			toast.remove();
+		}, 1000);
+	}, 7000);
+}
 
 let punchlinePin;
 let playerName;
@@ -16,6 +89,11 @@ var errorMessages = document.getElementById("errorMessages");
 
 // when the page is fully charged
 window.addEventListener('load', function() {
+
+	if (pendingNotice) {
+		showNotice(pendingNotice);
+		pendingNotice = null;
+	}
 
 	punchlinePin = sessionStorage.getItem("punchlinePin");
     if (punchlinePin) {

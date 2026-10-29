@@ -1,0 +1,63 @@
+# systemd unit for Punchline: an alternative to PM2 (use one or the other, not both).
+#   sudo cp deploy/punchline.service /etc/systemd/system/punchline.service
+#   (edit User, WorkingDirectory, ExecStart and the environment below)
+#   sudo systemctl daemon-reload && sudo systemctl enable --now punchline
+#   sudo systemctl restart punchline       after an update
+#   journalctl -u punchline -f             logs
+#
+# ONE service instance only: games live in the memory of the process.
+
+[Unit]
+Description=Punchline party game server
+Documentation=https://github.com/APICulter/punchline
+After=network-online.target mongod.service
+Wants=network-online.target mongod.service
+# give up after 20 restarts in 5 minutes (crash loop)
+StartLimitIntervalSec=300
+StartLimitBurst=20
+
+[Service]
+Type=simple
+User=punchline
+Group=punchline
+WorkingDirectory=/srv/punchline
+# absolute path of node: see `command -v node`
+ExecStart=/usr/bin/node app.js
+
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOST=127.0.0.1
+Environment=PUBLIC_URL=https://punchline.example.com
+Environment=TRUST_PROXY=loopback
+# optional file for secrets (MONGODB_URI=..., ADMIN_...): KEY=value lines, chmod 600
+EnvironmentFile=-/etc/punchline/punchline.env
+
+# restart after a crash (exit code 1 on a fatal error) or a kill by the OOM killer
+Restart=always
+RestartSec=2
+
+# graceful stop: SIGTERM -> games saved, connections closed, exit within ~5 s
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+# memory cap (the process is restarted, games are restored from MongoDB)
+MemoryMax=768M
+
+# logs go to the journal (JSON lines)
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=punchline
+
+# hardening: the app writes nothing on disk
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

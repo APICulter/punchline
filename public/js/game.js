@@ -150,7 +150,8 @@ socket.on("question", function (data) {
 	answersDisplayed = false;
 	votesDisplayed = false;
 	document.getElementById("question").textContent = data.question;
-	roundNumber = readRoundNumber() + 1;
+	// the question's position in the game (also right after a server restart), else a local count
+	roundNumber = Number.isInteger(data.id) ? data.id + 1 : readRoundNumber() + 1;
 	try {
 		sessionStorage.setItem("punchlineRound", punchlinePin + ":" + roundNumber);
 	} catch (e) {}

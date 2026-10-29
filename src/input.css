@@ -904,3 +904,468 @@
     }
   }
 }
+
+/* ---------- Admin ---------- */
+/* Back office (/admin, public/admin): same bubbles, outlines and sticker shadows */
+@layer components {
+  .skip-link {
+    @apply sr-only;
+  }
+
+  .skip-link:focus {
+    @apply not-sr-only fixed left-4 top-4 z-50 rounded-xl border-[2.5px] border-plum bg-butter px-4 py-2 font-bold;
+  }
+
+  .admin-kicker {
+    @apply inline-flex h-8 items-center rounded-full bg-plum px-4 text-sm font-extrabold uppercase tracking-[0.16em] text-butter;
+  }
+
+  .admin-head {
+    @apply flex flex-wrap items-center gap-x-5 gap-y-3 pb-6 pt-7 sm:pt-9;
+  }
+
+  .admin-wordmark {
+    @apply rounded-[1.25rem] px-4 text-3xl shadow-pop sm:text-4xl;
+  }
+
+  .admin-user {
+    @apply min-w-0 truncate text-base font-semibold;
+  }
+
+  .admin-code {
+    @apply overflow-x-auto whitespace-pre-wrap break-all rounded-2xl border-[2.5px] border-plum bg-plum px-4 py-3 font-mono text-sm font-semibold text-butter sm:text-base;
+  }
+
+  .admin-steps-2 {
+    counter-reset: step 1;
+  }
+
+  .admin-summary {
+    @apply text-lg font-extrabold tracking-tight;
+  }
+
+  /* ----- Compact controls ----- */
+
+  .btn-sm {
+    @apply min-h-[44px] whitespace-nowrap rounded-xl px-4 text-base shadow-pop-sm;
+  }
+
+  .btn-sm svg {
+    @apply h-5 w-5 shrink-0;
+  }
+
+  .btn-sm:active:not(:disabled) {
+    @apply translate-y-[2px] shadow-none;
+  }
+
+  .icon-btn--sm {
+    @apply h-10 w-10;
+  }
+
+  .icon-btn--sm svg {
+    @apply h-5 w-5;
+  }
+
+  .icon-btn--danger:hover {
+    @apply bg-pink text-white;
+  }
+
+  .field-label {
+    @apply mb-2 block text-base font-extrabold tracking-tight;
+  }
+
+  .field--area {
+    @apply min-h-[6.5rem] resize-y py-3 leading-snug;
+  }
+
+  .field--search {
+    @apply pl-12 text-lg;
+  }
+
+  .field--search::-webkit-search-cancel-button {
+    @apply cursor-pointer;
+  }
+
+  .admin-search-icon {
+    @apply pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-plum/60;
+  }
+
+  .field[aria-invalid="true"] {
+    @apply border-pink-deep ring-4 ring-pink/30;
+  }
+
+  .field-error {
+    @apply mt-2 text-base font-bold text-pink-deep;
+  }
+
+  .form-error {
+    @apply rounded-2xl border-[2.5px] border-plum bg-pink px-4 py-3 text-base font-bold text-white;
+  }
+
+  .char-count {
+    @apply text-sm font-bold tabular-nums text-plum/50;
+  }
+
+  .char-count.is-near-limit {
+    @apply text-pink-deep;
+  }
+
+  .file-field {
+    @apply block w-full cursor-pointer rounded-2xl border-[2.5px] border-dashed border-plum bg-milk-dim p-3 text-base font-semibold;
+  }
+
+  .file-field::file-selector-button {
+    @apply mr-3 cursor-pointer rounded-xl border-[2.5px] border-plum bg-butter px-4 py-2 font-bold text-plum;
+  }
+
+  /* Segmented control with 3 options and counters */
+  .segmented--3 {
+    @apply grid-cols-3;
+  }
+
+  .segmented--3 label {
+    @apply gap-1.5 px-2 text-base;
+  }
+
+  .seg-count {
+    @apply text-sm font-extrabold tabular-nums opacity-60;
+  }
+
+  .seg-count:empty {
+    @apply hidden;
+  }
+
+  /* ----- Tabs ----- */
+
+  .admin-tabs {
+    @apply mb-6 grid grid-flow-col gap-1 rounded-2xl border-[2.5px] border-plum bg-milk p-1 shadow-pop;
+    grid-auto-columns: 1fr;
+  }
+
+  .admin-tab {
+    @apply flex min-h-[48px] min-w-0 items-center justify-center gap-1.5 rounded-xl px-1.5 text-base font-bold leading-tight transition sm:gap-2 sm:px-2 sm:text-lg;
+  }
+
+  .admin-tab:hover {
+    @apply bg-milk-dim;
+  }
+
+  .admin-tab[aria-selected="true"] {
+    @apply bg-plum text-milk;
+  }
+
+  .admin-tab:focus-visible {
+    outline-offset: -1px;
+  }
+
+  .tab-count {
+    @apply inline-grid h-6 min-w-[1.5rem] place-items-center rounded-full bg-butter px-1.5 text-xs font-extrabold tabular-nums text-plum;
+  }
+
+  .tab-count:empty {
+    @apply hidden;
+  }
+
+  .admin-panels:focus {
+    outline: none;
+  }
+
+  /* ----- Questions toolbar ----- */
+
+  .admin-toolbar {
+    @apply grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end;
+  }
+
+  .admin-actions {
+    @apply grid grid-cols-2 gap-3 sm:flex sm:flex-wrap lg:col-span-2;
+  }
+
+  .admin-actions .btn {
+    @apply px-3;
+  }
+
+  .admin-filter {
+    @apply min-w-0 lg:w-[26rem];
+  }
+
+  /* ----- Question cards ----- */
+
+  .q-list {
+    @apply grid gap-5 lg:grid-cols-2;
+  }
+
+  .q-list[aria-busy="true"] {
+    @apply opacity-60;
+  }
+
+  .q-card {
+    @apply flex min-w-0 flex-col gap-3 rounded-[1.5rem] border-[2.5px] border-plum bg-milk p-4 shadow-pop sm:p-5;
+  }
+
+  .q-card-head {
+    @apply flex items-center justify-between gap-3;
+  }
+
+  .q-card-actions {
+    @apply flex gap-2;
+  }
+
+  .q-text {
+    @apply text-lg font-bold leading-snug sm:text-xl;
+    overflow-wrap: anywhere;
+  }
+
+  .q-answers {
+    @apply flex flex-wrap items-start gap-2 border-t-2 border-dashed border-plum/20 pt-3;
+  }
+
+  .q-answers-label {
+    @apply inline-flex h-7 items-center rounded-full bg-plum px-2.5 text-xs font-extrabold uppercase tracking-wider text-milk;
+  }
+
+  .q-answer-list {
+    @apply flex min-w-0 flex-1 flex-wrap gap-2;
+  }
+
+  .q-answer {
+    @apply min-w-0 rounded-2xl border-2 border-plum bg-butter px-3 py-0.5 text-base font-semibold leading-snug;
+    overflow-wrap: anywhere;
+  }
+
+  .q-answer--none {
+    @apply border-dashed bg-milk-dim text-plum/60;
+  }
+
+  .q-empty {
+    @apply text-center lg:col-span-2;
+  }
+
+  .badge {
+    @apply inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded-full px-3 text-sm font-extrabold;
+  }
+
+  .badge--classic {
+    @apply border-2 border-plum bg-milk text-plum;
+  }
+
+  .badge--premium {
+    @apply bg-pink text-white;
+  }
+
+  .badge--phase {
+    @apply bg-plum text-butter;
+  }
+
+  .badge--lobby {
+    @apply bg-butter text-plum;
+  }
+
+  .badge--scores {
+    @apply bg-mint text-plum;
+  }
+
+  .badge--voting {
+    @apply bg-pink text-white;
+  }
+
+  .pager {
+    @apply flex items-center justify-between gap-3 pb-4;
+  }
+
+  /* ----- Sheets ----- */
+
+  .admin-sheet-card {
+    @apply max-h-[92dvh] overflow-y-auto sm:max-w-2xl;
+  }
+
+  .admin-sheet-card--narrow {
+    @apply sm:max-w-lg;
+  }
+
+  .admin-sheet--confirm {
+    @apply z-50;
+  }
+
+  .sheet-head {
+    @apply mb-5 flex items-center justify-between gap-4;
+  }
+
+  .sheet-actions {
+    @apply flex flex-col-reverse gap-3 sm:flex-row sm:justify-end;
+  }
+
+  .has-sheet {
+    @apply overflow-hidden;
+  }
+
+  #confirmQuote {
+    overflow-wrap: anywhere;
+  }
+
+  /* ----- Import report ----- */
+
+  .import-report {
+    @apply flex flex-col gap-4 rounded-[1.5rem] border-[2.5px] border-plum bg-milk-dim p-4;
+  }
+
+  .import-report[aria-busy="true"] {
+    @apply opacity-60;
+  }
+
+  .import-stats {
+    @apply grid grid-cols-3 gap-2;
+  }
+
+  .import-stat {
+    @apply flex flex-col items-center rounded-2xl border-[2.5px] border-plum bg-milk px-2 py-3 text-center;
+  }
+
+  .import-stat--ok {
+    @apply bg-mint;
+  }
+
+  .import-stat--warn {
+    @apply bg-butter;
+  }
+
+  .import-stat--error {
+    @apply bg-pink text-white;
+  }
+
+  .import-stat-value {
+    @apply text-3xl font-extrabold tabular-nums leading-none;
+  }
+
+  .import-stat-label {
+    @apply mt-1 text-sm font-bold leading-tight;
+  }
+
+  .import-details summary {
+    @apply cursor-pointer rounded-xl py-1 font-extrabold;
+  }
+
+  .import-lines {
+    @apply mt-2 max-h-56 space-y-1.5 overflow-y-auto pr-1 text-base;
+  }
+
+  .import-lines li {
+    @apply flex gap-2 leading-snug;
+    overflow-wrap: anywhere;
+  }
+
+  .import-line-no {
+    @apply inline-flex h-6 shrink-0 items-center rounded-full bg-plum px-2 text-xs font-extrabold tabular-nums text-milk;
+  }
+
+  /* ----- Duplicates ----- */
+
+  .dup-group {
+    @apply flex flex-col gap-3 rounded-[1.5rem] border-[2.5px] border-dashed border-plum p-3;
+  }
+
+  .dup-item {
+    @apply flex items-start gap-3 rounded-2xl border-[2.5px] border-plum bg-milk p-3 shadow-pop-sm;
+  }
+
+  .dup-none {
+    @apply rounded-2xl bg-mint px-4 py-3 text-lg font-bold;
+  }
+
+  /* ----- Live games ----- */
+
+  .game-list {
+    @apply grid gap-5 md:grid-cols-2 xl:grid-cols-3;
+  }
+
+  .game-list:empty::before {
+    @apply rounded-[1.75rem] border-[2.5px] border-dashed border-plum bg-milk/60 py-10;
+  }
+
+  .game-card {
+    @apply flex min-w-0 flex-col gap-4 rounded-[1.75rem] border-[2.5px] border-plum bg-milk p-5 shadow-pop-lg;
+  }
+
+  .game-card-head {
+    @apply flex items-start justify-between gap-3;
+  }
+
+  .game-pin {
+    @apply h-11 shrink-0 text-xl;
+  }
+
+  .game-meta {
+    @apply flex flex-col gap-0.5 text-base font-semibold text-plum/70;
+  }
+
+  .game-round {
+    @apply text-lg font-extrabold text-plum;
+  }
+
+  .game-players {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .game-player {
+    @apply chip max-w-full pr-1;
+  }
+
+  .game-player.is-offline {
+    @apply border-dashed bg-milk-dim text-plum/70;
+  }
+
+  .game-player.is-bot {
+    @apply bg-milk;
+  }
+
+  .game-player-tag {
+    @apply shrink-0 text-xs font-extrabold uppercase tracking-wider opacity-70;
+  }
+
+  .game-player-points {
+    @apply grid h-8 min-w-[2rem] shrink-0 place-items-center rounded-full bg-plum px-2 text-sm font-extrabold tabular-nums text-milk;
+  }
+
+  .game-card-foot {
+    @apply mt-auto flex justify-end border-t-2 border-dashed border-plum/20 pt-4;
+  }
+
+  /* ----- Activity log ----- */
+
+  .log-list {
+    @apply flex flex-col p-2 sm:p-3;
+  }
+
+  .log-row {
+    @apply grid gap-x-4 gap-y-0.5 rounded-2xl px-3 py-3 sm:grid-cols-[11rem_11rem_1fr_auto] sm:items-baseline;
+  }
+
+  .log-row + .log-row {
+    @apply border-t-2 border-dashed border-plum/15;
+  }
+
+  .log-row.is-failed .log-action {
+    @apply text-pink-deep;
+  }
+
+  .log-time {
+    @apply text-sm font-bold tabular-nums text-plum/60;
+  }
+
+  .log-action {
+    @apply font-extrabold;
+  }
+
+  .log-detail {
+    @apply min-w-0 font-semibold;
+    overflow-wrap: anywhere;
+  }
+
+  .log-who {
+    @apply text-sm font-semibold text-plum/60 sm:text-right;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-toast {
+    @apply pointer-events-none;
+  }
+}

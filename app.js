@@ -10,9 +10,40 @@ const mongoose = require("mongoose");
 const DOMPurify = require("isomorphic-dompurify");
 const os = require("os");
 
+// Structured logs: one JSON object per line (time, level, msg + fields such as pin, event, error, stack)
+function log(level, msg, fields) {
+	const entry = Object.assign({ time: new Date().toISOString(), level: level, msg: msg }, fields || {});
+	const err = entry.error;
+	if (err instanceof Error) {
+		entry.error = err.message;
+		entry.stack = err.stack;
+	} else if (err !== undefined) {
+		entry.error = String(err);
+	}
+	let line;
+	try {
+		line = JSON.stringify(entry);
+	} catch (e) {
+		line = JSON.stringify({ time: entry.time, level: level, msg: msg, error: "unserializable log fields" });
+	}
+	(level === "error" || level === "fatal" || level === "warn" ? process.stderr : process.stdout).write(line + "\n");
+}
 
 // Create and configure the Express app
 const app = express();
+app.disable("x-powered-by");
+
+// X-Forwarded-* headers are only trusted behind a reverse proxy: TRUST_PROXY=loopback (nginx on the
+// same machine), a number of hops, an address / subnet list, or true. Not set => not trusted.
+function parseTrustProxy(value) {
+	const text = String(value == null ? "" : value).trim();
+	if (text === "" || text === "false" || text === "0") return false;
+	if (text === "true") return true;
+	if (/^[0-9]+$/.test(text)) return Number(text);
+	return text;
+}
+app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
+
 const server = http.createServer(app);
 const io = socketIO(server);
 var path = require("path");
@@ -49,6 +80,20 @@ app.get("/api/music", function (req, res) {
 	res.json(tracks);
 });
 
+// Health check for the supervisor / reverse proxy / monitoring:
+// 200 {status: "ok", ...} when MongoDB is connected, 503 otherwise (or while shutting down)
+app.get("/healthz", function (req, res) {
+	const mongo = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+	const ok = mongo === "connected" && !shuttingDown;
+	res.set("Cache-Control", "no-store");
+	res.status(ok ? 200 : 503).json({
+		status: shuttingDown ? "shutting_down" : ok ? "ok" : "degraded",
+		uptime: Math.round(process.uptime()),
+		games: games.length,
+		mongo: mongo,
+	});
+});
+
 // Admin panel (admin/): login, questions management, live games.
 // Must be registered before the catch-all redirect below.
 require("./admin")(app, {
@@ -61,6 +106,15 @@ app.all("*", function (req, res) {
 	res.redirect("/");
 });
 
+// Errors thrown by a route: logged, the request gets a 500, the process keeps running
+app.use(function (err, req, res, next) {
+	log("error", "http request failed", { method: req.method, path: req.path, error: err });
+	if (res.headersSent) {
+		return next(err);
+	}
+	res.status(500).type("text/plain").send("Internal server error");
+});
+
 // Define classes
 const { Game } = require("./classes/game");
 const { Player } = require("./classes/player");
@@ -68,6 +122,8 @@ const { Player } = require("./classes/player");
 // Define global variables
 var games = [];
 var SECRET_CODE;
+// true once SIGTERM / SIGINT was received (or after a fatal error)
+var shuttingDown = false;
 
 // Read the configuration properties from external file and create global variables from it
 var propertiesReader = require("properties-reader");
@@ -95,7 +151,9 @@ function lanAddress() {
 // 1. PUBLIC_URL environment variable (production)
 // 2. punchlineURL in config.properties
 // 3. the address the host used to open the game; "localhost" is replaced by the
-//    machine's local network address so that phones on the same Wi-Fi can reach it
+//    machine's local network address so that phones on the same Wi-Fi can reach it.
+//    X-Forwarded-Proto / X-Forwarded-Host are only used when the connection comes from
+//    a trusted proxy (TRUST_PROXY).
 function resolvePunchlineURL(socket) {
 	const configured = String(process.env.PUBLIC_URL || global.punchlineURL || "").trim();
 	if (configured) {
@@ -103,9 +161,11 @@ function resolvePunchlineURL(socket) {
 	}
 
 	const headers = socket.handshake.headers || {};
-	const forwardedProto = String(headers["x-forwarded-proto"] || "").split(",")[0].trim();
+	const trustFn = app.get("trust proxy fn");
+	const trusted = typeof trustFn === "function" && trustFn(socket.handshake.address || "", 0);
+	const forwardedProto = trusted ? String(headers["x-forwarded-proto"] || "").split(",")[0].trim() : "";
 	const protocol = forwardedProto || (socket.handshake.secure ? "https" : "http");
-	let host = String(headers["x-forwarded-host"] || headers.host || "").split(",")[0].trim();
+	let host = String((trusted && headers["x-forwarded-host"]) || headers.host || "").split(",")[0].trim();
 	if (!host) {
 		host = "localhost:" + port;
 	}
@@ -131,13 +191,25 @@ const YourSchema = new mongoose.Schema({});
 const YourModel = mongoose.model("Question", YourSchema, "questions");
 let db = mongoose.connection;
 
-db.on("error", console.error.bind(console, "MongoDB connection error:"));
-db.once("open", function () {
-	console.log("Connected to MongoDB");
+db.on("error", (err) => log("error", "MongoDB connection error", { error: err }));
+db.on("connected", () => log("info", "Connected to MongoDB"));
+db.on("disconnected", () => {
+	if (!shuttingDown) log("warn", "Disconnected from MongoDB");
 });
-mongoose.connect(databaseUrl).catch((err) => {
-	console.error("MongoDB initial connection error:", err);
-});
+
+// Initial connection, retried every 5 s while MongoDB is unreachable
+// (once connected, the driver reconnects by itself)
+function connectMongo() {
+	// MONGODB_URI (environment) wins over databaseUrl (config.properties)
+	const url = process.env.MONGODB_URI || global.databaseUrl;
+	return mongoose.connect(url, { serverSelectionTimeoutMS: 5000 }).catch((err) => {
+		log("error", "MongoDB initial connection error", { error: err });
+		if (!shuttingDown) {
+			safeTimeout("mongoConnectRetry", null, () => connectMongo().catch(() => {}), 5000);
+		}
+		throw err;
+	});
+}
 
 // Messages sent to the clients: stable keys translated by the browser (public/js/i18n.js).
 // Event names are unchanged; older clients simply display the key.
@@ -159,6 +231,8 @@ const MESSAGES = {
 	questionsUnavailable: "error.questionsUnavailable",
 	answerEmpty: "error.answerEmpty",
 	answerTooLong: "error.answerTooLong",
+	gameCrashed: "error.gameCrashed",
+	gameResumed: "notice.gameResumed",
 };
 
 // Name reserved for the bot (case insensitive)
@@ -196,8 +270,8 @@ function parseTimeSetting(value, min, max, fallback) {
 	return number >= min && number <= max ? number : null;
 }
 
-// Rooms dictionary
-const rooms = {};
+// Rooms dictionary (no prototype: room names come from the clients, e.g. "__proto__")
+const rooms = Object.create(null);
 
 // Delay before an empty room (no connected socket) and its game are destroyed
 const EMPTY_ROOM_TTL_MS = 10 * 60 * 1000;
@@ -227,6 +301,16 @@ function clean(value) {
 	return DOMPurify.sanitize(value == null ? "" : String(value));
 }
 
+// Removes a game from memory (its saved copy is marked as finished on the next save)
+function removeGame(game) {
+	const index = games.indexOf(game);
+	if (index !== -1) {
+		games.splice(index, 1);
+		removedPins.add(game.pin);
+		requestSave();
+	}
+}
+
 // Removes the game and the room linked to a room name
 function destroyRoom(roomName) {
 	const room = rooms[roomName];
@@ -234,16 +318,46 @@ function destroyRoom(roomName) {
 	clearTimeout(room.cleanupTimer);
 	const game = findGame(room.pin);
 	if (typeof game !== "undefined") {
-		games.splice(games.indexOf(game), 1);
+		removeGame(game);
 	}
 	delete rooms[roomName];
+}
+
+// Destroys a room (and its game) if nobody comes back to it within EMPTY_ROOM_TTL_MS
+function scheduleRoomCleanup(roomName) {
+	const room = rooms[roomName];
+	if (!room) return;
+	clearTimeout(room.cleanupTimer);
+	room.cleanupTimer = safeTimeout("roomCleanup", room.pin, () => {
+		if (rooms[roomName] === room && room.sockets.length === 0) {
+			destroyRoom(roomName);
+		}
+	}, EMPTY_ROOM_TTL_MS);
+	room.cleanupTimer.unref();
 }
 
 // Ends one game from the server side (admin action, or an error inside that game):
 // its host and players are sent back home with a message key; other games are untouched.
 // Returns true if a game or room was found.
+// PINs of the games aborted in the last minutes, with the reason: a page that was loading at
+// that moment (its new socket was not in the room yet) is told when it sends "joinRoom"
+const ABORTED_MEMORY_MS = 10 * 60 * 1000;
+const recentlyAborted = new Map(); // pin -> { reasonKey, at }
+
+function recentAbortReason(pin) {
+	const now = Date.now();
+	for (const [key, value] of recentlyAborted) {
+		if (now - value.at > ABORTED_MEMORY_MS) recentlyAborted.delete(key);
+	}
+	const entry = recentlyAborted.get(Number(pin));
+	return entry ? entry.reasonKey : null;
+}
+
 function abortGame(pin, reasonKey) {
 	const roomName = findRoomName(pin);
+	if (roomName || findGame(pin)) {
+		recentlyAborted.set(Number(pin), { reasonKey: reasonKey || "error.gameEnded", at: Date.now() });
+	}
 	if (roomName) {
 		io.to(roomName).emit("gameAborted", reasonKey || "error.gameEnded");
 		io.to(roomName).emit("redirect", "/html/index.html");
@@ -253,10 +367,395 @@ function abortGame(pin, reasonKey) {
 	}
 	const game = findGame(pin);
 	if (typeof game !== "undefined") {
-		games.splice(games.indexOf(game), 1);
+		removeGame(game);
 		return true;
 	}
 	return false;
+}
+
+/**  *****************************************************************************************
+ ******************************** Failure isolation ******************************************
+ ***************************************************************************************** **/
+
+// A bug in one game must never take the other games down: every socket handler and every
+// server-side timer goes through these helpers. An exception is logged with the game PIN and
+// the event name, then only the game concerned is aborted (players sent home with a message).
+
+// Events whose arguments are not ({ pin, ... }): where to read the PIN
+const PIN_ARGUMENT = {
+	joinRoom: (args) => args[0],
+	joinGame: (args) => args[0],
+	vote: (args) => args[1],
+	leaveRoom: (args) => (typeof args[0] === "string" && rooms[args[0]] ? rooms[args[0]].pin : undefined),
+};
+// Events a socket sends before being part of the game: the PIN of the payload is enough
+const JOINING_EVENTS = ["joinRoom", "joinGame", "setUsername", "findRoomById"];
+
+// Does this socket take part in the game (room member, host or player)?
+function socketBelongsTo(socket, pin) {
+	const roomName = findRoomName(pin);
+	if (roomName && rooms[roomName].sockets.includes(socket)) return true;
+	const game = findGame(pin);
+	return (
+		typeof game !== "undefined" &&
+		(game.hostSocketId === socket.id || game.players.some((player) => player.socketId === socket.id))
+	);
+}
+
+// The game an error belongs to: the PIN of the payload if the sender is part of that game
+// (so that a client cannot abort somebody else's game), otherwise the game the sender is in.
+function errorPin(socket, event, args) {
+	try {
+		const read = PIN_ARGUMENT[event] || ((a) => (a[0] !== null && typeof a[0] === "object" ? a[0].pin : undefined));
+		const candidate = clean(read(args)).trim();
+		if (/^[0-9]{4}$/.test(candidate) && (findGame(candidate) || findRoomName(candidate))) {
+			if (JOINING_EVENTS.includes(event) || socketBelongsTo(socket, candidate)) {
+				return Number(candidate);
+			}
+		}
+		for (const name in rooms) {
+			if (rooms[name].sockets.includes(socket)) return rooms[name].pin;
+		}
+		const game = games.find(
+			(g) => g.hostSocketId === socket.id || g.players.some((player) => player.socketId === socket.id)
+		);
+		return game ? game.pin : null;
+	} catch (e) {
+		return null;
+	}
+}
+
+// Logs an error and aborts the game it belongs to (pin may be null: log only)
+function handleGameError(error, fields, pin) {
+	log("error", "game error", Object.assign({ pin: pin == null ? null : pin }, fields, { error: error }));
+	if (pin != null) {
+		try {
+			abortGame(pin, MESSAGES.gameCrashed);
+			log("warn", "game aborted after an error", { pin: pin, event: fields.event });
+		} catch (e) {
+			log("error", "abortGame failed", { pin: pin, event: fields.event, error: e });
+		}
+	}
+}
+
+// Wraps a socket handler (sync or async). options.global: the event is not tied to one game
+// (errors are only logged).
+function guardHandler(socket, event, handler, options) {
+	const isGlobal = options && options.global;
+	return function (...args) {
+		const fail = (error) => {
+			const pin = isGlobal ? null : errorPin(socket, event, args);
+			handleGameError(error, { event: event, socket: socket.id }, pin);
+			requestSave();
+		};
+		try {
+			const result = handler.apply(this, args);
+			if (result && typeof result.then === "function") {
+				result.then(requestSave, fail);
+			} else {
+				requestSave();
+			}
+		} catch (error) {
+			fail(error);
+		}
+	};
+}
+
+// setTimeout whose callback cannot crash the process; pin (optional) is the game it belongs to
+function safeTimeout(name, pin, fn, ms) {
+	return setTimeout(() => {
+		try {
+			fn();
+		} catch (error) {
+			handleGameError(error, { event: "timer:" + name }, pin);
+		}
+		requestSave();
+	}, ms);
+}
+
+/**  *****************************************************************************************
+ ******************************** Persistence ************************************************
+ ***************************************************************************************** **/
+
+// Games are kept in memory and copied to the MongoDB collection "games" (one document per PIN):
+// at most once per second after a change, and on shutdown. On startup, games that are not
+// finished and were updated less than 6 hours ago are put back in memory.
+const SAVE_DELAY_MS = 1000;
+const RESTORE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+
+const snapshotSchema = new mongoose.Schema(
+	{
+		_id: Number, // PIN
+		finished: Boolean,
+		updatedAt: Date,
+		game: mongoose.Schema.Types.Mixed,
+	},
+	{ collection: "games", versionKey: false, minimize: false }
+);
+// old documents are removed by MongoDB after 7 days
+snapshotSchema.index({ updatedAt: 1 }, { expireAfterSeconds: 7 * 24 * 3600 });
+const GameSnapshot = mongoose.model("GameSnapshot", snapshotSchema);
+
+let saveTimer = null;
+let saving = null; // promise of the save in progress
+const lastSaved = new Map(); // pin -> JSON of the last saved state
+const removedPins = new Set(); // games removed from memory since the last save
+
+// What is needed to rebuild a game (no socket ids: they change after a restart)
+function serializeGame(game) {
+	return {
+		pin: game.pin,
+		players: game.players.map((player) => ({
+			id: player.id,
+			name: player.name,
+			points: player.points,
+			gameCreator: player.gameCreator,
+		})),
+		settings: game.settings,
+		question: game.question,
+		questions: game.questions,
+		answers: game.answers,
+		maxAnswers: game.maxAnswers,
+		nbOfPlayers: game.nbOfPlayers,
+		votes: game.votes,
+		maxVotes: game.maxVotes,
+		inGame: game.inGame,
+		status: game.status,
+		nbOfQuestions: game.nbOfQuestions,
+		premium: game.premium,
+		answerTime: game.answerTime,
+		revealTime: game.revealTime,
+	};
+}
+
+// The game reached the final scores
+function isFinished(game) {
+	return game.inGame && game.questions.length > 0 && game.question >= game.questions.length;
+}
+
+// Asks for a save within SAVE_DELAY_MS (several changes in a row => one save)
+function requestSave() {
+	if (saveTimer || shuttingDown) return;
+	saveTimer = setTimeout(() => {
+		saveTimer = null;
+		saveGames().catch((error) => log("error", "games save failed", { error: error }));
+	}, SAVE_DELAY_MS);
+}
+
+// Writes the games that changed since the last save; resolves when done (never rejects
+// while MongoDB is unreachable: the changes are kept and written on a later save)
+async function saveGames() {
+	if (saving) {
+		// a save is already running: save again right after it
+		await saving.catch(() => {});
+		return saveGames();
+	}
+	if (mongoose.connection.readyState !== 1) {
+		if (!shuttingDown) {
+			clearTimeout(saveTimer);
+			saveTimer = null;
+			setTimeout(requestSave, 5000).unref();
+		}
+		return;
+	}
+	const now = new Date();
+	const operations = [];
+	const pending = new Map();
+	for (const game of games) {
+		let json;
+		try {
+			json = JSON.stringify(serializeGame(game));
+		} catch (error) {
+			log("error", "game could not be serialized", { pin: game.pin, error: error });
+			continue;
+		}
+		if (lastSaved.get(game.pin) === json) continue;
+		pending.set(game.pin, json);
+		operations.push({
+			replaceOne: {
+				filter: { _id: game.pin },
+				replacement: { _id: game.pin, finished: isFinished(game), updatedAt: now, game: JSON.parse(json) },
+				upsert: true,
+			},
+		});
+	}
+	const removed = [...removedPins].filter((pin) => !findGame(pin));
+	removed.forEach((pin) => {
+		operations.push({
+			updateOne: { filter: { _id: pin }, update: { $set: { finished: true, updatedAt: now } } },
+		});
+	});
+	removedPins.clear();
+	if (operations.length === 0) return;
+
+	saving = GameSnapshot.bulkWrite(operations, { ordered: false });
+	try {
+		await saving;
+		pending.forEach((json, pin) => lastSaved.set(pin, json));
+		removed.forEach((pin) => lastSaved.delete(pin));
+	} catch (error) {
+		removed.forEach((pin) => removedPins.add(pin));
+		log("error", "games save failed", { error: error, games: operations.length });
+		if (!shuttingDown) setTimeout(requestSave, 5000).unref();
+	} finally {
+		saving = null;
+	}
+}
+
+// Same as saveGames, but gives up after ms milliseconds (shutdown / fatal error)
+function saveGamesWithin(ms) {
+	clearTimeout(saveTimer);
+	saveTimer = null;
+	return Promise.race([
+		saveGames().then(() => true, (error) => {
+			log("error", "final games save failed", { error: error });
+			return false;
+		}),
+		new Promise((resolve) => setTimeout(() => resolve(false), ms).unref()),
+	]);
+}
+
+// Games restored after a restart, waiting for their host to come back (see recoverGame)
+const restoredGames = new WeakSet();
+// Sockets of the host page that was running before the restart: its late (buffered) events
+// are ignored, a fresh game page takes over
+const staleHostSockets = new WeakMap(); // game -> Set of socket ids
+
+// Players told that their game was resumed after a restart (see catchUpPlayer)
+const resumedPlayers = new WeakMap(); // game -> Set of player names
+
+// A phone that reconnects after its game was resumed (it missed the message and the redirect):
+// tell it and send it to the page of the current phase
+function catchUpPlayer(socket, pin, playerName) {
+	const game = findGame(pin);
+	const told = game && resumedPlayers.get(game);
+	if (!told || !playerName || told.has(playerName)) return;
+	if (!game.players.some((player) => player.name === playerName && player.socketId === socket.id)) return;
+	told.add(playerName);
+	socket.emit("gameResumed", MESSAGES.gameResumed);
+	if (game.status === "answering" && !game.answers.some((answer) => answer.playerName === playerName)) {
+		socket.emit("redirect", "/html/prompt.html");
+	} else if (game.status === "voting" && !game.votes.includes(playerName)) {
+		socket.emit("redirect", "/html/votePrompt.html");
+	} else {
+		socket.emit("redirect", "/html/waiting.html");
+	}
+}
+
+function isStaleHostSocket(game, socket) {
+	const stale = staleHostSockets.get(game);
+	return Boolean(stale && stale.has(socket.id));
+}
+
+// Puts back in memory the games saved before the last stop / crash
+async function restoreGames() {
+	const since = new Date(Date.now() - RESTORE_MAX_AGE_MS);
+	const docs = await GameSnapshot.find({ finished: false, updatedAt: { $gte: since } }).lean();
+	let restored = 0;
+	for (const doc of docs) {
+		try {
+			const data = doc.game || {};
+			const pin = Number(doc._id);
+			if (!Number.isInteger(pin) || findGame(pin) || findRoomName(pin)) continue;
+			const game = Object.assign(new Game(), data, { pin: pin, hostSocketId: null });
+			game.players = (Array.isArray(data.players) ? data.players : []).map((p) => {
+				// nobody is connected yet: everyone can take their place back
+				const player = Object.assign(new Player(), p, { socketId: null, lock: false });
+				if (player.id === -1) player.lock = true; // the bot
+				return player;
+			});
+			if (isFinished(game)) continue;
+			games.push(game);
+			const roomName = pin + "-restored";
+			rooms[roomName] = { pin: pin, sockets: [] };
+			scheduleRoomCleanup(roomName);
+			if (game.inGame) restoredGames.add(game);
+			lastSaved.set(pin, JSON.stringify(serializeGame(game)));
+			restored++;
+		} catch (error) {
+			log("error", "game could not be restored", { pin: doc._id, error: error });
+		}
+	}
+	log("info", "games restored", { count: restored });
+}
+
+// First host connection to a game restored in the middle of a round: the round in progress
+// cannot be continued as is (timers ran on the host page, events may have been lost), so
+//  - before the answers were closed (countdown / answering): the current question starts over,
+//  - after (answers reveal, votes, votes reveal): the round is over (points already given are
+//    kept) and the game goes on with the next question (or the final scores).
+// The host page is reloaded (it asks for the question again); the players wait for the prompt.
+function recoverGame(game, roomName, socket) {
+	restoredGames.delete(game);
+	if (!game.inGame || isFinished(game)) return;
+
+	const answersClosed = game.status === "voting" || (game.status === "" && game.answers.length > 0);
+	const restartQuestion = !answersClosed && game.question >= 0;
+	if (restartQuestion) {
+		// getQuestion moves to game.question + 1: serve the same question again
+		game.question -= 1;
+	}
+	game.status = "";
+	game.answers = [];
+	game.maxAnswers = 0;
+	game.votes = [];
+	game.maxVotes = 0;
+
+	let stale = staleHostSockets.get(game);
+	if (!stale) {
+		stale = new Set();
+		staleHostSockets.set(game, stale);
+	}
+	stale.add(socket.id);
+
+	log("info", "game recovered after a restart", {
+		pin: game.pin,
+		event: "recover",
+		action: restartQuestion ? "restartQuestion" : "nextQuestion",
+		nextRound: game.question + 2,
+	});
+	io.to(roomName).emit("gameResumed", MESSAGES.gameResumed);
+	socket.to(roomName).emit("redirect", "/html/waiting.html");
+	// players already back are told now, the others when their phone reconnects
+	resumedPlayers.set(game, new Set(game.players.filter((player) => player.socketId).map((player) => player.name)));
+	socket.emit("redirect", "/html/game.html", game.pin);
+	requestSave();
+}
+
+// (Re)attaches a socket to its room and player: "joinRoom" from each page, and every
+// reconnection (the socket id changes, e.g. after a server restart).
+// No player name = the host's screen.
+function rejoinRoom(socket, pin, playerName) {
+	let roomName = findRoomName(pin);
+
+	if (roomName) {
+		socket.join(roomName);
+		if (!rooms[roomName].sockets.includes(socket)) {
+			rooms[roomName].sockets.push(socket);
+		}
+		// Someone is back in the room: cancel its pending destruction
+		clearTimeout(rooms[roomName].cleanupTimer);
+		let game = findGame(pin);
+		if (typeof game !== "undefined" && playerName.length > 0) {
+			let player = game.players.find((player) => player.name === playerName);
+			if (typeof player !== "undefined") {
+				player.socketId = socket.id;
+				player.lock = true;
+			}
+		} else if (typeof game !== "undefined") {
+			// the host's screen (lobby, game or scores page): host events go to this socket
+			game.hostSocketId = socket.id;
+			if (restoredGames.has(game)) {
+				recoverGame(game, roomName, socket);
+			}
+		}
+	} else if (!findGame(pin)) {
+		const reasonKey = recentAbortReason(pin);
+		if (reasonKey) {
+			socket.emit("gameAborted", reasonKey);
+			socket.emit("redirect", "/html/index.html");
+		}
+	}
 }
 
 // Generates a random UUID for a player
@@ -276,16 +775,35 @@ const {
  ******************************** Main program *******************************************
  ***************************************************************************************** **/
 
+io.engine.on("connection_error", (err) => {
+	log("warn", "socket.io connection error", { error: err && err.message, code: err && err.code });
+});
+
 io.on("connection", function (socket) {
 	const ID = socket.id;
 
+	// Every handler goes through guardHandler: an exception only aborts the game concerned
+	const on = (event, handler, options) => socket.on(event, guardHandler(socket, event, handler, options));
+
+	// Reconnection (e.g. after a server restart): the client sends its PIN and player name in
+	// the handshake, so the socket is back in its room before any of its buffered events is handled
+	guardHandler(socket, "handshakeRejoin", function () {
+		const auth = asObject(socket.handshake.auth);
+		if (auth.rejoin === true && auth.pin != null) {
+			const pin = clean(auth.pin);
+			const playerName = clean(auth.playerName);
+			rejoinRoom(socket, pin, playerName);
+			catchUpPlayer(socket, pin, playerName);
+		}
+	})();
+
 	// Handler to get the game URL => Rules panel
-	socket.on("getPunchlineURL", () => {
+	on("getPunchlineURL", () => {
 		socket.emit("sendPunchlineURL", resolvePunchlineURL(socket));
-	});
+	}, { global: true });
 
 	// Handler for creating a new room
-	socket.on("createGame", () => {
+	on("createGame", () => {
 		// Look for a PIN that is not already used by another game
 		let pin = generatePIN();
 		for (let i = 0; i < 20 && (findGame(pin) || findRoomName(pin)); i++) {
@@ -312,10 +830,10 @@ io.on("connection", function (socket) {
 			// Retry if the generated room name already exists (highly unlikely)
 			socket.emit("gameExists");
 		}
-	});
+	}, { global: true });
 
 	// Handler for checking if the game / room exists
-	socket.on("findRoomById", function (data) {
+	on("findRoomById", function (data) {
 		data = asObject(data);
 		data.pin = clean(data.pin).trim();
 
@@ -348,35 +866,15 @@ io.on("connection", function (socket) {
 				socket.emit("findRoomByIdErrorMessages", MESSAGES.gameNotFound);
 			}
 		}
-	});
+	}, { global: true });
 
 	// Handler for joining a room (after entering PIN and before giving a name)
-	socket.on("joinRoom", (pin, playerName) => {
-		pin = clean(pin);
-		playerName = clean(playerName);
-
-		let roomName = findRoomName(pin);
-
-		if (roomName) {
-			socket.join(roomName);
-			if (!rooms[roomName].sockets.includes(socket)) {
-				rooms[roomName].sockets.push(socket);
-			}
-			// Someone is back in the room: cancel its pending destruction
-			clearTimeout(rooms[roomName].cleanupTimer);
-			let game = findGame(pin);
-			if (typeof game !== "undefined" && playerName.length > 0) {
-				let player = game.players.find((player) => player.name === playerName);
-				if (typeof player !== "undefined") {
-					player.socketId = socket.id;
-					player.lock = true;
-				}
-			}
-		}
+	on("joinRoom", (pin, playerName) => {
+		rejoinRoom(socket, clean(pin), clean(playerName));
 	});
 
 	// Handler for joining or rejoigning a game after disconnexion
-	socket.on("joinGame", (pin, playerName) => {
+	on("joinGame", (pin, playerName) => {
 		pin = clean(pin);
 		playerName = clean(playerName);
 
@@ -409,7 +907,7 @@ io.on("connection", function (socket) {
 	});
 
 	// Sets the player's name and goes to the waiting room
-	socket.on("setUsername", function (data) {
+	on("setUsername", function (data) {
 		data = asObject(data);
 		data.playerName = clean(data.playerName).trim();
 
@@ -460,8 +958,8 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler for leaving a room
-	socket.on("leaveRoom", (roomName) => {
-		const room = rooms[roomName];
+	on("leaveRoom", (roomName) => {
+		const room = typeof roomName === "string" ? rooms[roomName] : undefined;
 		if (room) {
 			socket.leave(roomName);
 			room.sockets = room.sockets.filter((s) => s !== socket);
@@ -469,7 +967,7 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler for leaving a game (unlocks the player so they can rejoin later)
-	socket.on("leaveGame", (data) => {
+	on("leaveGame", (data) => {
 		data = asObject(data);
 		data.pin = clean(data.pin);
 		data.playerName = clean(data.playerName);
@@ -483,7 +981,7 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler for disconnecting from the server
-	socket.on("disconnect", () => {
+	on("disconnect", () => {
 		//unlock the player of the game
 		//maybe user some "break to stop searching ?"
 		games.forEach((game) => {
@@ -501,20 +999,14 @@ io.on("connection", function (socket) {
 			const room = rooms[roomName];
 			const wasInRoom = room.sockets.includes(socket);
 			room.sockets = room.sockets.filter((s) => s !== socket);
-			if (wasInRoom && room.sockets.length === 0) {
-				clearTimeout(room.cleanupTimer);
-				room.cleanupTimer = setTimeout(() => {
-					if (rooms[roomName] === room && room.sockets.length === 0) {
-						destroyRoom(roomName);
-					}
-				}, EMPTY_ROOM_TTL_MS);
-				room.cleanupTimer.unref();
+			if (wasInRoom && room.sockets.length === 0 && !shuttingDown) {
+				scheduleRoomCleanup(roomName);
 			}
 		}
-	});
+	}, { global: true });
 
 
-	socket.on("getConfig", function (data) {
+	on("getConfig", function (data) {
 		data = asObject(data);
 		// timers of the game linked to the PIN (set in the lobby), or the config defaults
 		let game = findGame(clean(data.pin));
@@ -535,7 +1027,7 @@ io.on("connection", function (socket) {
 
 
 	// Starts the game for all players in the room
-	socket.on("startGame", async function (data) {
+	on("startGame", async function (data) {
 		data = asObject(data);
 		data.pin = clean(data.pin);
 		let game = findGame(data.pin);
@@ -610,7 +1102,7 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler for sending the next question in the pool
-	socket.on("getQuestion", function (data) {
+	on("getQuestion", function (data) {
 		data = asObject(data);
 		data.pin = clean(data.pin);
 
@@ -620,6 +1112,8 @@ io.on("connection", function (socket) {
 			if (roomName) socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
+			// late event of the host page that was running before a restart
+			if (isStaleHostSocket(game, socket)) return;
 			// Is there any question left ?
 			game.question++;
 			game.status = "";
@@ -639,7 +1133,7 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler to remove a player from the room in the lobby
-	socket.on("deletePlayer", function (data) {
+	on("deletePlayer", function (data) {
 		data = asObject(data);
 		data.pin = clean(data.pin);
 
@@ -671,7 +1165,7 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler to allow players to answer the question
-	socket.on("startPrompt", function (data) {
+	on("startPrompt", function (data) {
 		data = asObject(data);
 		data.pin = clean(data.pin);
 		let game = findGame(data.pin);
@@ -681,6 +1175,7 @@ io.on("connection", function (socket) {
 			if (roomName) socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
+			if (isStaleHostSocket(game, socket)) return;
 			game.status = "answering";
 			let roomName = findRoomName(data.pin);
 			if (roomName) socket.to(roomName).emit("redirect", "/html/prompt.html");
@@ -688,7 +1183,7 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler to send the player's answer
-	socket.on("answer", function (data) {
+	on("answer", function (data) {
 		data = asObject(data);
 		data.answer = clean(data.answer).trim();
 
@@ -743,7 +1238,7 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler to end round when timer goes to 0 if there is still 1 player that did not answer
-	socket.on("timeIsUpToAnswer", function (data) {
+	on("timeIsUpToAnswer", function (data) {
 		data = asObject(data);
 		data.pin = clean(data.pin);
 		let game = findGame(data.pin);
@@ -752,6 +1247,8 @@ io.on("connection", function (socket) {
 		if (typeof game === "undefined") {
 			if (roomName) socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
+		} else if (isStaleHostSocket(game, socket)) {
+			return;
 		} else if (game.status === "answering") {
 			// Only once per round: if every player already answered, answers were already displayed
 			if (roomName) socket.to(roomName).emit("redirect", "/html/waiting.html");
@@ -762,7 +1259,7 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler to open the vote for players
-	socket.on("getVotes", function (data) {
+	on("getVotes", function (data) {
 		data = asObject(data);
 		data.pin = clean(data.pin);
 		let game = findGame(data.pin);
@@ -770,12 +1267,13 @@ io.on("connection", function (socket) {
 			socket.emit("redirect", "/");
 			return;
 		}
+		if (isStaleHostSocket(game, socket)) return;
 		game.status = "voting";
 		let roomName = findRoomName(data.pin);
 		if (roomName) socket.to(roomName).emit("redirect", "/html/votePrompt.html");
 	});
 
-	socket.on("getAnswers", function (data) {
+	on("getAnswers", function (data) {
 		data = asObject(data);
 		let game = findGame(clean(data.pin));
 		if (typeof game === "undefined") {
@@ -786,7 +1284,7 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler to vote for a player
-	socket.on("vote", function (playerName, pin) {
+	on("vote", function (playerName, pin) {
 		pin = clean(pin);
 		playerName = clean(playerName);
 		let game = findGame(pin);
@@ -835,7 +1333,7 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler to get the ranking of players based on the number of points (final board)
-	socket.on("getScores", function (data) {
+	on("getScores", function (data) {
 		data = asObject(data);
 		data.pin = clean(data.pin);
 		let game = findGame(data.pin);
@@ -854,12 +1352,12 @@ io.on("connection", function (socket) {
 	});
 
 	// Handler to send everyone back to the lobby
-	socket.on("endGame", function (data) {
+	on("endGame", function (data) {
 		data = asObject(data);
 		data.pin = clean(data.pin);
 		let game = findGame(data.pin);
 		if (typeof game !== "undefined") {
-			games.splice(games.indexOf(game), 1);
+			removeGame(game);
 		}
 
 		let roomName = findRoomName(data.pin);
@@ -872,6 +1370,69 @@ io.on("connection", function (socket) {
 	});
 });
 
-server.listen(port, () => {
-	console.log(`Server is running on http://localhost:${port}`);
+/**  *****************************************************************************************
+ ******************************** Process lifecycle ******************************************
+ ***************************************************************************************** **/
+
+// A rejected promise nobody handled: logged, the process keeps running
+process.on("unhandledRejection", (reason) => {
+	log("error", "unhandled promise rejection", { error: reason instanceof Error ? reason : String(reason) });
 });
+
+// An exception outside of the guarded handlers: the process is in an unknown state. Save what
+// can be saved (best effort, 2 s max) and exit with an error so that the supervisor restarts it.
+let fatalError = false;
+process.on("uncaughtException", (error) => {
+	log("fatal", "uncaught exception, exiting", { error: error });
+	if (fatalError) {
+		process.exit(1);
+	}
+	fatalError = true;
+	shuttingDown = true;
+	setTimeout(() => process.exit(1), 3000).unref();
+	saveGamesWithin(2000).finally(() => process.exit(1));
+});
+
+// SIGTERM (systemd, docker) / SIGINT (PM2, Ctrl+C): stop accepting connections, save the games,
+// close socket.io, the HTTP server and MongoDB, exit within a few seconds.
+async function shutdown(signal) {
+	if (shuttingDown) return;
+	shuttingDown = true;
+	log("info", "shutting down", { signal: signal, games: games.length });
+	setTimeout(() => {
+		log("warn", "shutdown took too long, exiting");
+		process.exit(0);
+	}, 5000).unref();
+	try {
+		server.close();
+		if (typeof server.closeIdleConnections === "function") server.closeIdleConnections();
+		const saved = await saveGamesWithin(3000);
+		log("info", saved ? "games saved" : "games not saved", { games: games.length });
+		await new Promise((resolve) => io.close(() => resolve()));
+		await mongoose.disconnect();
+	} catch (error) {
+		log("error", "error during shutdown", { error: error });
+	}
+	process.exit(0);
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+
+// Startup: MongoDB, then the saved games, then the HTTP server (so that reconnecting clients
+// find their game). Without MongoDB the server starts anyway, with no game restored.
+async function start() {
+	try {
+		await connectMongo();
+		await restoreGames();
+	} catch (error) {
+		log("error", "games not restored", { error: error });
+	}
+	// HOST=127.0.0.1 behind nginx: the Node port is not reachable from outside (default: all interfaces)
+	const host = String(process.env.HOST || "").trim() || undefined;
+	server.listen(port, host, () => {
+		log("info", `Server is running on http://${host || "localhost"}:${port}`, { port: port, host: host || null, pid: process.pid });
+		// PM2 "wait_ready": the server is ready to accept connections
+		if (typeof process.send === "function") process.send("ready");
+	});
+}
+start();
