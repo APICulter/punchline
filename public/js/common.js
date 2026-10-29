@@ -52,24 +52,79 @@ socket.on("gameAborted", rememberNotice);
 // The server restarted and picks the game up again; a "redirect" follows
 socket.on("gameResumed", rememberNotice);
 
+// Toast animations (src/input.css, "Feedback animations"): an error drops in with a springy
+// overshoot, shakes "nope" and stays slightly tilted; a notice drops in with a soft bounce;
+// both pop out (scale down + fade). The old animate.css classes of the markup are dropped.
+var TOAST_ANIMATIONS = ["animate__animated", "animate__fadeInDown", "animate__fadeOutRight", "toast--error-in", "toast--notice-in", "toast--out"];
+var TOAST_OUT_MS = 320;
+
+function toastIn(toast, kind) {
+	clearTimeout(toast.toastOutTimer);
+	toast.classList.remove.apply(toast.classList, TOAST_ANIMATIONS);
+	// restarts the animation when the same toast is shown again
+	void toast.offsetWidth;
+	// an error stays slightly tilted, until it pops out
+	toast.style.setProperty("--toast-tilt", kind === "notice" ? "0deg" : "-1.5deg");
+	toast.classList.add(kind === "notice" ? "toast--notice-in" : "toast--error-in");
+}
+
+function toastOut(toast, done) {
+	toast.classList.remove("toast--error-in", "toast--notice-in");
+	toast.classList.add("toast--out");
+	clearTimeout(toast.toastOutTimer);
+	toast.toastOutTimer = setTimeout(done, TOAST_OUT_MS + 40);
+}
+
+// Shakes the field whose value was refused, with a pink outline pulse ("field": element or id).
+// An input / textarea is also marked aria-invalid until the player edits it.
+function shakeField(field) {
+	if (typeof field === "string") {
+		field = document.getElementById(field);
+	}
+	if (!field || !field.classList) {
+		return;
+	}
+	// the answer textarea has no border of its own: its speech bubble shakes
+	let target = (field.closest && field.closest(".answer-bubble")) || field;
+	target.classList.remove("field-shake");
+	void target.offsetWidth;
+	target.classList.add("field-shake");
+	if (target.shakeEnd) {
+		target.removeEventListener("animationend", target.shakeEnd);
+	}
+	target.shakeEnd = function (event) {
+		// the outline pulse is the longest of the two animations
+		if (event.target !== target || event.animationName !== "field-alarm") return;
+		target.classList.remove("field-shake");
+		target.removeEventListener("animationend", target.shakeEnd);
+		target.shakeEnd = null;
+	};
+	target.addEventListener("animationend", target.shakeEnd);
+	if (field.matches && field.matches("input, textarea")) {
+		field.setAttribute("aria-invalid", "true");
+		field.addEventListener("input", function () {
+			field.removeAttribute("aria-invalid");
+		}, { once: true });
+	}
+}
+
 // Toast at the top of the page for a few seconds ("key" is translated, any other text shown as is)
 function showNotice(key) {
 	let toast = document.createElement("div");
 	toast.id = "notice";
 	toast.setAttribute("role", "status");
-	toast.className = "toast pointer-events-none animate__animated animate__fadeInDown";
+	toast.className = "toast pointer-events-none";
 	if (window.PunchlineI18n && PunchlineI18n.has(key)) {
 		i18nText(toast, key);
 	} else {
 		toast.textContent = String(key);
 	}
 	document.body.append(toast);
+	toastIn(toast, "notice");
 	setTimeout(function () {
-		toast.classList.remove("animate__fadeInDown");
-		toast.classList.add("animate__fadeOutRight");
-		setTimeout(function () {
+		toastOut(toast, function () {
 			toast.remove();
-		}, 1000);
+		});
 	}, 7000);
 }
 
@@ -103,7 +158,7 @@ window.addEventListener('load', function() {
 
 	// Link to the game in the rules panel
 	if (document.getElementById("gameURL")) {
-		socket.emit("getPunchlineURL");
+		socket.emit("getPunchlineURL", { origin: window.location.origin });
 	}
 
 	// Answer time of the current game, shown in the rules (and on the answer screen)
@@ -194,11 +249,13 @@ function home() {
 // Displays error messages. "message" is a translation key (from this page or sent by the
 // server, e.g. "error.roomFull"), translated again if the language changes while it is shown;
 // any other string (older server) is displayed as is.
-function displayErrorMessage(element, message, params) {
+// "field" (optional, element or id): the field whose value was refused, it shakes too.
+function displayErrorMessage(element, message, params, field) {
 	if (!element) {
 		return;
 	}
-	document.getElementById("errorMessages").classList.remove("hidden");
+	let container = document.getElementById("errorMessages");
+	if (container) container.classList.remove("hidden");
 	if (window.PunchlineI18n && PunchlineI18n.has(message)) {
 		i18nText(element, message, params);
 	} else {
@@ -206,12 +263,18 @@ function displayErrorMessage(element, message, params) {
 		element.textContent = message == null ? "" : String(message);
 	}
 	element.classList.remove("hidden");
-	element.classList.remove("animate__fadeOutRight");
-	// Message error for 1.5 seconds display (restart the timer if a new message comes in)
+	toastIn(element, "error");
+	if (field) {
+		shakeField(field);
+	}
+	// Message shown for about 2 seconds (restart the timer if a new message comes in)
 	clearTimeout(element.fadeOutTimer);
 	element.fadeOutTimer = setTimeout(function () {
-		element.classList.add("animate__fadeOutRight");
-	}, 1500);
+		toastOut(element, function () {
+			element.classList.add("hidden");
+			element.classList.remove("toast--out");
+		});
+	}, 2200);
 }
 
 // redirect the screen (the server may also send the pin / player name to keep between pages)

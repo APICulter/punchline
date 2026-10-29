@@ -26,16 +26,16 @@ function setUsername() {
 	playerName.value = playerName.value.trim();
 
 	if (playerName.value.length == 0) {
-		displayErrorMessage(error, "error.nameEmpty");
+		displayErrorMessage(error, "error.nameEmpty", null, playerName);
 		return;
 	} else if ( playerName.value.length > 22) {
-		displayErrorMessage(error, "error.nameTooLong");
+		displayErrorMessage(error, "error.nameTooLong", null, playerName);
 		return;
 	} else {
 
 		var result = forbiddenCaracters.filter((caracter) => playerName.value.includes(caracter));
 		if (result.length > 0) {
-			displayErrorMessage(error, "error.nameInvalidChars", { chars: result.join(" ") });
+			displayErrorMessage(error, "error.nameInvalidChars", { chars: result.join(" ") }, playerName);
 			return;
 		} else {
 			socket.emit("setUsername", {
@@ -56,7 +56,7 @@ function setUsername() {
 socket.on("setUsernameErrorMessages", function (data) {
 	let error = document.getElementById("errorName");
 	if (error) {
-		displayErrorMessage(error, data);
+		displayErrorMessage(error, data, null, document.getElementById("player-name"));
 	}
 });
 
@@ -106,7 +106,7 @@ function createGame() {
 	document.getElementById("hero").classList.remove("flex-1");
 	document.getElementById("lobby").classList.remove("hidden");
 	setRulesAnswerTime(document.getElementById("answerTime").value);
-	socket.emit("getPunchlineURL");
+	socket.emit("getPunchlineURL", { origin: window.location.origin });
 }
 
 // The join address shown in the lobby (same URL as the one in the rules)
@@ -266,13 +266,13 @@ function joinRoom() {
 	
 	// Validation
 	if (roomPin.value.length == 0) {
-		displayErrorMessage(error, "error.pinEmpty");
+		displayErrorMessage(error, "error.pinEmpty", null, roomPin);
 		return;
 	} else if (!/^[0-9]+$/.test(roomPin.value)) {
-		displayErrorMessage(error, "error.pinDigitsOnly");
+		displayErrorMessage(error, "error.pinDigitsOnly", null, roomPin);
 		return;
 	} else if (roomPin.value.length != 4) {
-		displayErrorMessage(error, "error.pinLength");
+		displayErrorMessage(error, "error.pinLength", null, roomPin);
 		return;
 	} else {
 		socket.emit("findRoomById", {
@@ -311,7 +311,7 @@ function joinRoom() {
 
 // Displays error message coming from the backend if the PIN encounters a problem
 socket.on("findRoomByIdErrorMessages", function (data) {
-	displayErrorMessage(document.getElementById("errorPin"), data);
+	displayErrorMessage(document.getElementById("errorPin"), data, null, "roomPin");
 	
 });
 
@@ -505,13 +505,13 @@ function startGame() {
 
 	if (premiumCode.value.length == 0 &&
 		isPremiumMode()) {
-		displayErrorMessage(error, "error.premiumCodeEmpty");
+		displayErrorMessage(error, "error.premiumCodeEmpty", null, premiumCode);
 		return;
 	
 	// check the number of players
 	} else if (premiumCode.value.length > 15 &&
 		isPremiumMode()) {
-		displayErrorMessage(error, "error.premiumCodeTooLong");
+		displayErrorMessage(error, "error.premiumCodeTooLong", null, premiumCode);
 		return;
 	} else if (nbOfPlayers < minNbOfPlayers) {
 		displayErrorMessage(error, "error.notEnoughPlayers", { count: minNbOfPlayers });
@@ -540,7 +540,9 @@ function startGame() {
 
 socket.on("startGameErrorMessages", function (data) {
 	document.getElementById("startGame").disabled = false;
-	displayErrorMessage(document.getElementById("startGameError"), data);
+	// a refused premium code: its field shakes too
+	let premiumError = typeof data === "string" && data.indexOf("error.premium") === 0;
+	displayErrorMessage(document.getElementById("startGameError"), data, null, premiumError ? "secretCode" : null);
 });
 
 // The game starts with fewer rounds than asked (not enough questions in this language):
@@ -571,6 +573,6 @@ function changeMode() {
 
 // Displays an error message if the players tries to join and the room is full
 socket.on("errorRoomFull", function (data) {
-	displayErrorMessage(document.getElementById("maxNbOfPlayersReached"), data);
+	displayErrorMessage(document.getElementById("maxNbOfPlayersReached"), data, null, "roomPin");
 	
 });

@@ -28,6 +28,68 @@ function initBot(game) {
     }
 }
 
+/**
+ * One shape for every answer, whoever wrote it (players type casually on their phone, the bot's
+ * answers are neatly written in the database): the same normalisation is applied to all of them.
+ *  - trim, every run of spaces / line breaks becomes one space;
+ *  - a single trailing period is removed (not "...", "?", "!", "…");
+ *  - the first letter is lowercased, unless the first word looks like an acronym or a name
+ *    written on purpose: all caps ("SNCF", "OK"), capitals inside the word ("iPhone",
+ *    "McDo", "Jean-Pierre") or the English "I" / "I'm" / "I'll"...
+ * The rest of the text is kept as typed.
+ */
+function normalizeAnswer(text) {
+    let answer = String(text == null ? "" : text).replace(/\s+/g, " ").trim();
+    // one final period, not an ellipsis
+    if (/[^.]\.$/.test(answer) || answer === ".") {
+        answer = answer.slice(0, -1).trimEnd();
+    }
+    const match = answer.match(/^([^\p{L}\p{N}]*)(\p{L}[\p{L}\p{M}'’-]*)/u);
+    if (match) {
+        const word = match[2];
+        const letters = word.replace(/[^\p{L}]/gu, "");
+        const allCaps = letters.length >= 2 && letters === letters.toUpperCase() && letters !== letters.toLowerCase();
+        const innerCapital = /\p{Lu}/u.test(word.slice(1).replace(/^['’]/, ""));
+        const englishI = /^I(['’](m|ll|d|ve|re))?$/.test(word);
+        if (!allCaps && !innerCapital && !englishI) {
+            const start = match[1].length;
+            answer = answer.slice(0, start) + answer.charAt(start).toLowerCase() + answer.slice(start + 1);
+        }
+    }
+    return answer;
+}
+
+// Text sent by a browser went through DOMPurify (an HTML string: "&" became "&amp;"); answers are
+// always displayed as text (textContent), so they are stored as plain text like the bot's ones
+function htmlToText(html) {
+    return String(html == null ? "" : html)
+        .replace(/&nbsp;/g, " ")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#0?39;/g, "'")
+        .replace(/&amp;/g, "&");
+}
+
+// Opaque id of an answer for the votes (says nothing about its author or its order)
+function answerId() {
+    return require("crypto").randomBytes(8).toString("hex");
+}
+
+// What the big screen gets to reveal the answers: no author
+function answersForHost(answers) {
+    return answers.map((answer) => ({ id: answer.id, textAnswer: answer.textAnswer }));
+}
+
+// What one phone gets to vote: no author, only "yours" for the player's own answer
+function answersForPlayer(answers, playerName) {
+    return answers.map((answer) => ({
+        id: answer.id,
+        textAnswer: answer.textAnswer,
+        yours: Boolean(playerName) && answer.playerName === playerName,
+    }));
+}
+
 // Uses randomly 1 of the 3 answers in the database for the current question
 function addBotAnswer(game) {
     const keysToExclude = ["question", "id"];
@@ -47,9 +109,15 @@ function addBotAnswer(game) {
     // Pick a random answer among the available ones
     const randomKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
 
+    // same normalisation as the players' answers, so nothing gives it away
+    const textAnswer = normalizeAnswer(currentQuestion[randomKey]);
+    if (textAnswer.length === 0) {
+        return;
+    }
     game.answers.push({
+        id: answerId(),
         playerName: "Bot",
-        textAnswer: currentQuestion[randomKey],
+        textAnswer: textAnswer,
         votes: 0,
     });
 }
@@ -175,4 +243,9 @@ module.exports = {
     addBotAnswer,
     shuffle,
     initQuestions,
+    normalizeAnswer,
+    htmlToText,
+    answerId,
+    answersForHost,
+    answersForPlayer,
 };

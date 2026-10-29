@@ -21,13 +21,14 @@ socket.on("postAnswers", function (data) {
 	document.getElementById("answers").replaceChildren();
 
 	data.forEach((element, index) => {
-		let isOwn = element.playerName == playerName;
+		// the server only sends a text, an opaque id and "yours" (no author before the votes reveal)
+		let isOwn = element.yours === true;
 
 		let answer = document.createElement("input");
 		answer.setAttribute("type", "radio");
 		// the id must not depend on the player's name (a name like "main" or "vote" would clash with the page ids)
 		answer.id = "answer-" + index;
-		answer.value = element.playerName;
+		answer.value = element.id;
 		answer.name = "answer";
 		answer.className = "sr-only";
 
@@ -65,7 +66,7 @@ button.addEventListener("click", function () {
 	if (!answer) {
 		let error = document.getElementById("voteError");
 		if (error) {
-			displayErrorMessage(error, "error.pickAnswer");
+			displayErrorMessage(error, "error.pickAnswer", null, document.getElementById("answers"));
 		}
 		return;
 	}

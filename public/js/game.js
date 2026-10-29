@@ -45,6 +45,66 @@ var stageElement = document.getElementById("stage");
 var phaseElement = document.getElementById("phase");
 // display only: the round number shown above the question (the server keeps the real count)
 var roundNumber = 0;
+// number of rounds of the game (sent with each question), 0 if unknown
+var totalRounds = 0;
+
+// Clock of the reveals and of the votes (next to the phase caption, where the answer countdown
+// was): seconds before the next step, or the votes received while the phones vote
+var phaseClockElement = document.getElementById("phaseClock");
+var phaseTimerElement = document.getElementById("phaseTimer");
+var phaseClockLabelElement = document.getElementById("phaseClockLabel");
+var revealBarElement = document.getElementById("revealBar");
+var phaseClockInterval = null;
+
+function stopPhaseClock() {
+	clearInterval(phaseClockInterval);
+	phaseClockInterval = null;
+	phaseClockElement.classList.add("invisible");
+}
+
+// Counts down durationMs (never below 0) and hides itself when the time is over
+function startPhaseClock(durationMs, labelKey) {
+	stopPhaseClock();
+	let endAt = Date.now() + Math.max(0, durationMs);
+	i18nText(phaseClockLabelElement, labelKey);
+	phaseTimerElement.classList.remove("is-waiting");
+	let tick = function () {
+		let left = endAt - Date.now();
+		if (left <= 0) {
+			stopPhaseClock();
+			return;
+		}
+		phaseTimerElement.textContent = Math.ceil(left / 1000);
+	};
+	tick();
+	if (endAt > Date.now()) {
+		phaseClockElement.classList.remove("invisible");
+		phaseClockInterval = setInterval(tick, 200);
+	}
+}
+
+// No time limit for the votes: the votes received so far ("…" until the server tells)
+function showVoteProgress(votes, expected) {
+	stopPhaseClock();
+	phaseTimerElement.classList.add("is-waiting");
+	if (Number.isInteger(votes) && Number.isInteger(expected) && expected > 0) {
+		phaseTimerElement.textContent = votes + "/" + expected;
+		i18nText(phaseClockLabelElement, "game.clock.votes");
+		i18nAttr(phaseClockElement, "aria-label", "game.clock.votesCount", { votes: votes, expected: expected });
+	} else {
+		phaseTimerElement.textContent = "…";
+		i18nText(phaseClockLabelElement, "game.clock.votes");
+	}
+	phaseClockElement.classList.remove("invisible");
+}
+
+// Thin bar under the answer shown: drains while the answer stays on screen
+function startRevealBar(durationMs) {
+	revealBarElement.classList.remove("is-running");
+	revealBarElement.style.setProperty("--reveal-ms", Math.max(0, durationMs) + "ms");
+	void revealBarElement.offsetWidth;
+	revealBarElement.classList.add("is-running");
+}
 
 // Last round shown for this game (survives a reload of the host screen)
 function readRoundNumber() {
@@ -149,6 +209,8 @@ socket.on("getConfigResponse", function(data) {
 socket.on("question", function (data) {
 	answersDisplayed = false;
 	votesDisplayed = false;
+	stopPhaseClock();
+	totalRounds = Number.isInteger(data.total) ? data.total : 0;
 	document.getElementById("question").textContent = data.question;
 	// the question's position in the game (also right after a server restart), else a local count
 	roundNumber = Number.isInteger(data.id) ? data.id + 1 : readRoundNumber() + 1;
@@ -183,6 +245,8 @@ socket.on("displayAnswers", function (data) {
 	countdownElement.classList.add("invisible");
 	setPhase("answers", "game.timesUp");
 	if (window.PunchlineAudio) PunchlineAudio.setPhase("reveal");
+	// time before the votes open (same timeline as the reveal below)
+	startPhaseClock(revealEnd(data.length), "game.clock.toVotes");
 
 	let index = 1;
 
@@ -192,6 +256,7 @@ socket.on("displayAnswers", function (data) {
 			answerElement.textContent = element.textAnswer;
 			responseBoxElement.scrollIntoView({ behavior: 'smooth' });
 			responseBoxElement.classList.remove("invisible");
+			startRevealBar(revealVisible());
 			if (window.PunchlineAudio) PunchlineAudio.sfx("pop");
 
 			setTimeout(() => {
@@ -207,7 +272,16 @@ socket.on("displayAnswers", function (data) {
 		socket.emit("getVotes", { pin: punchlinePin });
 		setPhase("voting", "game.voting");
 		responseBoxElement.classList.add("invisible");
+		showVoteProgress();
 	}, revealEnd(data.length));
+});
+
+// Votes received so far (sent when the vote opens and after each vote)
+socket.on("voteProgress", function (data) {
+	if (stageElement.dataset.phase !== "voting" || votesDisplayed || !data) {
+		return;
+	}
+	showVoteProgress(Number(data.votes), Number(data.expected));
 });
 
 socket.on("displayVotes", function (answers) {
@@ -222,6 +296,9 @@ socket.on("displayVotes", function (answers) {
 	// only the answers which received votes are displayed (no empty 9s pause for the others)
 	let votedAnswers = answers.filter((element) => element.votes > 0);
 	setPhase("votes", votedAnswers.length > 0 ? "game.votesIntro" : "game.noVotes");
+	// time before the next question (or the final scores after the last round)
+	let lastRound = totalRounds > 0 && roundNumber >= totalRounds;
+	startPhaseClock(revealEnd(votedAnswers.length), lastRound ? "game.clock.toScores" : "game.clock.toNext");
 	let index = 1;
 	votedAnswers.forEach((element, position) => {
 		setTimeout(() => {
@@ -231,6 +308,7 @@ socket.on("displayVotes", function (answers) {
 			playerElement.textContent = element.playerName;
 			pointsBoxElement.classList.remove("invisible");
 			pointsElement.textContent = "+" + element.votes;
+			startRevealBar(revealVisible());
 			if (window.PunchlineAudio) PunchlineAudio.sfx("ding", element.votes);
 
 			pointsBoxElement.scrollIntoView({ behavior: 'smooth' });

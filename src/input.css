@@ -1542,3 +1542,236 @@
     @apply text-lg sm:flex-1;
   }
 }
+
+/* ---------- Feedback animations ---------- */
+/* Error toasts drop in with a springy overshoot, shake "nope" and stay slightly tilted;
+   notices drop in with a soft bounce; both pop out (scale down + fade). The field whose value
+   was refused shakes with a pink outline pulse. Plain CSS (no layer): these rules come after the
+   base reduced-motion rule and override it with a simple fade. */
+
+.toast--error-in {
+  animation: toast-nope 0.85s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.toast--notice-in {
+  animation: toast-drop 0.7s cubic-bezier(0.25, 0.9, 0.35, 1) both;
+}
+
+.toast--out {
+  animation: toast-pop-out 0.32s cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+@keyframes toast-nope {
+  0% {
+    opacity: 0;
+    transform: translate(0, -1.75rem) rotate(0deg) scale(0.85);
+  }
+  24% {
+    opacity: 1;
+    transform: translate(0, 0.4rem) rotate(0deg) scale(1.05);
+  }
+  36% {
+    transform: translate(0, -0.1rem) rotate(0deg) scale(0.99);
+  }
+  46% {
+    transform: translate(-10px, 0) rotate(-3deg) scale(1);
+  }
+  56% {
+    transform: translate(9px, 0) rotate(2deg) scale(1);
+  }
+  66% {
+    transform: translate(-6px, 0) rotate(-3deg) scale(1);
+  }
+  76% {
+    transform: translate(4px, 0) rotate(-0.5deg) scale(1);
+  }
+  88% {
+    transform: translate(-1px, 0) rotate(-2deg) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(var(--toast-tilt, -1.5deg)) scale(1);
+  }
+}
+
+@keyframes toast-drop {
+  0% {
+    opacity: 0;
+    transform: translate(0, -1.5rem) rotate(0deg) scale(0.96);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(0, 0.3rem) rotate(0deg) scale(1.01);
+  }
+  78% {
+    transform: translate(0, -0.12rem) rotate(0deg) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes toast-pop-out {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(var(--toast-tilt, 0deg)) scale(1);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(var(--toast-tilt, 0deg)) scale(1.06);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(var(--toast-tilt, 0deg)) scale(0.55);
+  }
+}
+
+/* Refused field: "translate" (not transform) so the field keeps its own transforms */
+.field-shake {
+  animation:
+    field-nope 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both,
+    field-alarm 0.9s ease-out both;
+}
+
+.vote-list.field-shake {
+  border-radius: 1.75rem;
+}
+
+@keyframes field-nope {
+  10%,
+  90% {
+    translate: -1px 0;
+  }
+  20%,
+  80% {
+    translate: 3px 0;
+  }
+  30%,
+  50%,
+  70% {
+    translate: -7px 0;
+  }
+  40%,
+  60% {
+    translate: 7px 0;
+  }
+  100% {
+    translate: 0 0;
+  }
+}
+
+@keyframes field-alarm {
+  0% {
+    outline: 4px solid rgb(255 79 140 / 0.95);
+    outline-offset: 2px;
+  }
+  60% {
+    outline: 4px solid rgb(255 79 140 / 0.6);
+    outline-offset: 5px;
+  }
+  100% {
+    outline: 4px solid rgb(255 79 140 / 0);
+    outline-offset: 9px;
+  }
+}
+
+@keyframes feedback-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes feedback-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ----- Big screen: clock of the reveals and of the votes ----- */
+
+.phase-clock {
+  @apply flex shrink-0 items-center gap-3;
+}
+
+.phase-clock-label {
+  @apply max-w-[8rem] text-right text-base font-extrabold leading-tight text-plum/75 sm:max-w-[11rem] sm:text-lg lg:max-w-[17rem] lg:text-xl;
+}
+
+/* the answer countdown and this clock share the spot next to the phase caption */
+.stage:is([data-phase="answers"], [data-phase="voting"], [data-phase="votes"]) .stage-timer:not(.timer--phase),
+.stage:is([data-phase="ready"], [data-phase="answering"]) .phase-clock {
+  display: none;
+}
+
+/* waiting for the votes (no time limit): votes received, milk + pink, breathing */
+.timer--phase.is-waiting {
+  @apply bg-milk text-xl text-pink lg:text-3xl;
+  animation: phase-wait 1.8s ease-in-out infinite;
+}
+
+@keyframes phase-wait {
+  50% {
+    transform: scale(1.06) rotate(-3deg);
+  }
+}
+
+/* How long the current answer stays on screen */
+.reveal-bar {
+  @apply mt-5 block h-2 w-full overflow-hidden rounded-full bg-plum/15 sm:mt-6;
+}
+
+.reveal-bar::after {
+  content: "";
+  @apply block h-full w-full rounded-full bg-plum;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.reveal-bar.is-running::after {
+  animation: reveal-drain var(--reveal-ms, 7000ms) linear both;
+}
+
+.stage[data-phase="votes"] .reveal-bar {
+  @apply bg-white/30;
+}
+
+.stage[data-phase="votes"] .reveal-bar::after {
+  @apply bg-white;
+}
+
+@keyframes reveal-drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* no movement: a plain fade */
+  .toast--error-in,
+  .toast--notice-in {
+    animation: feedback-fade-in 0.25s ease-out both !important;
+    transform: none !important;
+  }
+
+  .toast--out {
+    animation: feedback-fade-out 0.25s ease-in both !important;
+  }
+
+  /* the field does not move, the outline pulse stays */
+  .field-shake {
+    animation: field-alarm 0.9s ease-out both !important;
+  }
+
+  .timer--phase.is-waiting {
+    animation: none !important;
+  }
+
+  /* information, not decoration: the bar keeps draining (no movement of the layout) */
+  .reveal-bar.is-running::after {
+    animation-duration: var(--reveal-ms, 7000ms) !important;
+  }
+}

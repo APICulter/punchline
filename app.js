@@ -141,49 +141,81 @@ properties.each((key, value) => {
 // Port: PORT environment variable (set by most hosting platforms) or applicationPort
 const port = Number(process.env.PORT) || Number(global.applicationPort) || 3000;
 
-// First IPv4 address of this machine on the local network (e.g. 192.168.1.10)
-function lanAddress() {
-	for (const addresses of Object.values(os.networkInterfaces())) {
-		for (const address of addresses || []) {
-			if (address.family === "IPv4" && !address.internal) {
-				return address.address;
-			}
-		}
-	}
-	return null;
+// Best guess of this machine's address on the local network (e.g. 192.168.1.10), used only
+// when the host opened the game on localhost. Virtual interfaces (Docker, VMs, VPNs, WSL)
+// are skipped; home/office private ranges come first.
+const VIRTUAL_INTERFACE = /^(docker|br-|veth|virbr|vmnet|vboxnet|vnic|zt|tailscale|utun|wg|tun|tap|lo|ham|nordlynx|vEthernet|WSL|Hyper-V|VirtualBox|VMware)/i;
+
+function lanAddressScore(name, ip) {
+	let score = 0;
+	if (/^192\.168\./.test(ip)) score += 30;
+	else if (/^10\./.test(ip)) score += 20;
+	else if (/^172\.(1[6-9]|2\d|3[01])\./.test(ip)) score += 10;
+	if (/^(en|eth|wl|wlan|Wi-?Fi|Ethernet)/i.test(name)) score += 5;
+	return score;
 }
 
-// Public address shown to players ("On your phone, open …"), in order of priority:
-// 1. PUBLIC_URL environment variable (production)
-// 2. punchlineURL in config.properties
-// 3. the address the host used to open the game; "localhost" is replaced by the
-//    machine's local network address so that phones on the same Wi-Fi can reach it.
-//    X-Forwarded-Proto / X-Forwarded-Host are only used when the connection comes from
-//    a trusted proxy (TRUST_PROXY).
-function resolvePunchlineURL(socket) {
+function lanAddress() {
+	let best = null;
+	for (const [name, addresses] of Object.entries(os.networkInterfaces())) {
+		if (VIRTUAL_INTERFACE.test(name)) continue;
+		for (const address of addresses || []) {
+			if (address.family !== "IPv4" && address.family !== 4) continue;
+			if (address.internal || /^169\.254\./.test(address.address)) continue;
+			const score = lanAddressScore(name, address.address);
+			if (!best || score > best.score) best = { ip: address.address, score: score };
+		}
+	}
+	return best ? best.ip : null;
+}
+
+const LOOPBACK_HOST = /^(localhost|127(\.\d{1,3}){3}|\[::1\]|0\.0\.0\.0)$/i;
+
+// Public address shown to players ("On your phone, open …" and the QR code), in order:
+// 1. PUBLIC_URL environment variable, then punchlineURL in config.properties (production)
+// 2. the address shown in the host's browser (window.location.origin, sent with the
+//    request): it is exactly what the host typed, https and domain included, even
+//    behind a proxy that rewrites the Host header
+// 3. the Host header (X-Forwarded-* only from a trusted proxy, TRUST_PROXY)
+// 2 and 3 on localhost: replaced by this machine's local network address so that phones
+// on the same Wi-Fi can reach it.
+function resolvePunchlineURL(socket, clientOrigin) {
 	const configured = String(process.env.PUBLIC_URL || global.punchlineURL || "").trim();
 	if (configured) {
 		return configured.replace(/\/+$/, "");
 	}
 
-	const headers = socket.handshake.headers || {};
-	const trustFn = app.get("trust proxy fn");
-	const trusted = typeof trustFn === "function" && trustFn(socket.handshake.address || "", 0);
-	const forwardedProto = trusted ? String(headers["x-forwarded-proto"] || "").split(",")[0].trim() : "";
-	const protocol = forwardedProto || (socket.handshake.secure ? "https" : "http");
-	let host = String((trusted && headers["x-forwarded-host"]) || headers.host || "").split(",")[0].trim();
-	if (!host) {
-		host = "localhost:" + port;
+	let protocol = null;
+	let hostname = null;
+	let portPart = "";
+	try {
+		const origin = new URL(String(clientOrigin || ""));
+		if ((origin.protocol === "http:" || origin.protocol === "https:") && origin.hostname) {
+			protocol = origin.protocol.slice(0, -1);
+			hostname = origin.hostname;
+			portPart = origin.port ? ":" + origin.port : "";
+		}
+	} catch (e) {
+		// no or invalid origin: use the request headers
 	}
 
-	const local = host.match(/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i);
-	if (local) {
-		const ip = lanAddress();
-		if (ip) {
-			host = ip + (local[2] || "");
-		}
+	if (!hostname) {
+		const headers = socket.handshake.headers || {};
+		const trustFn = app.get("trust proxy fn");
+		const trusted = typeof trustFn === "function" && trustFn(socket.handshake.address || "", 0);
+		const forwardedProto = trusted ? String(headers["x-forwarded-proto"] || "").split(",")[0].trim() : "";
+		protocol = forwardedProto || (socket.handshake.secure ? "https" : "http");
+		const host = String((trusted && headers["x-forwarded-host"]) || headers.host || "localhost:" + port).split(",")[0].trim();
+		const match = host.match(/^(\[[^\]]+\]|[^:]+)(:\d+)?$/);
+		hostname = match ? match[1] : host;
+		portPart = match && match[2] ? match[2] : "";
 	}
-	return protocol + "://" + host;
+
+	if (LOOPBACK_HOST.test(hostname)) {
+		const ip = lanAddress();
+		if (ip) hostname = ip;
+	}
+	return protocol + "://" + hostname + portPart;
 }
 
 // Premium code: stored in MongoDB (collection "settings") and changed in the admin panel;
@@ -825,7 +857,29 @@ const {
 	addBotAnswer,
 	shuffle,
 	initQuestions,
+	normalizeAnswer,
+	htmlToText,
+	answerId,
+	answersForHost,
+	answersForPlayer,
 } = require("./functions");
+
+// Closes the answers of the round: the bot adds its answer, the order is shuffled (the same order
+// is used by the big screen, the phones and the votes reveal) and the big screen gets the texts
+// only (no author: the whole room receives this event)
+function closeAnswers(game, roomName) {
+	game.status = "";
+	addBotAnswer(game);
+	shuffle(game.answers);
+	if (roomName) io.in(roomName).emit("displayAnswers", answersForHost(game.answers));
+}
+
+// Number of votes received, for the big screen ("waiting for votes" indicator)
+function emitVoteProgress(game) {
+	if (game.hostSocketId) {
+		io.to(game.hostSocketId).emit("voteProgress", { votes: game.maxVotes, expected: game.nbOfPlayers });
+	}
+}
 
 /**  *****************************************************************************************
  ******************************** Main program *******************************************
@@ -854,8 +908,9 @@ io.on("connection", function (socket) {
 	})();
 
 	// Handler to get the game URL => Rules panel
-	on("getPunchlineURL", () => {
-		socket.emit("sendPunchlineURL", resolvePunchlineURL(socket));
+	on("getPunchlineURL", (data) => {
+		const origin = data && typeof data === "object" ? String(data.origin || "").slice(0, 200) : "";
+		socket.emit("sendPunchlineURL", resolvePunchlineURL(socket, origin));
 	}, { global: true });
 
 	// Handler for creating a new room
@@ -1192,7 +1247,8 @@ io.on("connection", function (socket) {
 			game.votes = [];
 			if (game.question < game.questions.length) {
 				let question = game.questions[game.question];
-				socket.emit("question", question);
+				// the bot's answers (reponse_1..3) stay on the server
+				socket.emit("question", { id: question.id, question: question.question, total: game.questions.length });
 			} else {
 				let roomName = findRoomName(data.pin);
 				if (roomName) socket.to(roomName).emit("redirect", "/html/waiting.html");
@@ -1281,7 +1337,8 @@ io.on("connection", function (socket) {
 	// Handler to send the player's answer
 	on("answer", function (data) {
 		data = asObject(data);
-		data.answer = clean(data.answer).trim();
+		// plain text, normalised like the bot's answers (see normalizeAnswer)
+		data.answer = normalizeAnswer(htmlToText(clean(data.answer)));
 
 		if (data.answer.length == 0) {
 			socket.emit("answerErrorMessages", MESSAGES.answerEmpty);
@@ -1315,6 +1372,7 @@ io.on("connection", function (socket) {
 			}
 			if (game.maxAnswers < game.nbOfPlayers) {
 				game.answers.push({
+					id: answerId(),
 					playerName: player.name,
 					textAnswer: data.answer,
 					votes: 0,
@@ -1323,11 +1381,7 @@ io.on("connection", function (socket) {
 				socket.emit("redirect", "/html/waiting.html");
 
 				if (game.maxAnswers == game.nbOfPlayers) {
-					game.status = "";
-
-					let roomName = findRoomName(data.pin);
-					addBotAnswer(game);
-					if (roomName) io.in(roomName).emit("displayAnswers", shuffle(game.answers));
+					closeAnswers(game, findRoomName(data.pin));
 				}
 			}
 		}
@@ -1348,9 +1402,7 @@ io.on("connection", function (socket) {
 		} else if (game.status === "answering") {
 			// Only once per round: if every player already answered, answers were already displayed
 			if (roomName) socket.to(roomName).emit("redirect", "/html/waiting.html");
-			game.status = "";
-			addBotAnswer(game);
-			if (roomName) io.in(roomName).emit("displayAnswers", shuffle(game.answers));
+			closeAnswers(game, roomName);
 		}
 	});
 
@@ -1367,6 +1419,7 @@ io.on("connection", function (socket) {
 		game.status = "voting";
 		let roomName = findRoomName(data.pin);
 		if (roomName) socket.to(roomName).emit("redirect", "/html/votePrompt.html");
+		emitVoteProgress(game);
 	});
 
 	on("getAnswers", function (data) {
@@ -1376,13 +1429,16 @@ io.on("connection", function (socket) {
 			socket.emit("redirect", "/");
 			return;
 		}
-		socket.emit("postAnswers", game.answers);
+		// texts and opaque ids only: who wrote what (the bot included) is only known after the
+		// votes; "yours" lets the phone disable the player's own answer
+		let player = game.players.find((player) => player.socketId === socket.id && player.id !== -1);
+		socket.emit("postAnswers", answersForPlayer(game.answers, player ? player.name : null));
 	});
 
-	// Handler to vote for a player
-	on("vote", function (playerName, pin) {
+	// Handler to vote for an answer (its opaque id, see "postAnswers")
+	on("vote", function (votedAnswerId, pin) {
 		pin = clean(pin);
-		playerName = clean(playerName);
+		votedAnswerId = clean(votedAnswerId);
 		let game = findGame(pin);
 		if (typeof game === "undefined") {
 			let roomName = findRoomName(pin);
@@ -1393,9 +1449,9 @@ io.on("connection", function (socket) {
 			let voter = game.players.find(
 				(player) => player.socketId === socket.id && player.id !== -1
 			);
-			let answer = game.answers.find(
-				(answer) => answer.playerName === playerName
-			);
+			let answer = votedAnswerId
+				? game.answers.find((answer) => answer.id === votedAnswerId)
+				: undefined;
 			// Ignore votes outside of the voting phase, from unknown sockets,
 			// for a non-existing answer, or for the voter's own answer
 			if (
@@ -1414,12 +1470,13 @@ io.on("connection", function (socket) {
 			game.votes.push(voter.name);
 
 			answer.votes++;
-			let player = game.players.find((player) => player.name === playerName);
+			let player = game.players.find((player) => player.name === answer.playerName);
 			if (typeof player !== "undefined") {
 				player.points++;
 			}
 			game.maxVotes++;
 			socket.emit("redirect", "/html/waiting.html");
+			emitVoteProgress(game);
 			if (game.maxVotes >= game.nbOfPlayers) {
 				let roomName = findRoomName(pin);
 				game.status = "";

@@ -63,6 +63,11 @@
 					<div class="stage-head">
 						<p id="phase" class="stage-phase" aria-live="polite" data-i18n="game.getReady">Get ready…</p>
 						<div id="countdown" class="invisible timer stage-timer" role="timer" aria-label="Seconds left" data-i18n-aria-label="game.secondsLeft"></div>
+						<!-- During the reveals and the votes: time before the next step, or the votes received -->
+						<div id="phaseClock" class="phase-clock invisible" role="timer" aria-label="Time before the next step" data-i18n-aria-label="game.clock.label">
+							<span id="phaseClockLabel" class="phase-clock-label"></span>
+							<span id="phaseTimer" class="timer stage-timer timer--phase"></span>
+						</div>
 					</div>
 
 					<div id="gameZone" class="invisible stage-zone">
@@ -72,6 +77,8 @@
 
 						<div id="answerBox" class="invisible stage-answer">
 							<p id="answer" class="stage-answer-text"></p>
+							<!-- how long the current answer stays on screen -->
+							<span id="revealBar" class="reveal-bar" aria-hidden="true"></span>
 						</div>
 
 						<div id="pointsBox" class="invisible stage-credit">

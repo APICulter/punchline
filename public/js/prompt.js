@@ -42,11 +42,11 @@ function sendAnswer() {
 	answer.value = answer.value.trim();
 
 	if (answer.value.length == 0) {
-		displayErrorMessage(error, "error.answerEmpty");
+		displayErrorMessage(error, "error.answerEmpty", null, answer);
 		updateAnswerCount();
 		return;
 	} else if (answer.value.length >= 100) {
-		displayErrorMessage(error, "error.answerTooLong");
+		displayErrorMessage(error, "error.answerTooLong", null, answer);
 		return;
 	} else {
 		socket.emit("answer", {
@@ -70,7 +70,7 @@ socket.on("answerErrorMessages", function (data) {
 	try {
 		sessionStorage.removeItem("punchlineLastAction");
 	} catch (e) {}
-	displayErrorMessage(document.getElementById("answerError"), data);
+	displayErrorMessage(document.getElementById("answerError"), data, null, answerField);
 });
 
 // The answer time of the game (getConfig is sent by common.js), in the hint under the title

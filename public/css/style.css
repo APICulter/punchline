@@ -966,6 +966,51 @@ video {
 
   /* ---------- Fields ---------- */
 
+  .\!field {
+  display: block;
+  min-height: 56px;
+  width: 100%;
+  border-radius: 1rem;
+  border-width: 2.5px;
+  --tw-border-opacity: 1;
+  border-color: rgb(43 23 64 / var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 247 240 / var(--tw-bg-opacity, 1));
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  --tw-text-opacity: 1;
+  color: rgb(43 23 64 / var(--tw-text-opacity, 1));
+  --tw-shadow: 0 2px 0 0 #2B1740;
+  --tw-shadow-colored: 0 2px 0 0 var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+  .\!field::-moz-placeholder {
+  font-weight: 500;
+  color: rgb(43 23 64 / 0.4);
+}
+
+  .\!field::placeholder {
+  font-weight: 500;
+  color: rgb(43 23 64 / 0.4);
+}
+
+  .\!field:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(4px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(255 212 94 / var(--tw-ring-opacity, 1));
+}
+
   .field {
   display: block;
   min-height: 56px;
@@ -1011,8 +1056,19 @@ video {
   --tw-ring-color: rgb(255 212 94 / var(--tw-ring-opacity, 1));
 }
 
+  .\!field {
+    -webkit-text-fill-color: currentColor !important;
+  }
+
   .field {
     -webkit-text-fill-color: currentColor;
+  }
+
+  .\!field:-webkit-autofill,
+  .\!field:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 100px #FFF7F0 inset !important;
+    -webkit-transition: background-color 0s 600000s, color 0s 600000s !important;
+    transition: background-color 0s 600000s, color 0s 600000s !important;
   }
 
   .field:-webkit-autofill,
@@ -1020,6 +1076,13 @@ video {
     -webkit-box-shadow: 0 0 0 100px #FFF7F0 inset;
     -webkit-transition: background-color 0s 600000s, color 0s 600000s;
     transition: background-color 0s 600000s, color 0s 600000s;
+  }
+
+  .\!field:-webkit-autofill,
+  .\!field:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 100px #FFF7F0 inset !important;
+    -webkit-transition: background-color 0s 600000s, color 0s 600000s !important;
+    transition: background-color 0s 600000s, color 0s 600000s !important;
   }
 
   .field--pin {
@@ -3099,6 +3162,15 @@ video {
   color: rgb(43 23 64 / 0.6);
 }
 
+  .\!field[aria-invalid="true"] {
+  --tw-border-opacity: 1;
+  border-color: rgb(232 51 111 / var(--tw-border-opacity, 1));
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(4px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  --tw-ring-color: rgb(255 79 140 / 0.3);
+}
+
   .field[aria-invalid="true"] {
   --tw-border-opacity: 1;
   border-color: rgb(232 51 111 / var(--tw-border-opacity, 1));
@@ -4084,6 +4156,11 @@ video {
     background-size: 1.25rem;
 }
 
+  .\!field:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
   .field:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -4334,6 +4411,18 @@ video {
   @media (min-width: 640px) {
 
   .settings-row .field {
+    flex: 1 1 0%;
+  }
+}
+
+  .settings-row .\!field {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+  @media (min-width: 640px) {
+
+  .settings-row .\!field {
     flex: 1 1 0%;
   }
 }
@@ -4634,6 +4723,9 @@ video {
   --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
+.outline {
+  outline-style: solid;
+}
 .ring {
   --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color);
@@ -4669,6 +4761,299 @@ video {
 
 /* ---------- Admin ---------- */
 /* Back office (/admin, public/admin): same bubbles, outlines and sticker shadows */
+
+/* ---------- Feedback animations ---------- */
+/* Error toasts drop in with a springy overshoot, shake "nope" and stay slightly tilted;
+   notices drop in with a soft bounce; both pop out (scale down + fade). The field whose value
+   was refused shakes with a pink outline pulse. Plain CSS (no layer): these rules come after the
+   base reduced-motion rule and override it with a simple fade. */
+
+.toast--error-in {
+  animation: toast-nope 0.85s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.toast--notice-in {
+  animation: toast-drop 0.7s cubic-bezier(0.25, 0.9, 0.35, 1) both;
+}
+
+.toast--out {
+  animation: toast-pop-out 0.32s cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+@keyframes toast-nope {
+  0% {
+    opacity: 0;
+    transform: translate(0, -1.75rem) rotate(0deg) scale(0.85);
+  }
+  24% {
+    opacity: 1;
+    transform: translate(0, 0.4rem) rotate(0deg) scale(1.05);
+  }
+  36% {
+    transform: translate(0, -0.1rem) rotate(0deg) scale(0.99);
+  }
+  46% {
+    transform: translate(-10px, 0) rotate(-3deg) scale(1);
+  }
+  56% {
+    transform: translate(9px, 0) rotate(2deg) scale(1);
+  }
+  66% {
+    transform: translate(-6px, 0) rotate(-3deg) scale(1);
+  }
+  76% {
+    transform: translate(4px, 0) rotate(-0.5deg) scale(1);
+  }
+  88% {
+    transform: translate(-1px, 0) rotate(-2deg) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(var(--toast-tilt, -1.5deg)) scale(1);
+  }
+}
+
+@keyframes toast-drop {
+  0% {
+    opacity: 0;
+    transform: translate(0, -1.5rem) rotate(0deg) scale(0.96);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(0, 0.3rem) rotate(0deg) scale(1.01);
+  }
+  78% {
+    transform: translate(0, -0.12rem) rotate(0deg) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes toast-pop-out {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(var(--toast-tilt, 0deg)) scale(1);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(var(--toast-tilt, 0deg)) scale(1.06);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(var(--toast-tilt, 0deg)) scale(0.55);
+  }
+}
+
+/* Refused field: "translate" (not transform) so the field keeps its own transforms */
+.field-shake {
+  animation:
+    field-nope 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both,
+    field-alarm 0.9s ease-out both;
+}
+
+.vote-list.field-shake {
+  border-radius: 1.75rem;
+}
+
+@keyframes field-nope {
+  10%,
+  90% {
+    translate: -1px 0;
+  }
+  20%,
+  80% {
+    translate: 3px 0;
+  }
+  30%,
+  50%,
+  70% {
+    translate: -7px 0;
+  }
+  40%,
+  60% {
+    translate: 7px 0;
+  }
+  100% {
+    translate: 0 0;
+  }
+}
+
+@keyframes field-alarm {
+  0% {
+    outline: 4px solid rgb(255 79 140 / 0.95);
+    outline-offset: 2px;
+  }
+  60% {
+    outline: 4px solid rgb(255 79 140 / 0.6);
+    outline-offset: 5px;
+  }
+  100% {
+    outline: 4px solid rgb(255 79 140 / 0);
+    outline-offset: 9px;
+  }
+}
+
+@keyframes feedback-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes feedback-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ----- Big screen: clock of the reveals and of the votes ----- */
+
+.phase-clock {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.phase-clock-label {
+  max-width: 8rem;
+  text-align: right;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: rgb(43 23 64 / 0.75);
+}
+
+@media (min-width: 640px) {
+
+  .phase-clock-label {
+    max-width: 11rem;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+
+  .phase-clock-label {
+    max-width: 17rem;
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+}
+
+/* the answer countdown and this clock share the spot next to the phase caption */
+.stage:is([data-phase="answers"], [data-phase="voting"], [data-phase="votes"]) .stage-timer:not(.timer--phase),
+.stage:is([data-phase="ready"], [data-phase="answering"]) .phase-clock {
+  display: none;
+}
+
+/* waiting for the votes (no time limit): votes received, milk + pink, breathing */
+.timer--phase.is-waiting {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 247 240 / var(--tw-bg-opacity, 1));
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  --tw-text-opacity: 1;
+  color: rgb(255 79 140 / var(--tw-text-opacity, 1));
+}
+@media (min-width: 1024px) {
+
+  .timer--phase.is-waiting {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+}
+.timer--phase.is-waiting {
+  animation: phase-wait 1.8s ease-in-out infinite;
+}
+
+@keyframes phase-wait {
+  50% {
+    transform: scale(1.06) rotate(-3deg);
+  }
+}
+
+/* How long the current answer stays on screen */
+.reveal-bar {
+  margin-top: 1.25rem;
+  display: block;
+  height: 0.5rem;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 9999px;
+  background-color: rgb(43 23 64 / 0.15);
+}
+@media (min-width: 640px) {
+
+  .reveal-bar {
+    margin-top: 1.5rem;
+  }
+}
+
+.reveal-bar::after {
+  content: "";
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 9999px;
+  --tw-bg-opacity: 1;
+  background-color: rgb(43 23 64 / var(--tw-bg-opacity, 1));
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.reveal-bar.is-running::after {
+  animation: reveal-drain var(--reveal-ms, 7000ms) linear both;
+}
+
+.stage[data-phase="votes"] .reveal-bar {
+  background-color: rgb(255 255 255 / 0.3);
+}
+
+.stage[data-phase="votes"] .reveal-bar::after {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}
+
+@keyframes reveal-drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* no movement: a plain fade */
+  .toast--error-in,
+  .toast--notice-in {
+    animation: feedback-fade-in 0.25s ease-out both !important;
+    transform: none !important;
+  }
+
+  .toast--out {
+    animation: feedback-fade-out 0.25s ease-in both !important;
+  }
+
+  /* the field does not move, the outline pulse stays */
+  .field-shake {
+    animation: field-alarm 0.9s ease-out both !important;
+  }
+
+  .timer--phase.is-waiting {
+    animation: none !important;
+  }
+
+  /* information, not decoration: the bar keeps draining (no movement of the layout) */
+  .reveal-bar.is-running::after {
+    animation-duration: var(--reveal-ms, 7000ms) !important;
+  }
+}
+
 @media (min-width: 640px) {
 
   .sm\:col-span-1 {
@@ -4738,6 +5123,7 @@ video {
     line-height: 1;
   }
 }
+
 @media (min-width: 1024px) {
 
   .lg\:mb-0 {

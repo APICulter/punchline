@@ -107,6 +107,12 @@
 			"game.noVotes": "No votes this round",
 			"game.votesOf": "Votes · {index} of {total}",
 			"game.secondsLeft": "Seconds left",
+			"game.clock.label": "Time before the next step",
+			"game.clock.toVotes": "Votes open in",
+			"game.clock.toNext": "Next question in",
+			"game.clock.toScores": "Scores in",
+			"game.clock.votes": "Votes in",
+			"game.clock.votesCount": "{votes} of {expected} votes in",
 
 			// prompt (phone)
 			"prompt.title": "Your punchline",
@@ -555,6 +561,12 @@
 			"game.noVotes": "Aucun vote pour cette manche",
 			"game.votesOf": "Votes · {index} sur {total}",
 			"game.secondsLeft": "Secondes restantes",
+			"game.clock.label": "Temps avant la suite",
+			"game.clock.toVotes": "Vote dans",
+			"game.clock.toNext": "Question suivante dans",
+			"game.clock.toScores": "Scores dans",
+			"game.clock.votes": "Votes reçus",
+			"game.clock.votesCount": "{votes} votes reçus sur {expected}",
 
 			"prompt.title": "Ta punchline",
 			"prompt.hint": "Lis la question sur le grand écran et bats le chrono.",
