@@ -113,12 +113,21 @@
 
 							<!-- Host: lobby -->
 							<div id="lobby" class="hidden w-full">
-							<div class="gap-6 lg:grid lg:grid-cols-[1.15fr_1fr] lg:items-start">
-								<div class="panel panel--plum mb-6 flex flex-col gap-5 p-7 lg:mb-0 lg:p-10">
-									<p class="text-2xl font-bold leading-tight lg:text-4xl" data-i18n="lobby.openOnPhone">On your phone, open</p>
-									<p id="lobbyURL" class="break-all text-2xl font-extrabold leading-tight text-butter lg:text-4xl">&nbsp;</p>
-									<p class="text-2xl font-bold leading-tight lg:text-4xl" data-i18n="lobby.enterPin">and enter this PIN</p>
-									<div id="lobbyPin" class="flex gap-2 sm:gap-3" aria-label="Game PIN" data-i18n-aria-label="common.gamePin"></div>
+							<div class="gap-6 lg:grid lg:grid-cols-[1.45fr_1fr] lg:items-start">
+								<div class="panel panel--plum lobby-join mb-6 p-7 lg:mb-0 lg:p-10">
+									<div id="lobbyJoinGrid" class="lobby-join-grid">
+										<div class="lobby-join-text flex flex-col gap-5">
+											<p class="text-2xl font-bold leading-tight lg:text-4xl" data-i18n="lobby.openOnPhone">On your phone, open</p>
+											<p id="lobbyURL" class="text-2xl [overflow-wrap:anywhere] font-extrabold leading-tight text-butter lg:text-4xl">&nbsp;</p>
+											<p class="text-2xl font-bold leading-tight lg:text-4xl" data-i18n="lobby.enterPin">and enter this PIN</p>
+										</div>
+										<div id="lobbyPin" class="lobby-join-pin flex gap-2 sm:gap-3" aria-label="Game PIN" data-i18n-aria-label="common.gamePin"></div>
+										<!-- QR code of the join link with the PIN (index.js), shown once both are known -->
+										<figure id="lobbyQR" class="lobby-qr hidden">
+											<div id="lobbyQRCode" class="lobby-qr-code"></div>
+											<figcaption class="lobby-qr-caption" data-i18n="lobby.scanToJoin">Scan to join</figcaption>
+										</figure>
+									</div>
 								</div>
 
 								<div class="flex flex-col gap-6">
@@ -229,6 +238,7 @@
 		<script src="../js/common.js"></script>
 		<script src="../js/audio.js"></script>
 		<script src="../js/thrid-party/purify.min.js"></script>
+		<script src="../js/thrid-party/qrcode-generator.js"></script>
 		<script src="../js/index.js"></script>
 	</body>
 </html>

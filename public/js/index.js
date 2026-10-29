@@ -113,9 +113,111 @@ function createGame() {
 socket.on("sendPunchlineURL", function (data) {
 	let lobbyURL = document.getElementById("lobbyURL");
 	if (lobbyURL && data) {
-		lobbyURL.textContent = String(data).replace(/^https?:\/\//, "").replace(/\/$/, "");
+		let address = String(data).replace(/^https?:\/\//, "").replace(/\/$/, "");
+		// line breaks preferably after "." or "/" and before ":" (not in the middle of a number)
+		lobbyURL.replaceChildren();
+		address.replace(/[./]/g, "$&\n").replace(/:/g, "\n:").split("\n").forEach((part, index) => {
+			if (index > 0) lobbyURL.append(document.createElement("wbr"));
+			lobbyURL.append(part);
+		});
+	}
+	if (data) {
+		lobbyQR.baseURL = String(data);
+		renderLobbyQR();
 	}
 });
+
+/** Lobby QR code: the join link with the PIN (<punchlineURL>/?pin=1234), opened by the phones **/
+const lobbyQR = { baseURL: null, pin: null, rendered: null };
+const QR_DARK = "#2B1740"; // plum
+const QR_LIGHT = "#FFF7F0"; // milk
+const QR_QUIET_ZONE = 4; // modules, as required by the QR code standard
+
+function lobbyJoinURL(baseURL, pin) {
+	try {
+		let url = new URL(baseURL, window.location.href);
+		if (url.protocol !== "http:" && url.protocol !== "https:") {
+			return null;
+		}
+		url.searchParams.set("pin", pin);
+		return url.href;
+	} catch (e) {
+		return null;
+	}
+}
+
+// Inline SVG (crisp at any size, on TVs too): one path, horizontal runs of dark modules
+function qrCodeSVG(text) {
+	let qr = qrcode(0, "M"); // smallest version that fits, error correction M
+	qr.addData(text, "Byte");
+	qr.make();
+	let count = qr.getModuleCount();
+	let size = count + 2 * QR_QUIET_ZONE;
+	let d = "";
+	for (let row = 0; row < count; row++) {
+		for (let col = 0; col < count; col++) {
+			if (!qr.isDark(row, col)) {
+				continue;
+			}
+			let start = col;
+			while (col + 1 < count && qr.isDark(row, col + 1)) {
+				col++;
+			}
+			let length = col - start + 1;
+			d += "M" + (start + QR_QUIET_ZONE) + " " + (row + QR_QUIET_ZONE) + "h" + length + "v1h-" + length + "z";
+		}
+	}
+
+	const NS = "http://www.w3.org/2000/svg";
+	let svg = document.createElementNS(NS, "svg");
+	svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+	svg.setAttribute("shape-rendering", "crispEdges");
+	svg.setAttribute("focusable", "false");
+	let background = document.createElementNS(NS, "rect");
+	background.setAttribute("width", size);
+	background.setAttribute("height", size);
+	background.setAttribute("fill", QR_LIGHT);
+	let modules = document.createElementNS(NS, "path");
+	modules.setAttribute("d", d);
+	modules.setAttribute("fill", QR_DARK);
+	svg.append(background, modules);
+	return svg;
+}
+
+// Shown once both the address and the PIN are known, regenerated if one of them changes
+function renderLobbyQR() {
+	let figure = document.getElementById("lobbyQR");
+	let container = document.getElementById("lobbyQRCode");
+	let grid = document.getElementById("lobbyJoinGrid");
+	if (!figure || !container || !lobbyQR.baseURL || !lobbyQR.pin || typeof qrcode !== "function") {
+		return;
+	}
+	let joinURL = lobbyJoinURL(lobbyQR.baseURL, lobbyQR.pin);
+	if (joinURL === lobbyQR.rendered) {
+		return;
+	}
+	let svg = null;
+	if (joinURL) {
+		try {
+			svg = qrCodeSVG(joinURL);
+		} catch (e) {
+			svg = null;
+		}
+	}
+	if (!svg) {
+		lobbyQR.rendered = null;
+		container.replaceChildren();
+		figure.classList.add("hidden");
+		grid.classList.remove("lobby-join-grid--qr");
+		return;
+	}
+	svg.setAttribute("role", "img");
+	i18nAttr(svg, "aria-label", "lobby.qrLabel", { url: joinURL });
+	container.replaceChildren(svg);
+	figure.classList.remove("hidden");
+	grid.classList.add("lobby-join-grid--qr");
+	lobbyQR.rendered = joinURL;
+}
 
 // Big PIN tiles in the lobby, readable from across the room
 function displayLobbyPin(pin) {
@@ -134,6 +236,8 @@ socket.on("newGame", function (data) {
 	document.getElementById("punchlinePin").textContent = data;
 	document.getElementById("punchlinePin").classList.remove("invisible");
 	displayLobbyPin(data);
+	lobbyQR.pin = String(data);
+	renderLobbyQR();
 
 	sessionStorage.setItem("punchlinePin", data);
 });
@@ -178,6 +282,32 @@ function joinRoom() {
 	
 
 }
+
+// Link from the lobby QR code (/?pin=1234): straight to the join step with the PIN filled in
+// and submitted the same way as typed (on error the toast shows and the field stays editable).
+// The PIN is removed from the address bar first, so a refresh or "back" doesn't submit it again.
+(function joinFromLink() {
+	let params;
+	try {
+		params = new URLSearchParams(window.location.search);
+	} catch (e) {
+		return;
+	}
+	if (!params.has("pin")) {
+		return;
+	}
+	let pin = String(params.get("pin") || "").trim().slice(0, 12);
+
+	params.delete("pin");
+	try {
+		let query = params.toString();
+		history.replaceState(history.state, "", window.location.pathname + (query ? "?" + query : "") + window.location.hash);
+	} catch (e) {}
+
+	joinGameInit();
+	document.getElementById("roomPin").value = pin;
+	joinRoom();
+})();
 
 // Displays error message coming from the backend if the PIN encounters a problem
 socket.on("findRoomByIdErrorMessages", function (data) {
@@ -399,6 +529,8 @@ function startGame() {
 			// timers in seconds
 			answerTime: DOMPurify.sanitize(document.getElementById("answerTime").value),
 			revealTime: DOMPurify.sanitize(document.getElementById("revealTime").value),
+			// language of the questions: the host's interface language
+			lang: typeof getLang === "function" ? getLang() : "fr",
 		});
 	}
 
@@ -409,6 +541,12 @@ function startGame() {
 socket.on("startGameErrorMessages", function (data) {
 	document.getElementById("startGame").disabled = false;
 	displayErrorMessage(document.getElementById("startGameError"), data);
+});
+
+// The game starts with fewer rounds than asked (not enough questions in this language):
+// the message is shown as a toast on the game page (the "redirect" follows)
+socket.on("startGameNotice", function (key) {
+	rememberNotice(key);
 });
 
 
