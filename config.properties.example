@@ -5,7 +5,11 @@ databaseUrl = mongodb://127.0.0.1:27017/punchline
 punchlineURL =
 applicationPort = 3000
 maxNumberOfPlayers = 3
-# max 15 caracters for premium code
+# Premium code: INITIAL value only. At the first start it is copied into MongoDB
+# (collection "settings"); afterwards it is managed in the admin panel (/admin,
+# "Settings" tab: generate, change, disable) and this key is ignored.
+# 4 to 15 characters: letters, digits, dashes. Leave empty (or change-me, ignored):
+# premium is off until a code is set in the panel.
 premiumCode = change-me
 
 # Default timers, in seconds. The host can change the two first ones in the lobby,

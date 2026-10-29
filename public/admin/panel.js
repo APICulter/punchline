@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Punchline admin panel: questions, live games, activity log.
+   Punchline admin panel: questions, live games, activity log, settings (premium code).
    Every value coming from the server is written with textContent (Admin.el).
    ========================================================================== */
 (function () {
@@ -33,7 +33,7 @@
 	// Tabs
 	// ======================================================================
 
-	var TABS = ["questions", "review", "games", "activity"];
+	var TABS = ["questions", "review", "games", "activity", "settings"];
 	var currentTab = "questions";
 
 	function selectTab(name, focus) {
@@ -52,6 +52,7 @@
 		} catch (e) {}
 		if (name === "games") loadGames();
 		if (name === "activity") loadLog();
+		if (name === "settings") loadSettings();
 		if (name === "questions" && !questions.data) loadQuestions();
 		if (name === "review") {
 			loadReview();
@@ -1286,7 +1287,8 @@
 		list.replaceChildren();
 		if (!log.data) return;
 		log.data.entries.forEach(function (entry) {
-			var key = "admin.action." + entry.action;
+			// premium.* actions are translated in the admin.settings.action.* block
+			var key = /^premium\./.test(entry.action) ? "admin.settings.action." + entry.action.slice(8) : "admin.action." + entry.action;
 			var failed = entry.action === "login.failed";
 			list.appendChild(
 				el("li", { className: "log-row" + (failed ? " is-failed" : "") }, [
@@ -1313,6 +1315,202 @@
 	$("refreshLog").addEventListener("click", loadLog);
 
 	// ======================================================================
+	// Settings: premium code
+	// ======================================================================
+
+	var settings = { premium: null, busy: false };
+
+	function loadSettings() {
+		$("premiumCard").setAttribute("aria-busy", "true");
+		return Admin.api("GET", "/admin/api/settings/premium")
+			.then(function (data) {
+				settings.premium = data.premium;
+				renderSettings();
+			})
+			.catch(function (error) {
+				Admin.toast(Admin.errorText(error));
+			})
+			.then(function () {
+				$("premiumCard").setAttribute("aria-busy", "false");
+			});
+	}
+
+	function renderSettings() {
+		var premium = settings.premium;
+		if (!premium) return;
+		var on = Boolean(premium.enabled && premium.code);
+		var state = $("premiumState");
+		state.className = "badge " + (on ? "badge--premium" : "badge--classic");
+		i18nText(state, on ? "admin.settings.on" : "admin.settings.off");
+		$("premiumCodeBox").classList.toggle("hidden", !on);
+		$("premiumOffBox").classList.toggle("hidden", on);
+		$("premiumCodeValue").textContent = on ? premium.code : "";
+		$("disablePremium").classList.toggle("hidden", !on);
+		i18nText($("generatePremiumLabel"), on ? "admin.settings.generate" : "admin.settings.generateFirst");
+
+		var meta = $("premiumMeta");
+		if (premium.updatedAt) {
+			var who = premium.updatedBy === "config" ? "config.properties" : premium.updatedBy;
+			i18nText(meta, who ? "admin.settings.updated" : "admin.settings.updatedNoUser", {
+				when: Admin.formatDate(premium.updatedAt),
+				who: who,
+			});
+			meta.title = Admin.relativeTime(premium.updatedAt);
+		} else if (on && !premium.persisted) {
+			i18nText(meta, "admin.settings.fromConfig");
+			meta.removeAttribute("title");
+		} else {
+			i18nClear(meta);
+			meta.textContent = "";
+			meta.removeAttribute("title");
+		}
+	}
+
+	function premiumRequest(url, body, toastKey) {
+		return Admin.api("POST", url, body || {}).then(function (data) {
+			settings.premium = data.premium;
+			renderSettings();
+			Admin.toast(toastKey);
+			if (currentTab === "activity" || log.data) loadLog();
+		});
+	}
+
+	function generatePremium() {
+		return premiumRequest("/admin/api/settings/premium/generate", { lang: getLang() === "fr" ? "fr" : "en" }, "admin.settings.generated");
+	}
+
+	$("generatePremium").addEventListener("click", function () {
+		var on = settings.premium && settings.premium.enabled;
+		if (!on) {
+			// nothing stops working: no confirmation
+			var button = $("generatePremium");
+			button.disabled = true;
+			generatePremium()
+				.catch(function (error) {
+					Admin.toast(Admin.errorText(error));
+				})
+				.then(function () {
+					button.disabled = false;
+				});
+			return;
+		}
+		confirmDialog({
+			title: "admin.settings.generateTitle",
+			text: "admin.settings.generateText",
+			ok: "admin.settings.generateConfirm",
+			action: generatePremium,
+		});
+	});
+
+	$("disablePremium").addEventListener("click", function () {
+		confirmDialog({
+			title: "admin.settings.disableTitle",
+			text: "admin.settings.disableText",
+			ok: "admin.settings.disableConfirm",
+			action: function () {
+				return premiumRequest("/admin/api/settings/premium/disable", {}, "admin.settings.disabled");
+			},
+		});
+	});
+
+	function setPremiumError(key) {
+		var error = $("premiumInputError");
+		var input = $("premiumInput");
+		if (!key) {
+			error.classList.add("hidden");
+			i18nClear(error);
+			error.textContent = "";
+			input.removeAttribute("aria-invalid");
+			return;
+		}
+		i18nText(error, PunchlineI18n.has(key) ? key : "admin.settings.error.invalid");
+		error.classList.remove("hidden");
+		input.setAttribute("aria-invalid", "true");
+		input.focus();
+	}
+
+	$("premiumInput").addEventListener("input", function () {
+		setPremiumError(null);
+	});
+
+	$("premiumForm").addEventListener("submit", function (event) {
+		event.preventDefault();
+		var input = $("premiumInput");
+		var code = input.value.trim();
+		setPremiumError(null);
+		// same rules as the server, which checks again
+		if (code.length < 4 || code.length > 15 || code.replace(/-/g, "").length < 4) return setPremiumError("admin.settings.error.length");
+		if (!/^[A-Za-z0-9-]+$/.test(code)) return setPremiumError("admin.settings.error.chars");
+		var button = $("premiumSave");
+		button.disabled = true;
+		premiumRequest("/admin/api/settings/premium/set", { code: code }, "admin.settings.saved")
+			.then(function () {
+				input.value = "";
+			})
+			.catch(function (error) {
+				setPremiumError(Admin.errorText(error));
+			})
+			.then(function () {
+				button.disabled = false;
+			});
+	});
+
+	// Copy: Clipboard API (HTTPS or localhost), otherwise a hidden textarea + execCommand,
+	// otherwise the code is selected so that the admin copies it himself
+	function copyText(text) {
+		if (navigator.clipboard && window.isSecureContext) {
+			return navigator.clipboard.writeText(text).then(
+				function () {
+					return true;
+				},
+				function () {
+					return legacyCopy(text);
+				}
+			);
+		}
+		return Promise.resolve(legacyCopy(text));
+	}
+
+	function legacyCopy(text) {
+		var area = el("textarea", { className: "sr-only", attrs: { readonly: true, "aria-hidden": "true", tabindex: "-1" } });
+		area.value = text;
+		document.body.appendChild(area);
+		area.select();
+		var ok = false;
+		try {
+			ok = document.execCommand("copy");
+		} catch (e) {
+			ok = false;
+		}
+		area.remove();
+		return ok;
+	}
+
+	function selectCode() {
+		var node = $("premiumCodeValue");
+		try {
+			var range = document.createRange();
+			range.selectNodeContents(node);
+			var selection = window.getSelection();
+			selection.removeAllRanges();
+			selection.addRange(range);
+		} catch (e) {}
+	}
+
+	$("copyPremium").addEventListener("click", function () {
+		var code = settings.premium && settings.premium.code;
+		if (!code) return;
+		copyText(code).then(function (ok) {
+			if (ok) {
+				Admin.toast("admin.settings.copied");
+			} else {
+				selectCode();
+				Admin.toast("admin.settings.copyFailed");
+			}
+		});
+	});
+
+	// ======================================================================
 	// Language change: rebuild the lists (dates, aria-labels…)
 	// ======================================================================
 
@@ -1322,6 +1520,7 @@
 		renderAiStatus();
 		renderGames();
 		renderLog();
+		renderSettings();
 	});
 
 	// ======================================================================

@@ -55,6 +55,9 @@
 					<button id="tab-activity" class="admin-tab" type="button" role="tab" aria-controls="panel-activity" aria-selected="false" tabindex="-1" data-tab="activity">
 						<span data-i18n="admin.tab.activity">Activity</span>
 					</button>
+					<button id="tab-settings" class="admin-tab" type="button" role="tab" aria-controls="panel-settings" aria-selected="false" tabindex="-1" data-tab="settings">
+						<span data-i18n="admin.settings.tab">Settings</span>
+					</button>
 				</div>
 
 				<div id="tabpanels" class="admin-panels" tabindex="-1">
@@ -222,6 +225,57 @@
 							</button>
 						</div>
 						<ol id="logList" class="log-list panel" data-empty="Nothing yet." data-i18n-empty="admin.log.empty"></ol>
+					</section>
+
+					<!-- ============ Settings: premium code ============ -->
+					<section id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" class="hidden flex flex-col gap-5">
+						<div id="premiumCard" class="panel settings-card" aria-busy="true">
+							<div class="settings-head">
+								<div class="min-w-0">
+									<h2 class="panel-title" data-i18n="admin.settings.premiumTitle">Premium code</h2>
+									<p class="muted mt-1 text-base" data-i18n="admin.settings.premiumHint">The host selects "Premium" in the lobby and types this code to add the explicit questions to the game. Case, spaces and dashes don't matter.</p>
+								</div>
+								<span id="premiumState" class="badge badge--classic"></span>
+							</div>
+
+							<div id="premiumCodeBox" class="premium-code-box hidden">
+								<p class="sr-only" data-i18n="admin.settings.codeLabel">Current code</p>
+								<p id="premiumCodeValue" class="premium-code" translate="no"></p>
+								<button id="copyPremium" type="button" class="btn btn-secondary btn-sm">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg>
+									<span data-i18n="admin.settings.copy">Copy</span>
+								</button>
+							</div>
+							<div id="premiumOffBox" class="premium-off hidden">
+								<p class="font-extrabold" data-i18n="admin.settings.offTitle">Premium is turned off</p>
+								<p class="mt-1 text-base" data-i18n="admin.settings.offText">No code works in the lobby. Generate a code or choose one to turn it on.</p>
+							</div>
+
+							<p id="premiumMeta" class="settings-meta"></p>
+
+							<div class="settings-actions">
+								<button id="generatePremium" type="button" class="btn btn-primary btn-sm">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 5v6h-6" /></svg>
+									<span id="generatePremiumLabel" data-i18n="admin.settings.generate">Generate a new code</span>
+								</button>
+								<button id="disablePremium" type="button" class="btn btn-secondary btn-sm">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path d="M6.5 6.5l11 11" /></svg>
+									<span data-i18n="admin.settings.disable">Disable premium</span>
+								</button>
+							</div>
+						</div>
+
+						<form id="premiumForm" class="panel settings-card" novalidate>
+							<div>
+								<label for="premiumInput" class="field-label" data-i18n="admin.settings.custom">Choose your own code</label>
+								<p id="premiumInputHint" class="muted -mt-1 text-base" data-i18n="admin.settings.customHint">4 to 15 characters: letters without accents, digits and dashes. Easy to type on a phone or a TV.</p>
+							</div>
+							<div class="settings-row">
+								<input id="premiumInput" type="text" class="field" maxlength="15" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="e.g. summer-party" data-i18n-placeholder="admin.settings.customPlaceholder" aria-describedby="premiumInputHint premiumInputError" />
+								<button id="premiumSave" type="submit" class="btn btn-secondary" data-i18n="admin.settings.customSave">Use this code</button>
+							</div>
+							<p id="premiumInputError" class="field-error hidden" role="alert"></p>
+						</form>
 					</section>
 				</div>
 			</div>

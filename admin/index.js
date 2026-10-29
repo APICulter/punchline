@@ -1,9 +1,10 @@
 /**
  * Admin panel: mounted by app.js with
- *   require("./admin")(app, { mongoose, getGames, abortGame })
+ *   require("./admin")(app, { mongoose, getGames, abortGame, premium })
  * - mongoose:  the shared mongoose instance (connection already opened by app.js)
  * - getGames:  () => array of the games currently in memory
  * - abortGame: (pin, reasonKey) => ends one game and sends its players home
+ * - premium:   the premium code store of app.js (admin/premium.js): get / set / disable
  *
  * Everything lives under /admin:
  *   GET  /admin                    login page, or the panel when signed in
@@ -11,6 +12,7 @@
  *   /admin/api/questions…          questions CRUD, review, import / export, duplicates
  *   /admin/api/ai/…                AI question generation (admin/ai.js, needs ANTHROPIC_API_KEY)
  *   /admin/api/games…              live games, end a game
+ *   /admin/api/settings/premium…   premium code (admin/settings.js)
  *   GET  /admin/api/log            audit log
  *   /admin/*.js|css                assets of public/admin
  *
@@ -26,6 +28,7 @@ const express = require("express");
 const auth = require("./auth");
 const questionsRouter = require("./questions");
 const gamesRouter = require("./games");
+const settingsRouter = require("./settings");
 const ai = require("./ai");
 
 const PAGES_DIR = path.join(__dirname, "..", "public", "admin");
@@ -196,7 +199,7 @@ function defaultLog(level, msg, fields) {
 // ---------------------------------------------------------------------------
 
 module.exports = function mountAdmin(app, options) {
-	const { mongoose, getGames, abortGame } = options || {};
+	const { mongoose, getGames, abortGame, premium } = options || {};
 	const log = (options && options.log) || defaultLog;
 	const credentials = loadCredentials();
 	const router = express.Router();
@@ -375,6 +378,7 @@ module.exports = function mountAdmin(app, options) {
 	api.use(questionsRouter({ mongoose, audit }));
 	api.use(ai.aiRouter({ service: aiService, audit, toClient: questionsRouter.toClient }));
 	api.use(gamesRouter({ getGames, abortGame, audit }));
+	api.use(settingsRouter({ premium, audit }));
 
 	api.use((req, res) => res.status(404).json({ error: "admin.error.notFound" }));
 

@@ -101,6 +101,12 @@ require("./admin")(app, {
 	getGames: () => games,
 	abortGame: (pin, reasonKey) => abortGame(pin, reasonKey),
 	log: (level, msg, fields) => log(level, msg, fields),
+	// premium code (Settings tab); premiumStore is created below, once config.properties is read
+	premium: {
+		get: () => premiumStore.get(),
+		set: (code, user) => premiumStore.set(code, user),
+		disable: (user) => premiumStore.disable(user),
+	},
 });
 
 app.all("*", function (req, res) {
@@ -122,7 +128,6 @@ const { Player } = require("./classes/player");
 
 // Define global variables
 var games = [];
-var SECRET_CODE;
 // true once SIGTERM / SIGINT was received (or after a fatal error)
 var shuttingDown = false;
 
@@ -181,9 +186,54 @@ function resolvePunchlineURL(socket) {
 	return protocol + "://" + host;
 }
 
-// Get the premium code
-if (global.premiumCode != null && String(global.premiumCode).length > 0) {
-	SECRET_CODE = String(global.premiumCode);
+// Premium code: stored in MongoDB (collection "settings") and changed in the admin panel;
+// premiumCode of config.properties is only the initial value (admin/premium.js)
+const premiumStore = require("./admin/premium").createPremiumStore({
+	mongoose,
+	log,
+	initialCode: () => (typeof properties.getRaw === "function" ? properties.getRaw("premiumCode") : global.premiumCode),
+});
+
+// Brute-force guard for the premium code: at most 10 wrong codes per client address
+// in 15 minutes (the address is the proxy's X-Forwarded-For only behind a trusted proxy).
+const PREMIUM_MAX_FAILURES = 10;
+const PREMIUM_WINDOW_MS = 15 * 60 * 1000;
+const premiumFailures = new Map(); // address -> { count, since }
+
+function clientAddress(socket) {
+	const address = socket.handshake.address || "";
+	const trustFn = app.get("trust proxy fn");
+	if (typeof trustFn === "function" && trustFn(address, 0)) {
+		const forwarded = String((socket.handshake.headers || {})["x-forwarded-for"] || "").split(",")[0].trim();
+		if (forwarded) return forwarded;
+	}
+	return address;
+}
+
+function premiumBlocked(address) {
+	const entry = premiumFailures.get(address);
+	if (!entry) return false;
+	if (Date.now() - entry.since > PREMIUM_WINDOW_MS) {
+		premiumFailures.delete(address);
+		return false;
+	}
+	return entry.count >= PREMIUM_MAX_FAILURES;
+}
+
+function recordPremiumFailure(address) {
+	const now = Date.now();
+	const entry = premiumFailures.get(address);
+	if (!entry || now - entry.since > PREMIUM_WINDOW_MS) {
+		premiumFailures.set(address, { count: 1, since: now });
+	} else {
+		entry.count++;
+	}
+	// keep the map small
+	if (premiumFailures.size > 10000) {
+		for (const [key, value] of premiumFailures) {
+			if (now - value.since > PREMIUM_WINDOW_MS) premiumFailures.delete(key);
+		}
+	}
 }
 
 // Database connexion: a single shared connection, kept open for the server's lifetime
@@ -230,6 +280,7 @@ const MESSAGES = {
 	revealTimeInvalid: "error.revealTimeInvalid",
 	premiumCodeLength: "error.premiumCodeLength",
 	premiumCodeInvalid: "error.premiumCodeInvalid",
+	premiumTooManyAttempts: "error.premiumTooManyAttempts",
 	questionsUnavailable: "error.questionsUnavailable",
 	notEnoughQuestions: "error.notEnoughQuestions",
 	fewerQuestions: "notice.fewerQuestions",
@@ -1074,12 +1125,16 @@ io.on("connection", function (socket) {
 
 			// Is game premium ?
 			if (data.premiumMode === "true") {
-				if (
-					typeof SECRET_CODE !== "undefined" &&
-					data.secretCode == SECRET_CODE
-				) {
+				const address = clientAddress(socket);
+				if (premiumBlocked(address)) {
+					socket.emit("startGameErrorMessages", MESSAGES.premiumTooManyAttempts);
+					return;
+				}
+				// constant time, ignoring case, spaces and dashes; false when premium is off
+				if (premiumStore.matches(data.secretCode)) {
 					game.premium = true;
 				} else {
+					recordPremiumFailure(address);
 					socket.emit("startGameErrorMessages", MESSAGES.premiumCodeInvalid);
 					return;
 				}
@@ -1437,6 +1492,7 @@ process.on("SIGINT", () => shutdown("SIGINT"));
 async function start() {
 	try {
 		await connectMongo();
+		await premiumStore.load();
 		// questions: migration of old documents, indexes, bank seeded when a language is nearly empty
 		try {
 			await questionBank.prepare(mongoose, log);

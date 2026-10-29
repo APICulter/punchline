@@ -1489,4 +1489,56 @@
   #generateForm[aria-busy="true"] .sheet-actions .btn-primary {
     @apply animate-pulse;
   }
+
+  /* ----- Settings (premium code) ----- */
+
+  /* 5 tabs on phones: the last one takes the whole third row */
+  .admin-tab:last-child:nth-child(odd) {
+    @apply col-span-2 sm:col-span-1;
+  }
+
+  .settings-card {
+    @apply flex max-w-3xl flex-col gap-5;
+  }
+
+  .settings-card[aria-busy="true"] {
+    @apply opacity-60;
+  }
+
+  .settings-head {
+    @apply flex items-start justify-between gap-4;
+  }
+
+  .premium-code-box {
+    @apply flex flex-col items-stretch gap-3 rounded-[1.5rem] border-[2.5px] border-plum bg-butter p-4 shadow-pop sm:flex-row sm:items-center sm:justify-between sm:p-5;
+  }
+
+  .premium-code {
+    @apply min-w-0 select-all text-center text-3xl font-extrabold tabular-nums tracking-tight sm:text-left sm:text-5xl;
+    overflow-wrap: anywhere;
+  }
+
+  .premium-off {
+    @apply rounded-[1.5rem] border-[2.5px] border-dashed border-plum bg-milk-dim p-4;
+  }
+
+  .settings-meta {
+    @apply -mt-1 text-sm font-semibold text-plum/60;
+  }
+
+  .settings-meta:empty {
+    @apply hidden;
+  }
+
+  .settings-actions {
+    @apply flex flex-col gap-3 border-t-2 border-dashed border-plum/20 pt-4 sm:flex-row sm:flex-wrap;
+  }
+
+  .settings-row {
+    @apply flex flex-col gap-3 sm:flex-row;
+  }
+
+  .settings-row .field {
+    @apply text-lg sm:flex-1;
+  }
 }
