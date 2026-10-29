@@ -286,6 +286,68 @@
     @apply text-plum/70;
   }
 
+  /* ---------- Lobby: join address, PIN and QR code (host screen) ----------
+     The plum panel is a size container: the QR code sits beside the text when
+     the panel is wide enough, below the PIN otherwise (phone-width hosts, or
+     browsers without container queries). The PIN row always spans the panel. */
+
+  .lobby-join {
+    container-type: inline-size;
+  }
+
+  .lobby-join-grid {
+    @apply grid grid-cols-1 gap-5;
+  }
+
+  .lobby-qr {
+    @apply m-0 flex flex-col items-center gap-3 justify-self-center;
+  }
+
+  /* Light card: dark plum modules on milk, quiet zone included in the SVG */
+  .lobby-qr-code {
+    @apply block rounded-2xl bg-milk p-2;
+    width: 15rem;
+    max-width: 100%;
+  }
+
+  .lobby-qr-code svg {
+    @apply block h-auto w-full;
+    aspect-ratio: 1;
+  }
+
+  .lobby-qr-caption {
+    @apply text-center text-xl font-bold leading-tight text-milk;
+  }
+
+  @container (min-width: 36rem) {
+    .lobby-join-grid--qr {
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: 2rem;
+    }
+
+    .lobby-join-grid--qr .lobby-join-text {
+      grid-column: 1;
+      grid-row: 1;
+      align-self: center;
+    }
+
+    .lobby-join-grid--qr .lobby-qr {
+      grid-column: 2;
+      grid-row: 1;
+      align-self: start;
+    }
+
+    .lobby-join-grid--qr .lobby-join-pin {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @container (min-width: 44rem) {
+    .lobby-qr-code {
+      width: 17.5rem;
+    }
+  }
+
   /* ---------- Segmented control (Classic / Premium) ---------- */
 
   .segmented {
@@ -297,7 +359,7 @@
   }
 
   .segmented label {
-    @apply flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl text-lg font-bold transition;
+    @apply flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl px-2 text-center text-lg font-bold leading-tight transition;
   }
 
   .segmented input:checked + label {
@@ -1037,8 +1099,9 @@
 
   /* ----- Tabs ----- */
 
+  /* 2 x 2 on phones (4 tabs with counters don't fit in one row), one row from sm */
   .admin-tabs {
-    @apply mb-6 grid grid-flow-col gap-1 rounded-2xl border-[2.5px] border-plum bg-milk p-1 shadow-pop;
+    @apply mb-6 grid grid-cols-2 gap-1 rounded-2xl border-[2.5px] border-plum bg-milk p-1 shadow-pop sm:grid-flow-col sm:grid-cols-none;
     grid-auto-columns: 1fr;
   }
 
@@ -1367,5 +1430,63 @@
 
   .admin-toast {
     @apply pointer-events-none;
+  }
+
+  /* ----- Questions: filters, tags, review ----- */
+
+  .admin-filters {
+    @apply grid gap-4 sm:grid-cols-3 lg:col-span-2;
+  }
+
+  .field--select {
+    @apply cursor-pointer appearance-none truncate pr-12 text-lg;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232B1740' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem;
+  }
+
+  .field:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  .q-badges {
+    @apply flex min-w-0 flex-wrap items-center gap-1.5;
+  }
+
+  .badge--lang {
+    @apply bg-plum tracking-wider text-butter;
+  }
+
+  .badge--cat {
+    @apply border-2 border-dashed border-plum bg-milk-dim text-plum;
+  }
+
+  .badge--pending {
+    @apply bg-butter text-plum;
+  }
+
+  .badge--rejected {
+    @apply bg-plum/15 text-plum line-through decoration-2;
+  }
+
+  .q-meta {
+    @apply -mt-1 flex flex-wrap items-center gap-x-1.5 text-sm font-semibold text-plum/60;
+  }
+
+  .q-card-foot {
+    @apply mt-auto flex justify-end gap-3 border-t-2 border-dashed border-plum/20 pt-3;
+  }
+
+  .q-card-foot .btn {
+    @apply flex-1 sm:flex-none;
+  }
+
+  .ai-off {
+    @apply rounded-[1.5rem] border-[2.5px] border-plum bg-butter p-4;
+  }
+
+  #generateForm[aria-busy="true"] .sheet-actions .btn-primary {
+    @apply animate-pulse;
   }
 }
