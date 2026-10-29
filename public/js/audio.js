@@ -37,7 +37,8 @@
 	/* ---------- Settings (shared by every page) ---------- */
 
 	function loadSettings() {
-		var s = { volume: 0.6, muted: false, sfx: true };
+		// first visit: a moderate level, comfortable on a TV (a saved volume is kept)
+		var s = { volume: 0.3, muted: false, sfx: true };
 		try {
 			var saved = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
 			if (typeof saved.volume === "number" && saved.volume >= 0 && saved.volume <= 1) s.volume = saved.volume;
@@ -120,8 +121,10 @@
 		return settings.volume * settings.volume * 0.85;
 	}
 
+	// effects follow the volume slider (more gently than the music) so they stay
+	// at or under the music level instead of jumping out when the music is low
 	function sfxLevel() {
-		return settings.sfx ? 0.75 : 0;
+		return settings.sfx ? 0.75 * (0.3 + 0.7 * settings.volume) : 0;
 	}
 
 	function applySettings() {
@@ -621,10 +624,10 @@
 				if (s === 4 || s === 12) clap(p.out, t, 0.7);
 				if (s % 4 === 2) hat(p.out, t, 0.28, true);
 				else hat(p.out, t, 0.14);
-				if (bar === 0 && s === 0) cymbal(p.out, t, 0.8);
+				if (bar === 0 && s === 0) cymbal(p.out, t, 0.6);
 				if (s % 2 === 0) bass(p.out, t, r + (s % 4 === 2 ? 12 : 0), sd * 1.5, 0.75);
-				if (s === 0) brass(p.send, t, c, sd * 3, 0.55);
-				if (s === 6 || s === 10) brass(p.send, t, c, sd * 1.6, 0.4);
+				if (s === 0) brass(p.send, t, c, sd * 3, 0.45);
+				if (s === 6 || s === 10) brass(p.send, t, c, sd * 1.6, 0.32);
 				if (s === 0) pad(p.filter, t, c, sd * 15, 0.3);
 				var m = this.melody[bar][s];
 				if (m) {
@@ -977,88 +980,57 @@
 
 	/* ---------- Sound effects ---------- */
 
+	// Every effect is played by the voice of "join" (pluck: soft triangle + quiet octave
+	// sine, percussive envelope, reverb send, centred) so they sound like one family.
+	// Only the notes, their rhythm and their length change. Each effect uses the key
+	// of the music it plays over (countdown A minor, answering D major, reveal Bb major,
+	// scores C major) and stays at or below the level of "join".
+	function notes(d, t, list) {
+		list.forEach(function (n) {
+			pluck(d.wet, t + n[0], n[1], n[2], n[3]);
+		});
+	}
+
 	var SFX = {
-		// soft wooden tock for the countdown
+		// countdown second: one very short, soft E5
 		tick: function (d, t) {
-			bell(d.dry, t, 84, 0.9, 0.08);
-			var o = osc("sine", 1050, t);
-			var g = gain(0);
-			perc(g, t, 0.35, 0.002, 0.07);
-			o.connect(g).connect(d.dry);
-			o.start(t);
-			o.stop(t + 0.1);
-			cleanup(o, [o, g]);
+			notes(d, t, [[0, 76, 0.07, 0.7]]);
 		},
-		// brighter double tick for the last seconds
+		// last seconds of answering: the same, higher (A5) and a touch brighter
 		urgentTick: function (d, t) {
-			[1568, 784].forEach(function (f, i) {
-				var o = osc(i ? "triangle" : "sine", f, t);
-				var g = gain(0);
-				perc(g, t, i ? 0.2 : 0.38, 0.002, 0.09);
-				o.connect(g).connect(d.dry);
-				o.start(t);
-				o.stop(t + 0.12);
-				cleanup(o, [o, g]);
-			});
-			rim(d.dry, t + 0.12, 0.6);
+			notes(d, t, [[0, 81, 0.09, 0.85], [0, 93, 0.05, 0.18]]);
 		},
-		// question on screen: quick D major sparkle with a whoosh
+		// question on screen: rising D major motif
 		go: function (d, t) {
-			[62, 66, 69, 74].forEach(function (m, i) {
-				pluck(d.wet, t + i * 0.045, m + 12, 0.4, 1.2);
-			});
-			bell(d.wet, t + 0.18, 86, 1, 1.2);
-			var n = noise(t, 0.45);
-			var f = filter("bandpass", 800, 1.5);
-			var g = gain(0);
-			f.frequency.setValueAtTime(600, t);
-			f.frequency.exponentialRampToValueAtTime(5000, t + 0.35);
-			g.gain.setValueAtTime(0, t);
-			g.gain.linearRampToValueAtTime(0.12, t + 0.25);
-			g.gain.linearRampToValueAtTime(0, t + 0.42);
-			n.connect(f).connect(g).connect(d.dry);
-			cleanup(n, [n, f, g]);
+			notes(d, t, [[0, 74, 0.12, 0.85], [0.07, 81, 0.12, 0.9], [0.14, 86, 0.3, 1]]);
 		},
-		// an answer pops on screen
+		// an answer pops on screen: quick grace note into Bb5
 		pop: function (d, t) {
-			var o = osc("sine", 380, t);
-			var g = gain(0);
-			o.frequency.exponentialRampToValueAtTime(1050, t + 0.06);
-			perc(g, t, 0.55, 0.002, 0.13);
-			o.connect(g).connect(d.wet);
-			o.start(t);
-			o.stop(t + 0.16);
-			cleanup(o, [o, g]);
-			var n = noise(t, 0.04);
-			var f = filter("bandpass", 2200, 1);
-			var ng = gain(0);
-			perc(ng, t, 0.2, 0.001, 0.03);
-			n.connect(f).connect(ng).connect(d.dry);
-			cleanup(n, [n, f, ng]);
+			notes(d, t, [[0, 77, 0.05, 0.5], [0.035, 82, 0.16, 0.95]]);
 		},
-		// one ding per vote (up to 6), climbing a Bb major arpeggio
+		// one note per vote (up to 6), climbing a Bb major arpeggio, softer as it goes up
 		ding: function (d, t, count) {
 			var n = Math.max(1, Math.min(6, Math.round(Number(count) || 1)));
-			var notes = [82, 86, 89, 94, 98, 101];
+			var scale = [82, 86, 89, 94, 98, 101];
 			for (var i = 0; i < n; i++) {
-				bell(d.wet, t + i * 0.13, notes[i], 1.15, 0.9);
-				pluck(d.dry, t + i * 0.13, notes[i], 0.2, 0.7);
+				notes(d, t, [[i * 0.1, scale[i], i === n - 1 ? 0.3 : 0.16, 1 - i * 0.07]]);
 			}
 		},
-		// the winner: brass arpeggio into a big C major chord
+		// the winner: C major arpeggio of the same voice, landing on a ringing chord
 		fanfare: function (d, t) {
-			[67, 72, 76].forEach(function (m, i) {
-				brass(d.wet, t + i * 0.11, [m, m - 12], 0.09, 1.6);
-			});
-			brass(d.wet, t + 0.33, [72, 76, 79, 84], 1.3, 1.8);
-			brass(d.wet, t + 0.33, [48, 60], 1.3, 1.2);
-			kick(d.dry, t + 0.33, 0.8);
-			cymbal(d.dry, t + 0.33, 1.3);
-			[84, 88, 91, 96].forEach(function (m, i) {
-				bell(d.wet, t + 0.45 + i * 0.08, m, 0.7, 1.2);
-			});
+			notes(d, t, [
+				[0, 67, 0.12, 0.6],
+				[0.08, 72, 0.12, 0.65],
+				[0.16, 76, 0.12, 0.7],
+				[0.24, 79, 0.14, 0.75],
+				[0.36, 84, 0.9, 0.55],
+				[0.36, 76, 0.9, 0.3],
+				[0.36, 72, 0.9, 0.28],
+				[0.56, 88, 0.25, 0.3],
+				[0.64, 91, 0.3, 0.24],
+			]);
 		},
-		// a player joined the lobby
+		// a player joined the lobby (the reference sound of the family)
 		join: function (d, t) {
 			var pair = pick([[81, 88], [79, 86], [76, 84]]);
 			pluck(d.wet, t, pair[0], 0.14, 1.1);
