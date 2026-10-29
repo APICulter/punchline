@@ -82,7 +82,7 @@
 	// Questions: list, search, filter, pagination
 	// ======================================================================
 
-	var questions = { q: "", filter: "all", lang: "all", category: "all", status: "approved", page: 1, pageSize: 20, data: null, request: 0 };
+	var questions = { q: "", filter: "all", lang: panelLang(), category: "all", status: "approved", page: 1, pageSize: 20, data: null, request: 0 };
 
 	var CATEGORIES = ["quotidien", "travail", "couple", "famille", "nourriture", "voyage", "ecole", "tech", "pop", "absurde", "animaux", "sport", "fete"];
 	var LANGS = ["fr", "en"];
@@ -866,7 +866,7 @@
 	// To review: pending questions (AI generation)
 	// ======================================================================
 
-	var review = { lang: "all", page: 1, pageSize: 20, data: null, request: 0 };
+	var review = { lang: panelLang(), page: 1, pageSize: 20, data: null, request: 0 };
 
 	function loadReview() {
 		var request = ++review.request;
@@ -1510,11 +1510,33 @@
 		});
 	});
 
+	// The question lists follow the panel's language: in French, French questions
+	// (the "All" / other language chips stay available)
+	function panelLang() {
+		return typeof getLang === "function" && getLang() === "en" ? "en" : "fr";
+	}
+
+	function checkLangRadios() {
+		var main = { all: "langAll", fr: "langFr", en: "langEn" }[questions.lang];
+		var rev = { all: "reviewLangAll", fr: "reviewLangFr", en: "reviewLangEn" }[review.lang];
+		if (main && $(main)) $(main).checked = true;
+		if (rev && $(rev)) $(rev).checked = true;
+	}
+	checkLangRadios();
+
 	// ======================================================================
 	// Language change: rebuild the lists (dates, aria-labels…)
 	// ======================================================================
 
 	onLangChange(function () {
+		// switch the lists to the questions of the new language
+		questions.lang = panelLang();
+		review.lang = panelLang();
+		questions.page = 1;
+		review.page = 1;
+		checkLangRadios();
+		loadQuestions();
+		if (review.data || currentTab === "review") loadReview();
 		renderQuestions();
 		renderReview();
 		renderAiStatus();
