@@ -84,6 +84,7 @@ module.exports = function gamesRouter({ getGames, abortGame, audit }) {
 			premium: game.premium === true,
 			answerTime: Number(game.answerTime) || null,
 			revealTime: Number(game.revealTime) || null,
+			voteTime: Number(game.voteTime) || null,
 			players,
 			firstSeen: new Date(entry.firstSeen).toISOString(),
 			lastActivity: new Date(entry.lastActivity).toISOString(),

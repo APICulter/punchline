@@ -12,14 +12,16 @@ maxNumberOfPlayers = 3
 # premium is off until a code is set in the panel.
 premiumCode = change-me
 
-# Default timers, in seconds. The host can change the two first ones in the lobby,
-# for each game; these values are the defaults of the lobby sliders.
+# Default timers, in seconds. The host can change the answer, reveal and vote times in the
+# lobby, for each game; these values are the defaults of the lobby sliders.
 # Time to write an answer: min 30, max 150 (2:30), by steps of 10
 questionCountDown = 60
 # Time each answer stays on the big screen during the reveals: min 10, max 30
 revealTime = 10
 beforeQuestionCountDown = 6
-voteCountDown = 10
+# Time to vote (the server closes the votes at the end, or as soon as everyone voted):
+# min 15, max 60, by steps of 5
+voteCountDown = 30
 
 # Name players cannot take (reserved for the bot), case insensitive
 botName = bot

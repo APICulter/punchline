@@ -1704,10 +1704,25 @@
   display: none;
 }
 
-/* waiting for the votes (no time limit): votes received, milk + pink, breathing */
+/* votes received / awaited, next to the time left to vote: a pill readable from the sofa */
+.phase-votes {
+  @apply inline-flex h-12 shrink-0 items-center rounded-full border-[3px] border-plum bg-milk px-4 text-2xl font-extrabold tabular-nums text-plum shadow-pop-sm lg:h-16 lg:px-5 lg:text-4xl;
+}
+
+/* waiting for the server (time left not known yet): milk + pink, breathing */
 .timer--phase.is-waiting {
   @apply bg-milk text-xl text-pink lg:text-3xl;
   animation: phase-wait 1.8s ease-in-out infinite;
+}
+
+/* Phone, vote page: small countdown next to the title */
+.vote-timer {
+  @apply h-12 w-12 shrink-0 border-[2.5px] text-xl shadow-pop-sm transition-colors;
+}
+
+.vote-timer.is-urgent {
+  @apply bg-pink text-white;
+  animation: stage-pulse 1s ease-in-out infinite;
 }
 
 @keyframes phase-wait {
@@ -1766,7 +1781,8 @@
     animation: field-alarm 0.9s ease-out both !important;
   }
 
-  .timer--phase.is-waiting {
+  .timer--phase.is-waiting,
+  .vote-timer.is-urgent {
     animation: none !important;
   }
 

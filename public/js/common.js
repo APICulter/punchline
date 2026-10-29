@@ -181,10 +181,27 @@ function setRulesAnswerTime(seconds) {
 	}
 }
 
-// [answer time, before question countdown, vote countdown, reveal time] in seconds
+// Rules step 4: the vote time of the game when it is known
+function setRulesVoteTime(seconds) {
+	let step = document.getElementById("rulesVoteTime");
+	if (!step) {
+		return;
+	}
+	seconds = Number(seconds);
+	if (seconds > 0) {
+		i18nText(step, "rules.step4.known", { seconds: seconds });
+	} else {
+		i18nText(step, "rules.step4");
+	}
+}
+
+// [answer time, before question countdown, vote time, reveal time] in seconds
 socket.on("getConfigResponse", function (data) {
 	if (Array.isArray(data) && data[0]) {
 		setRulesAnswerTime(data[0]);
+	}
+	if (Array.isArray(data) && data[2]) {
+		setRulesVoteTime(data[2]);
 	}
 });
 

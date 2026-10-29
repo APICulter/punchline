@@ -310,6 +310,7 @@ const MESSAGES = {
 	roundsInvalid: "error.roundsInvalid",
 	answerTimeInvalid: "error.answerTimeInvalid",
 	revealTimeInvalid: "error.revealTimeInvalid",
+	voteTimeInvalid: "error.voteTime",
 	premiumCodeLength: "error.premiumCodeLength",
 	premiumCodeInvalid: "error.premiumCodeInvalid",
 	premiumTooManyAttempts: "error.premiumTooManyAttempts",
@@ -320,6 +321,7 @@ const MESSAGES = {
 	answerTooLong: "error.answerTooLong",
 	gameCrashed: "error.gameCrashed",
 	gameResumed: "notice.gameResumed",
+	voteTooLate: "notice.voteTooLate",
 };
 
 // Name reserved for the bot (case insensitive)
@@ -330,6 +332,8 @@ const ANSWER_TIME_MIN = 30;
 const ANSWER_TIME_MAX = 150;
 const REVEAL_TIME_MIN = 10;
 const REVEAL_TIME_MAX = 30;
+const VOTE_TIME_MIN = 15;
+const VOTE_TIME_MAX = 60;
 
 // Integer config value kept within [min, max], or fallback if missing / not a number
 function boundedSetting(value, min, max, fallback) {
@@ -342,6 +346,7 @@ function boundedSetting(value, min, max, fallback) {
 
 const DEFAULT_ANSWER_TIME = boundedSetting(global.questionCountDown, ANSWER_TIME_MIN, ANSWER_TIME_MAX, 60);
 const DEFAULT_REVEAL_TIME = boundedSetting(global.revealTime, REVEAL_TIME_MIN, REVEAL_TIME_MAX, 10);
+const DEFAULT_VOTE_TIME = boundedSetting(global.voteCountDown, VOTE_TIME_MIN, VOTE_TIME_MAX, 30);
 
 // Validates a timer sent by the host: undefined / empty => default, otherwise an integer
 // within [min, max]; returns null when invalid
@@ -390,6 +395,7 @@ function clean(value) {
 
 // Removes a game from memory (its saved copy is marked as finished on the next save)
 function removeGame(game) {
+	clearVoteDeadline(game);
 	const index = games.indexOf(game);
 	if (index !== -1) {
 		games.splice(index, 1);
@@ -613,6 +619,7 @@ function serializeGame(game) {
 		lang: game.lang,
 		answerTime: game.answerTime,
 		revealTime: game.revealTime,
+		voteTime: game.voteTime,
 	};
 }
 
@@ -874,11 +881,98 @@ function closeAnswers(game, roomName) {
 	if (roomName) io.in(roomName).emit("displayAnswers", answersForHost(game.answers));
 }
 
-// Number of votes received, for the big screen ("waiting for votes" indicator)
-function emitVoteProgress(game) {
-	if (game.hostSocketId) {
-		io.to(game.hostSocketId).emit("voteProgress", { votes: game.maxVotes, expected: game.nbOfPlayers });
+/* Votes: the server owns the deadline. When the votes open (openVotes), the players whose phone
+   is connected at that moment are awaited and a timer of game.voteTime seconds starts. The votes
+   close (closeVotes, exactly once per round) as soon as every awaited player voted, or at the
+   deadline; then "displayVotes" is sent and late votes are ignored. A player who was offline
+   when the votes opened is not awaited, but can still vote before the deadline.
+   This state is in memory only (never saved): after a restart the resume rule of recoverGame
+   applies (the round counts as played). */
+const voteRounds = new WeakMap(); // game -> { round, expected: Set of names, endsAt, timer }
+
+function voteTimeOf(game) {
+	return Number.isInteger(game.voteTime) && game.voteTime >= VOTE_TIME_MIN && game.voteTime <= VOTE_TIME_MAX
+		? game.voteTime
+		: DEFAULT_VOTE_TIME;
+}
+
+function clearVoteDeadline(game) {
+	const state = voteRounds.get(game);
+	if (state && state.timer) {
+		clearTimeout(state.timer);
+		state.timer = null;
 	}
+}
+
+// The votes of this round are open (and not closed yet)
+function openVoteState(game) {
+	const state = voteRounds.get(game);
+	return game.status === "voting" && state && state.round === game.question && state.timer ? state : null;
+}
+
+// Is this player's phone connected right now?
+function playerConnected(player) {
+	if (!player.socketId) return false;
+	const playerSocket = io.sockets.sockets.get(player.socketId);
+	return Boolean(playerSocket && playerSocket.connected);
+}
+
+// Time left to vote: ms (exact) and seconds (rounded up); clients count down from the moment they
+// receive it, so that the clocks of the devices do not matter
+function voteTiming(state) {
+	const remainingMs = state ? Math.max(0, state.endsAt - Date.now()) : 0;
+	return { remainingMs: remainingMs, remaining: Math.ceil(remainingMs / 1000), endsAt: state ? state.endsAt : null };
+}
+
+// Number of votes received / awaited and time left, for the big screen
+function emitVoteProgress(game) {
+	if (!game.hostSocketId) return;
+	const state = openVoteState(game);
+	const payload = { votes: game.maxVotes, expected: state ? state.expected.size : game.nbOfPlayers };
+	if (state) Object.assign(payload, voteTiming(state), { voteTime: voteTimeOf(game) });
+	io.to(game.hostSocketId).emit("voteProgress", payload);
+}
+
+// Opens the votes of the current round (once per round: a second "getVotes" changes nothing)
+function openVotes(game, roomName) {
+	const current = voteRounds.get(game);
+	if (current && current.round === game.question) {
+		return false;
+	}
+	clearVoteDeadline(game);
+	const expected = new Set(
+		game.players.filter((player) => player.id !== -1 && playerConnected(player)).map((player) => player.name)
+	);
+	const ms = voteTimeOf(game) * 1000;
+	const state = { round: game.question, expected: expected, endsAt: Date.now() + ms, timer: null };
+	voteRounds.set(game, state);
+	game.status = "voting";
+	state.timer = safeTimeout("voteDeadline", game.pin, () => {
+		if (voteRounds.get(game) !== state || !state.timer) return;
+		state.timer = null;
+		if (games.includes(game) && game.status === "voting" && game.question === state.round) {
+			closeVotes(game, "deadline");
+		}
+	}, ms);
+	if (roomName) io.to(roomName).except(game.hostSocketId || []).emit("redirect", "/html/votePrompt.html");
+	return true;
+}
+
+// Closes the votes (every awaited vote is in, or the deadline): only the first call does something
+function closeVotes(game, reason) {
+	if (game.status !== "voting") return false;
+	clearVoteDeadline(game);
+	game.status = "";
+	// players still on the vote page: too late, to the waiting page
+	game.players.forEach((player) => {
+		if (player.id === -1 || game.votes.includes(player.name) || !player.socketId) return;
+		io.to(player.socketId).emit("voteTimeUp", MESSAGES.voteTooLate);
+		io.to(player.socketId).emit("redirect", "/html/waiting.html");
+	});
+	log("info", "votes closed", { pin: game.pin, event: "votes", reason: reason, votes: game.maxVotes });
+	const roomName = findRoomName(game.pin);
+	if (roomName) io.in(roomName).emit("displayVotes", game.answers);
+	return true;
 }
 
 /**  *****************************************************************************************
@@ -1123,13 +1217,14 @@ io.on("connection", function (socket) {
 		let game = findGame(clean(data.pin));
 		let answerTime = game && game.answerTime ? game.answerTime : DEFAULT_ANSWER_TIME;
 		let revealTime = game && game.revealTime ? game.revealTime : DEFAULT_REVEAL_TIME;
+		let voteTime = game ? voteTimeOf(game) : DEFAULT_VOTE_TIME;
 
 		// get the different variables
 		// [answer time, before question countdown, vote countdown, reveal time] in seconds
 		let configurationVariables = [];
 		configurationVariables.push(answerTime);
 		configurationVariables.push(beforeQuestionCountDown);
-		configurationVariables.push(voteCountDown);
+		configurationVariables.push(voteTime);
 		configurationVariables.push(revealTime);
 
 		// emit to the sender
@@ -1166,11 +1261,15 @@ io.on("connection", function (socket) {
 			// Timers chosen in the lobby (seconds); missing => config defaults
 			const answerTime = parseTimeSetting(data.answerTime, ANSWER_TIME_MIN, ANSWER_TIME_MAX, DEFAULT_ANSWER_TIME);
 			const revealTime = parseTimeSetting(data.revealTime, REVEAL_TIME_MIN, REVEAL_TIME_MAX, DEFAULT_REVEAL_TIME);
+			const voteTime = parseTimeSetting(data.voteTime, VOTE_TIME_MIN, VOTE_TIME_MAX, DEFAULT_VOTE_TIME);
 			if (answerTime === null) {
 				socket.emit("startGameErrorMessages", MESSAGES.answerTimeInvalid);
 				return;
 			} else if (revealTime === null) {
 				socket.emit("startGameErrorMessages", MESSAGES.revealTimeInvalid);
+				return;
+			} else if (voteTime === null) {
+				socket.emit("startGameErrorMessages", MESSAGES.voteTimeInvalid);
 				return;
 			} else if ((data.secretCode.length == 0 || data.secretCode.length > 15) && data.premiumMode === "true") {
 				socket.emit("startGameErrorMessages", MESSAGES.premiumCodeLength);
@@ -1200,6 +1299,7 @@ io.on("connection", function (socket) {
 			game.nbOfQuestions = Number(data.nbOfQuestions);
 			game.answerTime = answerTime;
 			game.revealTime = revealTime;
+			game.voteTime = voteTime;
 			// Language of the questions: the host's interface language (fr | en, default fr)
 			const lang = clean(data.lang).trim().toLowerCase();
 			game.lang = questionBank.LANGS.includes(lang) ? lang : "fr";
@@ -1245,6 +1345,7 @@ io.on("connection", function (socket) {
 			game.maxAnswers = 0;
 			game.maxVotes = 0;
 			game.votes = [];
+			clearVoteDeadline(game);
 			if (game.question < game.questions.length) {
 				let question = game.questions[game.question];
 				// the bot's answers (reponse_1..3) stay on the server
@@ -1416,9 +1517,9 @@ io.on("connection", function (socket) {
 			return;
 		}
 		if (isStaleHostSocket(game, socket)) return;
-		game.status = "voting";
-		let roomName = findRoomName(data.pin);
-		if (roomName) socket.to(roomName).emit("redirect", "/html/votePrompt.html");
+		// only once the answers are closed (not while the players are still writing)
+		if (game.status === "answering") return;
+		openVotes(game, findRoomName(data.pin));
 		emitVoteProgress(game);
 	});
 
@@ -1433,6 +1534,16 @@ io.on("connection", function (socket) {
 		// votes; "yours" lets the phone disable the player's own answer
 		let player = game.players.find((player) => player.socketId === socket.id && player.id !== -1);
 		socket.emit("postAnswers", answersForPlayer(game.answers, player ? player.name : null));
+		// vote page: the time left to vote, or "too late" if the votes are already closed
+		if (player && !game.votes.includes(player.name)) {
+			const state = openVoteState(game);
+			if (state) {
+				socket.emit("voteTimer", voteTiming(state));
+			} else if (game.status === "" && voteRounds.has(game) && voteRounds.get(game).round === game.question) {
+				socket.emit("voteTimeUp", MESSAGES.voteTooLate);
+				socket.emit("redirect", "/html/waiting.html");
+			}
+		}
 	});
 
 	// Handler to vote for an answer (its opaque id, see "postAnswers")
@@ -1452,10 +1563,25 @@ io.on("connection", function (socket) {
 			let answer = votedAnswerId
 				? game.answers.find((answer) => answer.id === votedAnswerId)
 				: undefined;
-			// Ignore votes outside of the voting phase, from unknown sockets,
-			// for a non-existing answer, or for the voter's own answer
+			// Ignore votes outside of the voting phase (after the deadline included), from unknown
+			// sockets, for a non-existing answer, or for the voter's own answer
+			const voteState = openVoteState(game);
+			const closedState = voteRounds.get(game);
 			if (
-				game.status !== "voting" ||
+				!voteState &&
+				typeof voter !== "undefined" &&
+				!game.votes.includes(voter.name) &&
+				game.status === "" &&
+				closedState &&
+				closedState.round === game.question
+			) {
+				// too late: the vote is not counted, the phone goes to the waiting page
+				socket.emit("voteTimeUp", MESSAGES.voteTooLate);
+				socket.emit("redirect", "/html/waiting.html");
+				return;
+			}
+			if (
+				!voteState ||
 				typeof voter === "undefined" ||
 				typeof answer === "undefined" ||
 				answer.playerName === voter.name
@@ -1475,12 +1601,13 @@ io.on("connection", function (socket) {
 				player.points++;
 			}
 			game.maxVotes++;
+			// a player who was offline when the votes opened is back and voted: counted as awaited
+			voteState.expected.add(voter.name);
 			socket.emit("redirect", "/html/waiting.html");
 			emitVoteProgress(game);
-			if (game.maxVotes >= game.nbOfPlayers) {
-				let roomName = findRoomName(pin);
-				game.status = "";
-				if (roomName) io.in(roomName).emit("displayVotes", game.answers);
+			const allIn = [...voteState.expected].every((name) => game.votes.includes(name));
+			if (allIn || game.maxVotes >= game.nbOfPlayers) {
+				closeVotes(game, "allVoted");
 			}
 		}
 	});

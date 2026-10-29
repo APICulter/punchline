@@ -3,7 +3,8 @@
 // default values if not loaded from config
 var questionCountDown = 60;
 var beforeQuestionCountDown = 6;
-var voteCountDown = 10;
+// seconds to vote (set by the host in the lobby); the server sends the exact time left
+var voteCountDown = 30;
 // seconds between two answers during the reveals (set by the host in the lobby)
 var revealTime = 10;
 
@@ -53,6 +54,7 @@ var totalRounds = 0;
 var phaseClockElement = document.getElementById("phaseClock");
 var phaseTimerElement = document.getElementById("phaseTimer");
 var phaseClockLabelElement = document.getElementById("phaseClockLabel");
+var phaseVotesElement = document.getElementById("phaseVotes");
 var revealBarElement = document.getElementById("revealBar");
 var phaseClockInterval = null;
 
@@ -60,6 +62,9 @@ function stopPhaseClock() {
 	clearInterval(phaseClockInterval);
 	phaseClockInterval = null;
 	phaseClockElement.classList.add("invisible");
+	phaseTimerElement.classList.remove("is-urgent", "is-waiting");
+	phaseVotesElement.classList.add("hidden");
+	voteClock = null;
 }
 
 // Counts down durationMs (never below 0) and hides itself when the time is over
@@ -83,19 +88,55 @@ function startPhaseClock(durationMs, labelKey) {
 	}
 }
 
-// No time limit for the votes: the votes received so far ("…" until the server tells)
-function showVoteProgress(votes, expected) {
+// The votes: votes received / awaited and the seconds left to vote (the server closes the votes
+// at the deadline). "remainingMs" is the time left when the server sent it: the local end time is
+// computed at reception, so the clocks of the server and of this screen do not matter.
+// Until the server tells, "…".
+var voteClock = null; // { votes, expected, endAt } (endAt: local ms, null if unknown)
+
+function showVoteProgress(votes, expected, remainingMs) {
+	let previous = voteClock;
 	stopPhaseClock();
-	phaseTimerElement.classList.add("is-waiting");
-	if (Number.isInteger(votes) && Number.isInteger(expected) && expected > 0) {
-		phaseTimerElement.textContent = votes + "/" + expected;
-		i18nText(phaseClockLabelElement, "game.clock.votes");
-		i18nAttr(phaseClockElement, "aria-label", "game.clock.votesCount", { votes: votes, expected: expected });
-	} else {
-		phaseTimerElement.textContent = "…";
-		i18nText(phaseClockLabelElement, "game.clock.votes");
-	}
+	voteClock = {
+		votes: Number.isInteger(votes) ? votes : null,
+		expected: Number.isInteger(expected) ? expected : null,
+		endAt: Number.isFinite(remainingMs) ? Date.now() + Math.max(0, remainingMs) : previous ? previous.endAt : null,
+	};
+	i18nText(phaseClockLabelElement, "game.clock.votes");
+	let clock = voteClock;
+	let lastSecond = null;
+	let tick = function () {
+		let hasCount = clock.votes !== null && clock.expected !== null && clock.expected > 0;
+		phaseVotesElement.textContent = hasCount ? clock.votes + "/" + clock.expected : "";
+		phaseVotesElement.classList.toggle("hidden", !hasCount);
+		if (clock.endAt === null) {
+			phaseTimerElement.classList.add("is-waiting");
+			phaseTimerElement.textContent = "…";
+			if (hasCount) {
+				i18nAttr(phaseClockElement, "aria-label", "game.clock.votesCount", { votes: clock.votes, expected: clock.expected });
+			}
+			return;
+		}
+		let seconds = Math.max(0, Math.ceil((clock.endAt - Date.now()) / 1000));
+		phaseTimerElement.classList.remove("is-waiting");
+		phaseTimerElement.textContent = seconds;
+		// urgent under 10 s, like the answer countdown (stays at 0 until the server closes the votes)
+		phaseTimerElement.classList.toggle("is-urgent", seconds <= 10);
+		if (seconds !== lastSecond) {
+			if (lastSecond !== null && seconds > 0 && seconds <= 5 && window.PunchlineAudio) PunchlineAudio.sfx("tick");
+			lastSecond = seconds;
+			i18nAttr(phaseClockElement, "aria-label", "game.clock.votesTimed", {
+				votes: hasCount ? clock.votes : 0,
+				expected: hasCount ? clock.expected : 0,
+				seconds: seconds,
+			});
+		}
+	};
+	tick();
 	phaseClockElement.classList.remove("invisible");
+	if (clock.endAt !== null) {
+		phaseClockInterval = setInterval(tick, 200);
+	}
 }
 
 // Thin bar under the answer shown: drains while the answer stays on screen
@@ -169,6 +210,10 @@ function startCountdown(count, questionCount) {
 
 function startCountDownQuestion(count) {
 	clearInterval(countdownIntervalQuestion);
+	// the full answer time right away: otherwise the "1" of the countdown before the question
+	// stays on screen until the first tick, one second later
+	countdownElement.innerText = count;
+	countdownElement.classList.toggle("is-urgent", count <= 10);
 	countdownIntervalQuestion = setInterval(function () {
 		count--;
 		countdownElement.innerText = count;
@@ -199,7 +244,9 @@ function getConfig(){
 socket.on("getConfigResponse", function(data) {
 	questionCountDown = data[0];
     beforeQuestionCountDown =data[1];
-    voteCountDown = data[2];
+    if (data[2]) {
+		voteCountDown = data[2];
+	}
 	if (data[3]) {
 		revealTime = data[3];
 	}
@@ -272,7 +319,7 @@ socket.on("displayAnswers", function (data) {
 		socket.emit("getVotes", { pin: punchlinePin });
 		setPhase("voting", "game.voting");
 		responseBoxElement.classList.add("invisible");
-		showVoteProgress();
+		showVoteProgress(null, null, NaN);
 	}, revealEnd(data.length));
 });
 
@@ -281,7 +328,11 @@ socket.on("voteProgress", function (data) {
 	if (stageElement.dataset.phase !== "voting" || votesDisplayed || !data) {
 		return;
 	}
-	showVoteProgress(Number(data.votes), Number(data.expected));
+	let remainingMs = Number(data.remainingMs);
+	if (!Number.isFinite(remainingMs) && Number.isFinite(Number(data.remaining))) {
+		remainingMs = Number(data.remaining) * 1000;
+	}
+	showVoteProgress(Number(data.votes), Number(data.expected), remainingMs);
 });
 
 socket.on("displayVotes", function (answers) {

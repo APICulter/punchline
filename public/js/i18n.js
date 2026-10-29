@@ -59,6 +59,7 @@
 			"rules.step3": "A question appears. Write your answer before the clock runs out: the host sets how long you get.",
 			"rules.step3.known": "A question appears. You have {seconds|duration} to write your answer.",
 			"rules.step4": "The answers show up on every phone, without names. Vote for your favourite, just not your own.",
+			"rules.step4.known": "The answers show up on every phone, without names. You have {seconds|duration} to vote for your favourite, just not your own.",
 			"rules.step5": "Every vote you get is worth 1 point. Most points after the last round wins.",
 			"rules.gotIt": "Got it",
 
@@ -75,6 +76,7 @@
 			"lobby.rounds": "Rounds",
 			"lobby.answerTime": "Time to answer",
 			"lobby.revealTime": "Time per reveal",
+			"lobby.voteTime": "Time to vote",
 			"lobby.questions": "Questions",
 			"lobby.classic": "Classic",
 			"lobby.premium": "Premium",
@@ -113,6 +115,7 @@
 			"game.clock.toScores": "Scores in",
 			"game.clock.votes": "Votes in",
 			"game.clock.votesCount": "{votes} of {expected} votes in",
+			"game.clock.votesTimed": "{votes} of {expected} votes in, {seconds|duration} left to vote",
 
 			// prompt (phone)
 			"prompt.title": "Your punchline",
@@ -129,6 +132,7 @@
 			"vote.loading": "Loading the answers…",
 			"vote.button": "Vote",
 			"vote.yours": "Yours",
+			"vote.timeLeft": "Seconds left to vote",
 
 			// waiting (phone)
 			"wait.title": "Hang tight!",
@@ -139,6 +143,8 @@
 			"wait.vote.text": "Waiting for everyone to vote. Results on the big screen.",
 			"wait.late.title": "Time's up!",
 			"wait.late.text": "Too late for this one. Get ready to vote…",
+			"wait.voteLate.title": "Votes closed!",
+			"wait.voteLate.text": "No vote from you this round. Results on the big screen.",
 			"wait.in.title": "You're in!",
 			"wait.in.text": "The game starts soon. Keep an eye on the big screen.",
 
@@ -185,6 +191,7 @@
 			"error.roundsInvalid": "Invalid number of rounds",
 			"error.answerTimeInvalid": "Invalid answer time",
 			"error.revealTimeInvalid": "Invalid reveal time",
+			"error.voteTime": "Invalid vote time",
 			"error.questionsUnavailable": "Couldn't load the questions. Try again.",
 			"error.answerEmpty": "Write something first",
 			"error.answerTooLong": "That answer is too long",
@@ -192,6 +199,7 @@
 			"error.gameCrashed": "Oops, this game hit a problem and had to stop. Sorry! Start a new one.",
 			"error.gameEnded": "This game was ended by an admin.",
 			"notice.gameResumed": "We're back! The game picks up where it left off.",
+			"notice.voteTooLate": "Too late to vote!",
 			"notice.questionsLang": "The next questions will be in English.",
 			"error.notEnoughQuestions": "No questions in this language yet. Switch the language, or ask the admin to add some.",
 			"notice.fewerQuestions": "Not enough questions in this language: this game has fewer rounds than planned.",
@@ -516,6 +524,7 @@
 			"rules.step3": "Une question apparaît. Écris ta réponse avant la fin du chrono : c’est l’hôte qui choisit sa durée.",
 			"rules.step3.known": "Une question apparaît. Tu as {seconds|duration} pour écrire ta réponse.",
 			"rules.step4": "Les réponses s’affichent sur tous les téléphones, sans les noms. Vote pour ta préférée, mais pas pour la tienne.",
+			"rules.step4.known": "Les réponses s’affichent sur tous les téléphones, sans les noms. Tu as {seconds|duration} pour voter pour ta préférée (pas la tienne).",
 			"rules.step5": "Chaque vote reçu rapporte 1 point. Le plus de points après la dernière manche l’emporte.",
 			"rules.gotIt": "Compris !",
 
@@ -531,6 +540,7 @@
 			"lobby.rounds": "Manches",
 			"lobby.answerTime": "Temps pour répondre",
 			"lobby.revealTime": "Temps par réponse",
+			"lobby.voteTime": "Temps pour voter",
 			"lobby.questions": "Questions",
 			"lobby.classic": "Classique",
 			"lobby.premium": "Premium",
@@ -567,6 +577,7 @@
 			"game.clock.toScores": "Scores dans",
 			"game.clock.votes": "Votes reçus",
 			"game.clock.votesCount": "{votes} votes reçus sur {expected}",
+			"game.clock.votesTimed": "{votes} votes reçus sur {expected}, encore {seconds|duration} pour voter",
 
 			"prompt.title": "Ta punchline",
 			"prompt.hint": "Lis la question sur le grand écran et bats le chrono.",
@@ -581,6 +592,7 @@
 			"vote.loading": "Chargement des réponses…",
 			"vote.button": "Voter",
 			"vote.yours": "La tienne",
+			"vote.timeLeft": "Secondes restantes pour voter",
 
 			"wait.title": "Patience !",
 			"wait.text": "On attend les autres. Garde un œil sur le grand écran.",
@@ -590,6 +602,8 @@
 			"wait.vote.text": "On attend que tout le monde ait voté. Résultats sur le grand écran.",
 			"wait.late.title": "Temps écoulé !",
 			"wait.late.text": "Trop tard pour celle-ci. Prépare-toi à voter…",
+			"wait.voteLate.title": "Votes terminés !",
+			"wait.voteLate.text": "Pas de vote de ta part pour cette manche. Résultats sur le grand écran.",
 			"wait.in.title": "C’est bon, tu es dedans !",
 			"wait.in.text": "La partie va bientôt commencer. Garde un œil sur le grand écran.",
 
@@ -633,6 +647,7 @@
 			"error.roundsInvalid": "Nombre de manches invalide",
 			"error.answerTimeInvalid": "Temps de réponse invalide",
 			"error.revealTimeInvalid": "Temps par réponse invalide",
+			"error.voteTime": "Temps pour voter invalide",
 			"error.questionsUnavailable": "Impossible de charger les questions. Réessaie.",
 			"error.answerEmpty": "Écris d’abord quelque chose",
 			"error.answerTooLong": "Ta réponse est trop longue",
@@ -640,6 +655,7 @@
 			"error.gameCrashed": "Oups, cette partie a rencontré un problème et a dû s’arrêter. Désolés ! Lance une nouvelle partie.",
 			"error.gameEnded": "Cette partie a été arrêtée par un admin.",
 			"notice.gameResumed": "On est de retour ! La partie reprend là où elle s’était arrêtée.",
+			"notice.voteTooLate": "Trop tard pour voter !",
 			"notice.questionsLang": "Les prochaines questions seront en français.",
 			"error.notEnoughQuestions": "Pas encore de questions dans cette langue. Change de langue, ou demande à l’admin d’en ajouter.",
 			"notice.fewerQuestions": "Pas assez de questions dans cette langue : la partie aura moins de manches que prévu.",

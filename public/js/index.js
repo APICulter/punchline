@@ -106,6 +106,7 @@ function createGame() {
 	document.getElementById("hero").classList.remove("flex-1");
 	document.getElementById("lobby").classList.remove("hidden");
 	setRulesAnswerTime(document.getElementById("answerTime").value);
+	setRulesVoteTime(document.getElementById("voteTime").value);
 	socket.emit("getPunchlineURL", { origin: window.location.origin });
 }
 
@@ -475,9 +476,12 @@ function updateNbOfPlayers() {
 	i18nText(document.getElementById("playerCounterLabel"), "lobby.joined", { count: nbOfPlayers });
 }
 
-// Lobby sliders: the answer time chosen by the host is also shown in the rules
+// Lobby sliders: the answer and vote times chosen by the host are also shown in the rules
 document.getElementById("answerTime").addEventListener("input", function () {
 	setRulesAnswerTime(this.value);
+});
+document.getElementById("voteTime").addEventListener("input", function () {
+	setRulesVoteTime(this.value);
 });
 
 
@@ -529,6 +533,7 @@ function startGame() {
 			// timers in seconds
 			answerTime: DOMPurify.sanitize(document.getElementById("answerTime").value),
 			revealTime: DOMPurify.sanitize(document.getElementById("revealTime").value),
+			voteTime: DOMPurify.sanitize(document.getElementById("voteTime").value),
 			// language of the questions: the host's interface language
 			lang: typeof getLang === "function" ? getLang() : "fr",
 		});

@@ -79,3 +79,46 @@ button.addEventListener("click", function () {
 	button.setAttribute("disabled", "disabled");
 	socket.emit("vote", answer.value, punchlinePin);
 });
+
+// Time left to vote, sent by the server when the answers are asked for: counted down from the
+// moment it is received (the clocks of the phone and of the server do not matter). At 0 the
+// server closes the votes and sends the phone to the waiting page ("voteTimeUp" below).
+var voteTimerElement = document.getElementById("voteTimer");
+var voteTimerInterval = null;
+socket.on("voteTimer", function (data) {
+	if (!data || !voteTimerElement) {
+		return;
+	}
+	let remainingMs = Number(data.remainingMs);
+	if (!Number.isFinite(remainingMs)) {
+		remainingMs = Number(data.remaining) * 1000;
+	}
+	if (!Number.isFinite(remainingMs)) {
+		return;
+	}
+	let endAt = Date.now() + Math.max(0, remainingMs);
+	clearInterval(voteTimerInterval);
+	let tick = function () {
+		let seconds = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+		voteTimerElement.textContent = seconds;
+		voteTimerElement.classList.toggle("is-urgent", seconds <= 10);
+		if (seconds === 0) {
+			clearInterval(voteTimerInterval);
+		}
+	};
+	tick();
+	voteTimerElement.classList.remove("hidden");
+	voteTimerInterval = setInterval(tick, 250);
+});
+
+// The votes are closed and this player did not vote: a toast on the waiting page ("redirect" follows)
+socket.on("voteTimeUp", function (key) {
+	clearInterval(voteTimerInterval);
+	button.setAttribute("disabled", "disabled");
+	rememberNotice(key);
+	try {
+		sessionStorage.setItem("punchlineLastAction", "voteLate");
+	} catch (e) {
+		// only used for the copy of the waiting screen
+	}
+});

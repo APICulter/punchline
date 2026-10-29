@@ -21,6 +21,8 @@
 		copy = "wait.answer";
 	} else if (lastAction === "vote") {
 		copy = "wait.vote";
+	} else if (lastAction === "voteLate") {
+		copy = "wait.voteLate";
 	} else if (from.includes("/html/prompt.html")) {
 		copy = "wait.late";
 	} else if (from.endsWith("/") || from.includes("/html/index.html")) {

@@ -11,7 +11,7 @@ Open the site on a shared screen and create a room. Each participant opens the g
 - A question, image or video appears on the screen with a theme of some sort.
 - Everyone has a limited time to give an answer on their phone (60 seconds by default, set by the host in the lobby).
 - Once everyone has answered, the answers are displayed anonymously on the phones.
-- Everyone votes for an answer (except their own).
+- Everyone votes for an answer (except their own) within a time limit (30 seconds by default, set by the host in the lobby).
 - Each player gets one point per vote received.
 - Then comes the next round, until the end of the game.
 - The one with the highest number of points wins.
@@ -50,7 +50,8 @@ Open the site on a shared screen and create a room. Each participant opens the g
    | `premiumCode` | Initial premium code (unlocks the explicit questions), 15 characters max. Only read until the code is stored in MongoDB at the first start; then it is managed in the admin panel ([Settings](#admin-panel)) and this key is ignored |
    | `questionCountDown` | Default time to write an answer, in seconds (default `60`, min `30`, max `150`). The host can change it in the lobby for each game |
    | `revealTime` | Default time each answer stays on the big screen during the reveals, in seconds (default `10`, min `10`, max `30`). The host can change it in the lobby for each game |
-   | `beforeQuestionCountDown`, `voteCountDown` | Other round timers, in seconds |
+   | `voteCountDown` | Default time to vote, in seconds (default `30`, min `15`, max `60`). The host can change it in the lobby for each game; the votes close at the end of this time, or as soon as every connected player voted |
+   | `beforeQuestionCountDown` | Countdown before each question, in seconds |
    | `botName` | Name players cannot take (reserved for the bot) |
 
    Messages shown to players are not configured here anymore: see [Language](#language).

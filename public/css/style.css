@@ -4576,6 +4576,9 @@ video {
 .place-items-center {
   place-items: center;
 }
+.items-start {
+  align-items: flex-start;
+}
 .items-center {
   align-items: center;
 }
@@ -4950,7 +4953,43 @@ video {
   display: none;
 }
 
-/* waiting for the votes (no time limit): votes received, milk + pink, breathing */
+/* votes received / awaited, next to the time left to vote: a pill readable from the sofa */
+.phase-votes {
+  display: inline-flex;
+  height: 3rem;
+  flex-shrink: 0;
+  align-items: center;
+  border-radius: 9999px;
+  border-width: 3px;
+  --tw-border-opacity: 1;
+  border-color: rgb(43 23 64 / var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 247 240 / var(--tw-bg-opacity, 1));
+  padding-left: 1rem;
+  padding-right: 1rem;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 800;
+  --tw-numeric-spacing: tabular-nums;
+  font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction);
+  --tw-text-opacity: 1;
+  color: rgb(43 23 64 / var(--tw-text-opacity, 1));
+  --tw-shadow: 0 2px 0 0 #2B1740;
+  --tw-shadow-colored: 0 2px 0 0 var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+@media (min-width: 1024px) {
+
+  .phase-votes {
+    height: 4rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+}
+
+/* waiting for the server (time left not known yet): milk + pink, breathing */
 .timer--phase.is-waiting {
   --tw-bg-opacity: 1;
   background-color: rgb(255 247 240 / var(--tw-bg-opacity, 1));
@@ -4968,6 +5007,30 @@ video {
 }
 .timer--phase.is-waiting {
   animation: phase-wait 1.8s ease-in-out infinite;
+}
+
+/* Phone, vote page: small countdown next to the title */
+.vote-timer {
+  height: 3rem;
+  width: 3rem;
+  flex-shrink: 0;
+  border-width: 2.5px;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  --tw-shadow: 0 2px 0 0 #2B1740;
+  --tw-shadow-colored: 0 2px 0 0 var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.vote-timer.is-urgent {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 79 140 / var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+  animation: stage-pulse 1s ease-in-out infinite;
 }
 
 @keyframes phase-wait {
@@ -5044,7 +5107,8 @@ video {
     animation: field-alarm 0.9s ease-out both !important;
   }
 
-  .timer--phase.is-waiting {
+  .timer--phase.is-waiting,
+  .vote-timer.is-urgent {
     animation: none !important;
   }
 

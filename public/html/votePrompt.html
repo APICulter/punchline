@@ -29,7 +29,7 @@
 					<li><span data-i18n="rules.step1">Create a game on the big screen. Choose 1 to 10 rounds, or enter a premium code for extra questions.</span></li>
 					<li><span><span data-i18n="rules.step2.before">Everyone opens </span><a id="gameURL" class="font-bold underline decoration-pink decoration-[3px] underline-offset-4" href="">Punchline</a><span data-i18n="rules.step2.after"> on their phone, types the PIN and picks a name.</span></span></li>
 					<li><span id="rulesAnswerTime" data-i18n="rules.step3">A question appears. Write your answer before the clock runs out: the host sets how long you get.</span></li>
-					<li><span data-i18n="rules.step4">The answers show up on every phone, without names. Vote for your favourite, just not your own.</span></li>
+					<li><span id="rulesVoteTime" data-i18n="rules.step4">The answers show up on every phone, without names. Vote for your favourite, just not your own.</span></li>
 					<li><span data-i18n="rules.step5">Every vote you get is worth 1 point. Most points after the last round wins.</span></li>
 				</ol>
 				<button id="exitRules" type="button" class="btn btn-primary btn-block mt-7" data-i18n="rules.gotIt">Got it</button>
@@ -55,7 +55,11 @@
 
 				<section id="votes" class="phone-screen">
 					<div class="phone-intro">
-						<h1 class="phone-title" data-i18n="vote.title">Pick your favourite</h1>
+						<div class="flex items-start justify-between gap-3">
+							<h1 class="phone-title" data-i18n="vote.title">Pick your favourite</h1>
+							<!-- time left to vote (sent by the server) -->
+							<div id="voteTimer" class="timer vote-timer hidden" role="timer" aria-label="Seconds left to vote" data-i18n-aria-label="vote.timeLeft"></div>
+						</div>
 						<p class="muted text-lg font-semibold" data-i18n="vote.hint">No names, no pressure. You can't vote for your own.</p>
 					</div>
 
