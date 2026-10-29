@@ -186,6 +186,7 @@
 			"error.gameCrashed": "Oops, this game hit a problem and had to stop. Sorry! Start a new one.",
 			"error.gameEnded": "This game was ended by an admin.",
 			"notice.gameResumed": "We're back! The game picks up where it left off.",
+			"notice.questionsLang": "The next questions will be in English.",
 			"error.notEnoughQuestions": "No questions in this language yet. Switch the language, or ask the admin to add some.",
 			"notice.fewerQuestions": "Not enough questions in this language: this game has fewer rounds than planned.",
 
@@ -627,6 +628,7 @@
 			"error.gameCrashed": "Oups, cette partie a rencontré un problème et a dû s’arrêter. Désolés ! Lance une nouvelle partie.",
 			"error.gameEnded": "Cette partie a été arrêtée par un admin.",
 			"notice.gameResumed": "On est de retour ! La partie reprend là où elle s’était arrêtée.",
+			"notice.questionsLang": "Les prochaines questions seront en français.",
 			"error.notEnoughQuestions": "Pas encore de questions dans cette langue. Change de langue, ou demande à l’admin d’en ajouter.",
 			"notice.fewerQuestions": "Pas assez de questions dans cette langue : la partie aura moins de manches que prévu.",
 
@@ -933,14 +935,14 @@
 		return typeof lang === "string" && hasOwn.call(DICT, lang);
 	}
 
-	// Saved choice, otherwise the browser language (fr* => French, anything else => English)
+	// The game is made for French players: French unless English was chosen with the button
+	// (DEFAULT_LANG stays "en" only as the fallback dictionary for missing keys)
 	function detectLang() {
 		try {
 			var saved = localStorage.getItem(STORAGE_KEY);
 			if (isSupported(saved)) return saved;
 		} catch (e) {}
-		var browser = (navigator.languages && navigator.languages[0]) || navigator.language || "";
-		return /^fr\b/i.test(browser) ? "fr" : DEFAULT_LANG;
+		return "fr";
 	}
 
 	var lang = detectLang();

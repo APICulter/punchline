@@ -163,6 +163,16 @@ socket.on("question", function (data) {
 	startCountdown(beforeQuestionCountDown, questionCountDown);
 });
 
+// The host switches the language: the server replaces the questions still to come
+if (typeof onLangChange === "function") {
+	onLangChange(function (lang) {
+		if (punchlinePin) socket.emit("setGameLang", { pin: punchlinePin, lang: lang });
+	});
+}
+socket.on("gameLangChanged", function (key) {
+	showNotice(key);
+});
+
 // Displays answers randomly
 socket.on("displayAnswers", function (data) {
 	clearInterval(countdownIntervalQuestion);

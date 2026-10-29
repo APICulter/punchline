@@ -1201,6 +1201,33 @@ io.on("connection", function (socket) {
 		}
 	});
 
+	// The host switches the language during the game: the questions not shown yet are
+	// replaced by questions in the new language (the current one stays, players may be
+	// answering it). Only the host of the game can do it.
+	on("setGameLang", async function (data) {
+		data = asObject(data);
+		const game = findGame(clean(data.pin));
+		if (typeof game === "undefined" || game.hostSocketId !== socket.id) return;
+		const lang = clean(data.lang).trim().toLowerCase();
+		if (!questionBank.LANGS.includes(lang) || lang === game.lang) return;
+
+		const first = Math.max(game.question + 1, 0);
+		const remaining = game.questions.length - first;
+		game.lang = lang;
+		requestSave();
+		if (!game.inGame || remaining <= 0) return;
+
+		const pool = { lang: lang, premium: game.premium, nbOfQuestions: remaining, questions: [] };
+		const outcome = await initQuestions(YourModel, pool);
+		if (outcome.error || pool.questions.length === 0) return;
+		// rounds that could not be replaced keep their question
+		pool.questions.forEach((question, k) => {
+			game.questions[first + k] = Object.assign({}, question, { id: first + k });
+		});
+		requestSave();
+		socket.emit("gameLangChanged", "notice.questionsLang");
+	});
+
 	// Handler to remove a player from the room in the lobby
 	on("deletePlayer", function (data) {
 		data = asObject(data);
