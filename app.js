@@ -49,6 +49,14 @@ app.get("/api/music", function (req, res) {
 	res.json(tracks);
 });
 
+// Admin panel (admin/): login, questions management, live games.
+// Must be registered before the catch-all redirect below.
+require("./admin")(app, {
+	mongoose,
+	getGames: () => games,
+	abortGame: (pin, reasonKey) => abortGame(pin, reasonKey),
+});
+
 app.all("*", function (req, res) {
 	res.redirect("/");
 });
@@ -229,6 +237,26 @@ function destroyRoom(roomName) {
 		games.splice(games.indexOf(game), 1);
 	}
 	delete rooms[roomName];
+}
+
+// Ends one game from the server side (admin action, or an error inside that game):
+// its host and players are sent back home with a message key; other games are untouched.
+// Returns true if a game or room was found.
+function abortGame(pin, reasonKey) {
+	const roomName = findRoomName(pin);
+	if (roomName) {
+		io.to(roomName).emit("gameAborted", reasonKey || "error.gameEnded");
+		io.to(roomName).emit("redirect", "/html/index.html");
+		io.in(roomName).socketsLeave(roomName);
+		destroyRoom(roomName);
+		return true;
+	}
+	const game = findGame(pin);
+	if (typeof game !== "undefined") {
+		games.splice(games.indexOf(game), 1);
+		return true;
+	}
+	return false;
 }
 
 // Generates a random UUID for a player
