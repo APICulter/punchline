@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#FF6A4D" />
+		<meta name="robots" content="noindex, nofollow" />
+		<meta name="referrer" content="same-origin" />
+		<title>Punchline admin</title>
+		<link rel="preload" href="/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+		<link rel="stylesheet" href="/css/style.css" />
+	</head>
+
+	<body class="admin">
+		<div id="main" class="app">
+			<div class="app-inner">
+				<header class="topbar">
+					<div class="flex gap-2">
+						<a href="/" class="icon-btn" aria-label="Back to home" data-i18n-aria-label="common.home" data-i18n-title="common.home" title="Back to home">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9v11h13V9" /></svg>
+						</a>
+						<button id="langToggle" type="button" class="icon-btn lang-btn" data-lang-toggle aria-label="Switch to French" title="Switch to French">
+							<span data-lang-code lang="fr">FR</span>
+						</button>
+					</div>
+				</header>
+
+				<main class="flex flex-1 flex-col justify-center gap-10 pb-10 pt-8">
+					<div class="flex flex-col items-center gap-10">
+						<p class="wordmark text-4xl sm:text-5xl">Punchline</p>
+						<p class="admin-kicker" data-i18n="admin.kicker">Back office</p>
+					</div>
+
+					<form id="loginForm" class="panel flex flex-col gap-5" novalidate>
+						<div>
+							<h1 class="panel-title" data-i18n="admin.login.title">Admin sign-in</h1>
+							<p class="muted mt-1" data-i18n="admin.login.hint">Manage the questions and the live games.</p>
+						</div>
+
+						<div>
+							<label for="username" class="field-label" data-i18n="admin.login.user">User name</label>
+							<input id="username" name="username" type="text" class="field" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="200" required />
+						</div>
+
+						<div>
+							<label for="password" class="field-label" data-i18n="admin.login.password">Password</label>
+							<input id="password" name="password" type="password" class="field" autocomplete="current-password" maxlength="1024" required />
+						</div>
+
+						<p id="loginError" class="form-error hidden" role="alert"></p>
+
+						<button id="loginButton" type="submit" class="btn btn-primary btn-block" data-i18n="admin.login.submit">Sign in</button>
+					</form>
+				</main>
+			</div>
+		</div>
+
+		<script src="/js/i18n.js"></script>
+		<script src="/admin/admin.js"></script>
+		<script src="/admin/login.js"></script>
+	</body>
+</html>

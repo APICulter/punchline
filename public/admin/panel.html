@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#FF6A4D" />
+		<meta name="robots" content="noindex, nofollow" />
+		<meta name="referrer" content="same-origin" />
+		<title>Punchline admin</title>
+		<link rel="preload" href="/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+		<link rel="stylesheet" href="/css/style.css" />
+	</head>
+
+	<body class="admin">
+		<a href="#tabpanels" class="skip-link" data-i18n="admin.skip">Skip to content</a>
+
+		<div id="main" class="app">
+			<div class="app-inner app-inner--wide">
+				<header class="topbar">
+					<div class="flex gap-2">
+						<a href="/" class="icon-btn" aria-label="Back to home" data-i18n-aria-label="common.home" data-i18n-title="common.home" title="Back to home">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9v11h13V9" /></svg>
+						</a>
+						<button id="langToggle" type="button" class="icon-btn lang-btn" data-lang-toggle aria-label="Switch to French" title="Switch to French">
+							<span data-lang-code lang="fr">FR</span>
+						</button>
+					</div>
+					<div class="flex min-w-0 items-center gap-3">
+						<p class="admin-user hidden sm:block"><span data-i18n="admin.signedInAs">Signed in as</span> <strong id="adminUser"></strong></p>
+						<button id="logoutButton" type="button" class="btn btn-secondary btn-sm" aria-label="Log out" data-i18n-aria-label="admin.logout">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" /><path d="M10 8l-4 4 4 4" /><path d="M6 12h10" /></svg>
+							<span class="hidden sm:inline" data-i18n="admin.logout">Log out</span>
+						</button>
+					</div>
+				</header>
+
+				<div class="admin-head">
+					<p class="wordmark wordmark--sm admin-wordmark">Punchline</p>
+					<p class="admin-kicker" data-i18n="admin.kicker">Back office</p>
+				</div>
+
+				<div class="admin-tabs" role="tablist" aria-label="Sections" data-i18n-aria-label="admin.sections">
+					<button id="tab-questions" class="admin-tab" type="button" role="tab" aria-controls="panel-questions" aria-selected="true" data-tab="questions">
+						<span data-i18n="admin.tab.questions">Questions</span>
+						<span id="tabCountQuestions" class="tab-count"></span>
+					</button>
+					<button id="tab-games" class="admin-tab" type="button" role="tab" aria-controls="panel-games" aria-selected="false" tabindex="-1" data-tab="games">
+						<span class="sm:hidden" data-i18n="admin.tab.gamesShort">Games</span><span class="hidden sm:inline" data-i18n="admin.tab.games">Live games</span>
+						<span id="tabCountGames" class="tab-count"></span>
+					</button>
+					<button id="tab-activity" class="admin-tab" type="button" role="tab" aria-controls="panel-activity" aria-selected="false" tabindex="-1" data-tab="activity">
+						<span data-i18n="admin.tab.activity">Activity</span>
+					</button>
+				</div>
+
+				<div id="tabpanels" class="admin-panels" tabindex="-1">
+					<!-- ============ Questions ============ -->
+					<section id="panel-questions" role="tabpanel" aria-labelledby="tab-questions" class="flex flex-col gap-5">
+						<div class="panel admin-toolbar">
+							<div class="admin-search">
+								<label for="search" class="field-label" data-i18n="admin.q.search">Search</label>
+								<div class="relative">
+									<svg class="admin-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+									<input id="search" type="search" class="field field--search" maxlength="100" autocomplete="off" placeholder="Question or bot answer" data-i18n-placeholder="admin.q.searchPlaceholder" />
+								</div>
+							</div>
+
+							<fieldset class="admin-filter">
+								<legend class="field-label" data-i18n="admin.q.filter">Show</legend>
+								<div class="segmented segmented--3">
+									<input type="radio" id="filterAll" name="filter" value="all" checked />
+									<label for="filterAll"><span data-i18n="admin.filter.all">All</span><span id="countAll" class="seg-count"></span></label>
+									<input type="radio" id="filterClassic" name="filter" value="classic" />
+									<label for="filterClassic"><span data-i18n="lobby.classic">Classic</span><span id="countClassic" class="seg-count"></span></label>
+									<input type="radio" id="filterPremium" name="filter" value="premium" />
+									<label for="filterPremium"><span data-i18n="lobby.premium">Premium</span><span id="countPremium" class="seg-count"></span></label>
+								</div>
+							</fieldset>
+
+							<div class="admin-actions">
+								<button id="addButton" type="button" class="btn btn-primary btn-sm">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+									<span class="sm:hidden" data-i18n="admin.q.addShort">Add</span><span class="hidden sm:inline" data-i18n="admin.q.add">Add a question</span>
+								</button>
+								<button id="importButton" type="button" class="btn btn-secondary btn-sm">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4" /><path d="m7.5 8.5 4.5-4.5 4.5 4.5" /><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" /></svg>
+									<span class="sm:hidden" data-i18n="admin.q.importShort">Import</span><span class="hidden sm:inline" data-i18n="admin.q.import">Import CSV</span>
+								</button>
+								<a id="exportButton" href="/admin/api/questions/export" class="btn btn-secondary btn-sm" download>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11" /><path d="m7.5 10.5 4.5 4.5 4.5-4.5" /><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" /></svg>
+									<span class="sm:hidden" data-i18n="admin.q.exportShort">Export</span><span class="hidden sm:inline" data-i18n="admin.q.export">Export CSV</span>
+								</a>
+								<button id="duplicatesButton" type="button" class="btn btn-secondary btn-sm">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg>
+									<span class="sm:hidden" data-i18n="admin.q.duplicatesShort">Duplicates</span><span class="hidden sm:inline" data-i18n="admin.q.duplicates">Find duplicates</span>
+								</button>
+							</div>
+						</div>
+
+						<div class="flex items-baseline justify-between gap-3 px-1">
+							<p id="questionsSummary" class="admin-summary" aria-live="polite"></p>
+						</div>
+
+						<div id="questionsList" class="q-list" aria-busy="true"></div>
+
+						<nav id="pager" class="pager hidden" aria-label="Pages" data-i18n-aria-label="admin.pager">
+							<button id="prevPage" type="button" class="btn btn-secondary btn-sm">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6" /></svg>
+								<span data-i18n="admin.pager.prev">Previous</span>
+							</button>
+							<p id="pageInfo" class="font-bold tabular-nums"></p>
+							<button id="nextPage" type="button" class="btn btn-secondary btn-sm">
+								<span data-i18n="admin.pager.next">Next</span>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 6 6 6-6 6" /></svg>
+							</button>
+						</nav>
+					</section>
+
+					<!-- ============ Live games ============ -->
+					<section id="panel-games" role="tabpanel" aria-labelledby="tab-games" class="hidden flex flex-col gap-5">
+						<div class="flex flex-wrap items-center justify-between gap-3 px-1">
+							<p class="admin-summary"><span id="gamesSummary"></span> <span id="gamesUpdated" class="block text-base font-semibold text-plum/70 sm:inline"></span></p>
+							<button id="refreshGames" type="button" class="btn btn-secondary btn-sm">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 5v6h-6" /></svg>
+								<span data-i18n="admin.refresh">Refresh</span>
+							</button>
+						</div>
+						<div id="gamesList" class="game-list" data-empty="No game in progress." data-i18n-empty="admin.games.empty"></div>
+						<p class="muted px-1 text-sm" data-i18n="admin.games.note">Refreshed every 5 seconds. Times are approximate (seen by the server).</p>
+					</section>
+
+					<!-- ============ Activity ============ -->
+					<section id="panel-activity" role="tabpanel" aria-labelledby="tab-activity" class="hidden flex flex-col gap-5">
+						<div class="flex flex-wrap items-center justify-between gap-3 px-1">
+							<p class="admin-summary" data-i18n="admin.log.title">Latest admin actions</p>
+							<button id="refreshLog" type="button" class="btn btn-secondary btn-sm">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 5v6h-6" /></svg>
+								<span data-i18n="admin.refresh">Refresh</span>
+							</button>
+						</div>
+						<ol id="logList" class="log-list panel" data-empty="Nothing yet." data-i18n-empty="admin.log.empty"></ol>
+					</section>
+				</div>
+			</div>
+		</div>
+
+		<!-- ============ Sheet: add / edit a question ============ -->
+		<div id="editSheet" class="sheet admin-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+			<form id="editForm" class="sheet-card admin-sheet-card" novalidate>
+				<div class="sheet-head">
+					<h2 id="editTitle" class="text-2xl font-extrabold tracking-tight"></h2>
+					<button type="button" class="icon-btn" data-close aria-label="Close" data-i18n-aria-label="common.close">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+					</button>
+				</div>
+
+				<div class="flex flex-col gap-5">
+					<div>
+						<div class="flex items-baseline justify-between gap-3">
+							<label for="fieldQuestion" class="field-label" data-i18n="admin.field.question">Question</label>
+							<span id="countQuestion" class="char-count" aria-hidden="true"></span>
+						</div>
+						<textarea id="fieldQuestion" name="question" class="field field--area" rows="3" maxlength="300" required aria-describedby="errorQuestion"></textarea>
+						<p id="errorQuestion" class="field-error hidden"></p>
+					</div>
+
+					<fieldset class="flex flex-col gap-3">
+						<legend class="field-label" data-i18n="admin.field.answers">Bot answers</legend>
+						<p class="muted -mt-1 text-base" data-i18n="admin.field.answersHint">The bot picks one of them. At least one, 100 characters max each.</p>
+						<div>
+							<label for="fieldR1" class="sr-only" data-i18n="admin.field.reponse_1">Answer 1</label>
+							<input id="fieldR1" name="reponse_1" type="text" class="field" maxlength="100" autocomplete="off" placeholder="Answer 1" data-i18n-placeholder="admin.field.reponse_1" aria-describedby="errorR1" />
+							<p id="errorR1" class="field-error hidden"></p>
+						</div>
+						<div>
+							<label for="fieldR2" class="sr-only" data-i18n="admin.field.reponse_2">Answer 2</label>
+							<input id="fieldR2" name="reponse_2" type="text" class="field" maxlength="100" autocomplete="off" placeholder="Answer 2" data-i18n-placeholder="admin.field.reponse_2" aria-describedby="errorR2" />
+							<p id="errorR2" class="field-error hidden"></p>
+						</div>
+						<div>
+							<label for="fieldR3" class="sr-only" data-i18n="admin.field.reponse_3">Answer 3</label>
+							<input id="fieldR3" name="reponse_3" type="text" class="field" maxlength="100" autocomplete="off" placeholder="Answer 3" data-i18n-placeholder="admin.field.reponse_3" aria-describedby="errorR3" />
+							<p id="errorR3" class="field-error hidden"></p>
+						</div>
+					</fieldset>
+
+					<fieldset>
+						<legend class="field-label" data-i18n="admin.field.type">Question type</legend>
+						<div class="segmented">
+							<input type="radio" id="typeClassic" name="explicit" value="false" checked />
+							<label for="typeClassic" data-i18n="lobby.classic">Classic</label>
+							<input type="radio" id="typePremium" name="explicit" value="true" />
+							<label for="typePremium" data-i18n="admin.field.premium">Premium (explicit)</label>
+						</div>
+						<p class="muted mt-2 text-base" data-i18n="admin.field.typeHint">Premium questions only come up in games started with the premium code.</p>
+					</fieldset>
+
+					<p id="errorForm" class="form-error hidden" role="alert"></p>
+
+					<div class="sheet-actions">
+						<button type="button" class="btn btn-secondary" data-close data-i18n="admin.cancel">Cancel</button>
+						<button id="saveButton" type="submit" class="btn btn-primary" data-i18n="admin.save">Save</button>
+					</div>
+				</div>
+			</form>
+		</div>
+
+		<!-- ============ Sheet: import ============ -->
+		<div id="importSheet" class="sheet admin-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="importTitle">
+			<div class="sheet-card admin-sheet-card">
+				<div class="sheet-head">
+					<h2 id="importTitle" class="text-2xl font-extrabold tracking-tight" data-i18n="admin.import.title">Import questions</h2>
+					<button type="button" class="icon-btn" data-close aria-label="Close" data-i18n-aria-label="common.close">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+					</button>
+				</div>
+
+				<div class="flex flex-col gap-5">
+					<div class="flex flex-col gap-2">
+						<p data-i18n="admin.import.format">A UTF-8 text file without header, one question per line:</p>
+						<pre class="admin-code"><code>question;reponse_1;reponse_2;reponse_3;explicit</code></pre>
+						<p class="muted text-base" data-i18n="admin.import.formatHint">explicit is true or false (false if missing). No ";" inside the texts. 1 MB max. Questions already in the database are skipped.</p>
+					</div>
+
+					<div>
+						<label for="importFile" class="field-label" data-i18n="admin.import.file">CSV file</label>
+						<input id="importFile" type="file" accept=".csv,.txt,text/csv,text/plain" class="file-field" aria-describedby="importError" />
+						<p id="importError" class="field-error hidden" role="alert"></p>
+					</div>
+
+					<div id="importReport" class="import-report hidden" aria-live="polite"></div>
+
+					<div class="sheet-actions">
+						<button type="button" class="btn btn-secondary" data-close data-i18n="common.close">Close</button>
+						<button id="importCheck" type="button" class="btn btn-secondary" data-i18n="admin.import.check">Check the file</button>
+						<button id="importRun" type="button" class="btn btn-primary hidden"></button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ============ Sheet: duplicates ============ -->
+		<div id="duplicatesSheet" class="sheet admin-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="duplicatesTitle">
+			<div class="sheet-card admin-sheet-card">
+				<div class="sheet-head">
+					<h2 id="duplicatesTitle" class="text-2xl font-extrabold tracking-tight" data-i18n="admin.dup.title">Duplicate questions</h2>
+					<button type="button" class="icon-btn" data-close aria-label="Close" data-i18n-aria-label="common.close">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+					</button>
+				</div>
+				<p class="muted mb-4 text-base" data-i18n="admin.dup.hint">Same question text, ignoring case, spaces and apostrophes.</p>
+				<div id="duplicatesList" class="flex flex-col gap-5" aria-live="polite"></div>
+			</div>
+		</div>
+
+		<!-- ============ Sheet: confirmation ============ -->
+		<div id="confirmSheet" class="sheet admin-sheet admin-sheet--confirm hidden" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmText">
+			<div class="sheet-card admin-sheet-card admin-sheet-card--narrow">
+				<h2 id="confirmTitle" class="mb-3 text-2xl font-extrabold tracking-tight"></h2>
+				<p id="confirmText" class="mb-4 text-lg"></p>
+				<blockquote id="confirmQuote" class="bubble mb-8 hidden"></blockquote>
+				<div class="sheet-actions">
+					<button id="confirmCancel" type="button" class="btn btn-secondary" data-close data-i18n="admin.cancel">Cancel</button>
+					<button id="confirmOk" type="button" class="btn btn-pink"></button>
+				</div>
+			</div>
+		</div>
+
+		<div id="toast" class="toast admin-toast hidden" role="status" aria-live="polite"></div>
+
+		<script src="/js/i18n.js"></script>
+		<script src="/admin/admin.js"></script>
+		<script src="/admin/panel.js"></script>
+	</body>
+</html>
