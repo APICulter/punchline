@@ -1,3 +1,4 @@
+const { unquote } = require("./db/question-bank");
 // Define classes
 const { Player } = require("./classes/player");
 
@@ -39,7 +40,8 @@ function initBot(game) {
  * The rest of the text is kept as typed.
  */
 function normalizeAnswer(text) {
-    let answer = String(text == null ? "" : text).replace(/\s+/g, " ").trim();
+    // same text for everyone: no spreadsheet quotes ("…", ""…""), single spaces
+    let answer = unquote(String(text == null ? "" : text).replace(/\s+/g, " ").trim());
     // one final period, not an ellipsis
     if (/[^.]\.$/.test(answer) || answer === ".") {
         answer = answer.slice(0, -1).trimEnd();

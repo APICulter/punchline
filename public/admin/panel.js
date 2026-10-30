@@ -476,6 +476,12 @@
 		// a new question: the language shown in the list, otherwise the panel's language
 		var lang = item && item.lang ? item.lang : questions.lang !== "all" ? questions.lang : getLang() === "en" ? "en" : "fr";
 		$(lang === "en" ? "editLangEn" : "editLangFr").checked = true;
+		// a question is written in one language: editing it doesn't translate it, so the
+		// language is only chosen for a new question (shown as a label otherwise)
+		var existing = !!(item && item.lang);
+		$("editLangChoice").classList.toggle("hidden", existing);
+		$("editLangLabel").classList.toggle("hidden", !existing);
+		if (existing) i18nText($("editLangText"), "admin.lang." + item.lang);
 		$("fieldCategory").value = item ? item.category || "" : CATEGORIES.indexOf(questions.category) >= 0 ? questions.category : "";
 		updateCounter();
 		Admin.openSheet(editSheet, $("fieldQuestion"));

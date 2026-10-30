@@ -56,7 +56,34 @@ const BANK_DIR = path.join(__dirname, "questions");
 
 // Collapses any whitespace (line breaks, tabs, non-breaking spaces…) into single spaces
 function tidy(value) {
-	return String(value).normalize("NFC").replace(/\s+/g, " ").trim();
+	return unquote(String(value).normalize("NFC").replace(/\s+/g, " ").trim());
+}
+
+// Spreadsheets (Excel, LibreOffice) export a cell with quotes as "...": wrapping quotes and
+// doubled quotes ("") end up in the text. Removes quotes around the whole text (only when
+// no other quote is inside: 'He said "hi" and "bye"' is kept) and turns "" into ".
+const OPEN_QUOTES = '"“«';
+const CLOSE_QUOTES = { '"': '"', "“": "”", "«": "»" };
+
+function unquote(text) {
+	let value = String(text).trim();
+	for (let pass = 0; pass < 5; pass++) {
+		const before = value;
+		const close = CLOSE_QUOTES[value.charAt(0)];
+		if (close && value.length >= 2 && value.charAt(value.length - 1) === close) {
+			const inner = value.slice(1, -1);
+			if (!/["“”«»]/.test(inner)) {
+				// "text" -> text
+				value = inner.trim();
+			} else if (close === '"' && !/"/.test(inner.replace(/""/g, ""))) {
+				// CSV cell: "He said ""no""" -> He said "no"
+				value = inner.replace(/""/g, '"').trim();
+			}
+		}
+		if (value === before) value = value.replace(/""+/g, '"');
+		if (value === before) break;
+	}
+	return value;
 }
 
 /**
@@ -345,6 +372,37 @@ async function migrate(mongoose, log) {
 	const created = await collection.updateMany({ createdAt: { $exists: false } }, [{ $set: { createdAt: { $toDate: "$_id" } } }]);
 	summary.defaults += created.modifiedCount || 0;
 
+	// texts wrapped in quotes by a spreadsheet export ("…", ""…"")
+	const quoted = /^\s*["“«]|["”»]\s*$|""/;
+	const quotedCursor = collection.find(
+		{ $or: ["question"].concat(ANSWER_FIELDS).map((field) => ({ [field]: { $regex: quoted } })) },
+		{ projection: Object.fromEntries(["question"].concat(ANSWER_FIELDS).map((field) => [field, 1]).concat([["lang", 1]])) }
+	);
+	summary.unquoted = 0;
+	for await (const doc of quotedCursor) {
+		const set = {};
+		["question"].concat(ANSWER_FIELDS).forEach((field) => {
+			if (typeof doc[field] === "string") {
+				const cleaned = tidy(doc[field]);
+				if (cleaned !== doc[field]) set[field] = cleaned;
+			}
+		});
+		if (Object.keys(set).length === 0) continue;
+		if (set.question) set.norm = normKey(set.question) || "empty " + String(doc._id);
+		try {
+			await collection.updateOne({ _id: doc._id }, { $set: set });
+			summary.unquoted++;
+		} catch (error) {
+			// the cleaned question already exists in this language: keep the answers fix only
+			delete set.question;
+			delete set.norm;
+			if (Object.keys(set).length) {
+				await collection.updateOne({ _id: doc._id }, { $set: set });
+				summary.unquoted++;
+			}
+		}
+	}
+
 	// lang and norm need JavaScript: only the documents that miss one of them
 	const cursor = collection.find(
 		{ $or: [{ lang: { $nin: LANGS } }, { norm: { $exists: false } }, { norm: "" }] },
@@ -393,7 +451,7 @@ async function migrate(mongoose, log) {
 
 	await Question.createIndexes();
 	await getRemovedModel(mongoose).createIndexes();
-	if (summary.defaults || summary.langNorm || summary.duplicates) {
+	if (summary.defaults || summary.langNorm || summary.duplicates || summary.unquoted) {
 		log("info", "questions migrated", summary);
 	}
 	return summary;
@@ -544,6 +602,7 @@ module.exports = {
 	AUTO_SEED_MIN,
 	BANK_DIR,
 	tidy,
+	unquote,
 	normKey,
 	detectLang,
 	checkText,

@@ -324,7 +324,9 @@
 					<div class="grid gap-5 sm:grid-cols-2">
 						<fieldset class="min-w-0">
 							<legend class="field-label" data-i18n="admin.field.lang">Language</legend>
-							<div class="segmented">
+							<!-- an existing question keeps its language: shown as a label -->
+							<p id="editLangLabel" class="hidden pt-2"><span id="editLangText" class="badge badge--lang"></span></p>
+							<div id="editLangChoice" class="segmented">
 								<input type="radio" id="editLangFr" name="lang" value="fr" checked />
 								<label for="editLangFr" data-i18n="admin.lang.fr">French</label>
 								<input type="radio" id="editLangEn" name="lang" value="en" />
