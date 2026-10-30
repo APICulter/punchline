@@ -9,7 +9,7 @@ const express = require("express");
 const WATCH_INTERVAL_MS = 5000;
 const MAX_GAMES = 200;
 
-module.exports = function gamesRouter({ getGames, abortGame, audit }) {
+module.exports = function gamesRouter({ getGames, abortGame, audit, isConnected }) {
 	const router = express.Router();
 
 	// The game objects have no timestamps: they are watched every few seconds to know
@@ -72,7 +72,8 @@ module.exports = function gamesRouter({ getGames, abortGame, audit }) {
 				name: String(player.name == null ? "" : player.name).slice(0, 40),
 				points: Number(player.points) || 0,
 				bot: player.id === -1,
-				connected: player.lock !== false,
+				// live socket check from app.js when available (a lock flag can stay set after a page is closed)
+				connected: typeof isConnected === "function" ? isConnected(player) : player.lock !== false,
 			}));
 		const rounds = Number(game.nbOfQuestions) || 0;
 		const questionIndex = Number(game.question);

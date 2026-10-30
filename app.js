@@ -100,6 +100,7 @@ require("./admin")(app, {
 	mongoose,
 	getGames: () => games,
 	abortGame: (pin, reasonKey) => abortGame(pin, reasonKey),
+	isConnected: (player) => playerConnected(player),
 	log: (level, msg, fields) => log(level, msg, fields),
 	// premium code (Settings tab); premiumStore is created below, once config.properties is read
 	premium: {
@@ -322,6 +323,9 @@ const MESSAGES = {
 	gameCrashed: "error.gameCrashed",
 	gameResumed: "notice.gameResumed",
 	voteTooLate: "notice.voteTooLate",
+	playerConnected: "error.playerConnected",
+	sessionExpired: "error.sessionExpired",
+	sessionElsewhere: "notice.sessionElsewhere",
 };
 
 // Name reserved for the bot (case insensitive)
@@ -482,7 +486,7 @@ const PIN_ARGUMENT = {
 	leaveRoom: (args) => (typeof args[0] === "string" && rooms[args[0]] ? rooms[args[0]].pin : undefined),
 };
 // Events a socket sends before being part of the game: the PIN of the payload is enough
-const JOINING_EVENTS = ["joinRoom", "joinGame", "setUsername", "findRoomById"];
+const JOINING_EVENTS = ["joinRoom", "joinGame", "setUsername", "findRoomById", "resumeSession", "syncPlayer"];
 
 // Does this socket take part in the game (room member, host or player)?
 function socketBelongsTo(socket, pin) {
@@ -603,6 +607,8 @@ function serializeGame(game) {
 			name: player.name,
 			points: player.points,
 			gameCreator: player.gameCreator,
+			// rejoin token: the phones keep theirs across a server restart
+			token: player.token || null,
 		})),
 		settings: game.settings,
 		question: game.question,
@@ -728,12 +734,116 @@ function catchUpPlayer(socket, pin, playerName) {
 	if (!game.players.some((player) => player.name === playerName && player.socketId === socket.id)) return;
 	told.add(playerName);
 	socket.emit("gameResumed", MESSAGES.gameResumed);
-	if (game.status === "answering" && !game.answers.some((answer) => answer.playerName === playerName)) {
-		socket.emit("redirect", "/html/prompt.html");
-	} else if (game.status === "voting" && !game.votes.includes(playerName)) {
-		socket.emit("redirect", "/html/votePrompt.html");
-	} else {
-		socket.emit("redirect", "/html/waiting.html");
+	const player = game.players.find((p) => p.name === playerName);
+	socket.emit("redirect", playerPage(game, player));
+}
+
+// Pages of the phones
+const PAGE_HOME = "/html/index.html";
+const PAGE_WAITING = "/html/waiting.html";
+const PAGE_PROMPT = "/html/prompt.html";
+const PAGE_VOTE = "/html/votePrompt.html";
+const PHONE_PAGES = [PAGE_WAITING, PAGE_PROMPT, PAGE_VOTE];
+
+// The page a player's phone must show right now (the single source of truth used by "syncPlayer",
+// the rejoins and the resume after a restart):
+//  - home: the game or the player is gone
+//  - prompt: the answers are open and this player has not answered yet
+//  - vote: the votes are open and this player has not voted yet
+//  - waiting: everything else (lobby, countdown, reveals, scores, game restored after a restart
+//    that waits for its host)
+function playerPage(game, player) {
+	if (!game || !games.includes(game) || !player || player.id === -1 || !game.players.includes(player)) {
+		return PAGE_HOME;
+	}
+	if (!game.inGame || isFinished(game) || restoredGames.has(game)) {
+		return PAGE_WAITING;
+	}
+	if (game.status === "answering" && !game.answers.some((answer) => answer.playerName === player.name)) {
+		return PAGE_PROMPT;
+	}
+	if (openVoteState(game) && !game.votes.includes(player.name)) {
+		return PAGE_VOTE;
+	}
+	return PAGE_WAITING;
+}
+
+// The votes of the current round are closed and this player did not vote ("too late" on the phone)
+function missedVote(game, player) {
+	const state = voteRounds.get(game);
+	return Boolean(
+		state && state.round === game.question && !openVoteState(game) && player && !game.votes.includes(player.name)
+	);
+}
+
+/* Rejoining a game. A player can take their place back:
+   - with their rejoin token (stored by their phone when they joined): always, even if the server
+     still believes the old page is connected (a phone that killed the page silently keeps its
+     socket "connected" until the ping timeout); the old socket is detached from the player;
+   - by picking their name (no token, e.g. another phone): only if no page of that player is
+     connected (otherwise anyone could take over a connected player). */
+const crypto = require("crypto");
+// A player whose page just closed is not offered to others right away: a phone going from one page
+// to the next is disconnected for a moment
+const REJOIN_GRACE_MS = 3000;
+
+function newPlayerToken() {
+	return crypto.randomBytes(24).toString("base64url");
+}
+
+function tokenMatches(player, token) {
+	if (!player || typeof player.token !== "string" || player.token.length === 0) return false;
+	const given = Buffer.from(String(token == null ? "" : token));
+	const expected = Buffer.from(player.token);
+	return given.length === expected.length && crypto.timingSafeEqual(given, expected);
+}
+
+// The page that sent this token / name may act as this player (players without a token: games
+// started before tokens existed, the name is enough as before)
+function mayActAs(player, token) {
+	return Boolean(player) && (!player.token || tokenMatches(player, token));
+}
+
+// Can somebody without a token pick this player in the list?
+function playerAvailable(player) {
+	if (!player || player.id === -1) return false;
+	if (playerConnected(player)) return false;
+	return !(player.disconnectedAt && Date.now() - player.disconnectedAt < REJOIN_GRACE_MS);
+}
+
+// Names offered to a phone that rejoins a game without a token (nothing else: no socket id, no token)
+function availablePlayers(game) {
+	return game.players.filter(playerAvailable).map((player) => ({ name: player.name }));
+}
+
+// Gives the player a new rejoin token and sends it to their phone (stored with the PIN and name)
+function issueToken(socket, game, player) {
+	player.token = newPlayerToken();
+	socket.emit("playerSession", { pin: String(game.pin), playerName: player.name, token: player.token });
+}
+
+// Attaches a socket to a player (and to the room); an other page still attached to that player is
+// detached: told and sent home (it may be a dead page that will never get it)
+function attachPlayer(socket, game, player) {
+	const roomName = findRoomName(game.pin);
+	if (player.socketId && player.socketId !== socket.id) {
+		const old = io.sockets.sockets.get(player.socketId);
+		if (old && old.connected) {
+			old.emit("gameAborted", MESSAGES.sessionElsewhere);
+			old.emit("redirect", PAGE_HOME);
+			if (roomName) {
+				old.leave(roomName);
+				rooms[roomName].sockets = rooms[roomName].sockets.filter((s) => s !== old);
+			}
+		}
+	}
+	player.socketId = socket.id;
+	player.lock = true;
+	player.disconnectedAt = null;
+	if (roomName) {
+		socket.join(roomName);
+		if (!rooms[roomName].sockets.includes(socket)) rooms[roomName].sockets.push(socket);
+		clearTimeout(rooms[roomName].cleanupTimer);
 	}
 }
 
@@ -819,24 +929,30 @@ function recoverGame(game, roomName, socket) {
 
 // (Re)attaches a socket to its room and player: "joinRoom" from each page, and every
 // reconnection (the socket id changes, e.g. after a server restart).
-// No player name = the host's screen.
-function rejoinRoom(socket, pin, playerName) {
+// No player name = the host's screen. A player with a rejoin token is only attached with that token
+// (a page of a phone that was replaced by another one is not).
+function rejoinRoom(socket, pin, playerName, token) {
 	let roomName = findRoomName(pin);
 
 	if (roomName) {
+		let game = findGame(pin);
+		if (typeof game !== "undefined" && playerName.length > 0) {
+			let player = game.players.find((player) => player.name === playerName && player.id !== -1);
+			if (typeof player === "undefined" || !mayActAs(player, token)) {
+				return;
+			}
+		}
 		socket.join(roomName);
 		if (!rooms[roomName].sockets.includes(socket)) {
 			rooms[roomName].sockets.push(socket);
 		}
 		// Someone is back in the room: cancel its pending destruction
 		clearTimeout(rooms[roomName].cleanupTimer);
-		let game = findGame(pin);
 		if (typeof game !== "undefined" && playerName.length > 0) {
-			let player = game.players.find((player) => player.name === playerName);
-			if (typeof player !== "undefined") {
-				player.socketId = socket.id;
-				player.lock = true;
-			}
+			let player = game.players.find((player) => player.name === playerName && player.id !== -1);
+			player.socketId = socket.id;
+			player.lock = true;
+			player.disconnectedAt = null;
 		} else if (typeof game !== "undefined") {
 			// the host's screen (lobby, game or scores page): host events go to this socket
 			game.hostSocketId = socket.id;
@@ -859,7 +975,6 @@ const { v4: uuidv4 } = require("uuid");
 // Import custom functions from functions.js
 const {
 	generatePIN,
-	unlockedPlayers,
 	initBot,
 	addBotAnswer,
 	shuffle,
@@ -996,7 +1111,7 @@ io.on("connection", function (socket) {
 		if (auth.rejoin === true && auth.pin != null) {
 			const pin = clean(auth.pin);
 			const playerName = clean(auth.playerName);
-			rejoinRoom(socket, pin, playerName);
+			rejoinRoom(socket, pin, playerName, clean(auth.token));
 			catchUpPlayer(socket, pin, playerName);
 		}
 	})();
@@ -1055,17 +1170,18 @@ io.on("connection", function (socket) {
 
 			let game = findGame(data.pin);
 			if (typeof game !== "undefined") {
+				// This phone already plays in this game (its saved rejoin token): it is offered to
+				// take its place back, whatever the state of the game
+				const name = clean(data.playerName);
+				const known = game.players.find((player) => player.name === name && player.id !== -1);
+				const resume = known && !isFinished(game) && tokenMatches(known, clean(data.token)) ? known.name : null;
 				// We prevent max number of joigners before the game starts
-				if (game.players.length >= Number(maxNumberOfPlayers) && game.inGame == false) {
+				if (!resume && game.players.length >= Number(maxNumberOfPlayers) && game.inGame == false) {
 					socket.emit("errorRoomFull", MESSAGES.roomFull);
 					return;
 				} else {
-					socket.emit(
-						"gamePinFound",
-						game.pin,
-						game.inGame,
-						unlockedPlayers(game.players)
-					);
+					// players that can be picked (no connected page): names only
+					socket.emit("gamePinFound", game.pin, game.inGame, availablePlayers(game), { resume: resume });
 				}
 			} else {
 				socket.emit("findRoomByIdErrorMessages", MESSAGES.gameNotFound);
@@ -1074,41 +1190,111 @@ io.on("connection", function (socket) {
 	}, { global: true });
 
 	// Handler for joining a room (after entering PIN and before giving a name)
-	on("joinRoom", (pin, playerName) => {
-		rejoinRoom(socket, clean(pin), clean(playerName));
+	on("joinRoom", (pin, playerName, token) => {
+		rejoinRoom(socket, clean(pin), clean(playerName), clean(token));
 	});
 
-	// Handler for joining or rejoigning a game after disconnexion
+	// Handler for rejoining a game by picking a name (phone without a rejoin token for this game):
+	// only a player with no connected page can be taken over
 	on("joinGame", (pin, playerName) => {
 		pin = clean(pin);
 		playerName = clean(playerName);
 
 		let game = findGame(pin);
-		if (typeof game !== "undefined") {
-			// Only an existing, currently unlocked (disconnected) player can be taken over
-			let player = game.players.find((player) => player.name === playerName);
-			if (typeof player === "undefined" || player.lock) {
-				socket.emit("findRoomByIdErrorMessages", MESSAGES.gameNotFound);
-				return;
-			}
-			player.socketId = socket.id;
-			player.lock = true;
-
-			// Find what the game status if. As a function, redirect to the right page (waiting, prompt, Vote)
-			switch (game.status) {
-				case "answering":
-					socket.emit("redirect", "/html/prompt.html", pin, playerName);
-					break;
-
-				case "voting":
-					socket.emit("redirect", "/html/votePrompt.html", pin, playerName);
-					break;
-
-				default:
-					socket.emit("redirect", "/html/waiting.html", pin, playerName);
-					break;
-			}
+		if (typeof game === "undefined") {
+			socket.emit("findRoomByIdErrorMessages", MESSAGES.gameNotFound);
+			return;
 		}
+		let player = game.players.find((player) => player.name === playerName && player.id !== -1);
+		if (typeof player === "undefined") {
+			socket.emit("findRoomByIdErrorMessages", MESSAGES.gameNotFound);
+			return;
+		}
+		if (!playerAvailable(player)) {
+			// somebody plays with this name right now: refused, the phone gets the up-to-date list
+			socket.emit("findRoomByIdErrorMessages", MESSAGES.playerConnected);
+			socket.emit("gamePinFound", game.pin, game.inGame, availablePlayers(game), { resume: null, refresh: true });
+			return;
+		}
+		attachPlayer(socket, game, player);
+		issueToken(socket, game, player);
+		log("info", "player rejoined", { pin: game.pin, event: "joinGame", how: "name" });
+		socket.emit("redirect", playerPage(game, player), pin, player.name);
+	});
+
+	// Handler for rejoining a game with the rejoin token saved by the phone ("Rejoin as …", or the
+	// QR code link of a game the phone already plays in). Always allowed with the right token, even
+	// if another page still seems connected as that player (it is detached). A new token is issued.
+	on("resumeSession", (data) => {
+		data = asObject(data);
+		const game = findGame(clean(data.pin));
+		const name = clean(data.playerName);
+		const player = game && game.players.find((p) => p.name === name && p.id !== -1);
+		if (!player || isFinished(game) || !tokenMatches(player, clean(data.token))) {
+			socket.emit("resumeFailed", MESSAGES.sessionExpired);
+			return;
+		}
+		attachPlayer(socket, game, player);
+		issueToken(socket, game, player);
+		log("info", "player rejoined", { pin: game.pin, event: "resumeSession", how: "token" });
+		socket.emit("redirect", playerPage(game, player), String(game.pin), player.name);
+	});
+
+	// Is the rejoin token saved by this phone still good? (home page: "Rejoin as …" offer)
+	on("checkSession", (data) => {
+		data = asObject(data);
+		const game = findGame(clean(data.pin));
+		const name = clean(data.playerName);
+		const player = game && game.players.find((p) => p.name === name && p.id !== -1);
+		const valid = Boolean(player && !isFinished(game) && tokenMatches(player, clean(data.token)));
+		socket.emit("sessionStatus", {
+			valid: valid,
+			pin: valid ? String(game.pin) : null,
+			playerName: valid ? player.name : null,
+			inGame: valid ? Boolean(game.inGame) : false,
+		});
+	}, { global: true });
+
+	// Which page should this phone show? Sent by the phone pages on load, on every (re)connection,
+	// when the page becomes visible again (screen unlocked, browser back in front) and now and then:
+	// a phone that missed a "redirect" (socket suspended in the background) catches up.
+	// data: { pin, playerName, token, page }; answer (acknowledgement): { url, notice?, lastAction? }
+	// The phone only navigates when url is not the page it shows (no reload loop).
+	on("syncPlayer", (data, ack) => {
+		data = asObject(data);
+		const reply = typeof ack === "function" ? ack : (result) => socket.emit("syncPlayerResult", result);
+		const pin = clean(data.pin);
+		const name = clean(data.playerName);
+		const token = clean(data.token);
+		const page = clean(data.page);
+		const game = findGame(pin);
+		if (typeof game === "undefined") {
+			const reason = recentAbortReason(pin);
+			reply(reason ? { url: PAGE_HOME, notice: reason } : { url: PAGE_HOME });
+			return;
+		}
+		const player = game.players.find((p) => p.name === name && p.id !== -1);
+		if (!player) {
+			reply({ url: PAGE_HOME });
+			return;
+		}
+		if (!mayActAs(player, token)) {
+			// this phone was replaced by another one (rejoined with the token)
+			reply({ url: PAGE_HOME, notice: MESSAGES.sessionElsewhere });
+			return;
+		}
+		// attach this socket to the player (idempotent; "joinRoom" may have been lost)
+		if (player.socketId !== socket.id || !findRoomName(pin) || !socket.rooms.has(findRoomName(pin))) {
+			rejoinRoom(socket, pin, name, token);
+		}
+		const url = playerPage(game, player);
+		const result = { url: url };
+		if (page === PAGE_VOTE && url !== PAGE_VOTE && missedVote(game, player)) {
+			// the votes closed while this phone was away: "too late" on the waiting page
+			result.notice = MESSAGES.voteTooLate;
+			result.lastAction = "voteLate";
+		}
+		reply(result);
 	});
 
 	// Sets the player's name and goes to the waiting room
@@ -1146,6 +1332,8 @@ io.on("connection", function (socket) {
 				let id = uuidv4();
 				let player = new Player(id, data.playerName, ID);
 				game.players.push(player);
+				// rejoin token kept by the phone (sent before "userSet", which leaves the page)
+				issueToken(socket, game, player);
 
 				socket.join(roomName);
 				if (!rooms[roomName].sockets.includes(socket)) {
@@ -1189,10 +1377,12 @@ io.on("connection", function (socket) {
 	on("disconnect", () => {
 		//unlock the player of the game
 		//maybe user some "break to stop searching ?"
+		// (who can be rejoined is decided by playerAvailable: no connected socket)
 		games.forEach((game) => {
 			game.players.forEach((player) => {
 				if (player.socketId == socket.id) {
 					player.lock = false;
+					player.disconnectedAt = Date.now();
 				}
 			});
 		});
@@ -1627,7 +1817,8 @@ io.on("connection", function (socket) {
 			playersRankedByPoints.sort(function (a, b) {
 				return parseFloat(b.points) - parseFloat(a.points);
 			});
-			socket.emit("scores", game.players);
+			// names and points only (never the socket ids or the rejoin tokens)
+			socket.emit("scores", game.players.map((player) => ({ id: player.id, name: player.name, points: player.points })));
 		}
 	});
 

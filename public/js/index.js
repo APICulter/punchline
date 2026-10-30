@@ -264,7 +264,8 @@ function joinRoom() {
 	let roomPin = document.getElementById("roomPin");
 	let error = document.getElementById("errorPin");
 
-	
+	hideRejoinEmpty();
+
 	// Validation
 	if (roomPin.value.length == 0) {
 		displayErrorMessage(error, "error.pinEmpty", null, roomPin);
@@ -276,25 +277,177 @@ function joinRoom() {
 		displayErrorMessage(error, "error.pinLength", null, roomPin);
 		return;
 	} else {
-		socket.emit("findRoomById", {
-			pin: DOMPurify.sanitize(roomPin.value),
-		});
+		let payload = { pin: DOMPurify.sanitize(roomPin.value) };
+		// this phone already plays in that game: the server offers to take the place back
+		let saved = readSavedSession();
+		if (saved && saved.pin === payload.pin) {
+			payload.playerName = saved.playerName;
+			payload.token = saved.token;
+		}
+		socket.emit("findRoomById", payload);
 	}
-	
+}
 
+/* "Rejoin as <name>": this phone joined a game less than 6 hours ago (rejoin token saved by
+   common.js) and that game still has this player. Shown on the home page and after typing the PIN
+   of that game; the QR code link of that game rejoins directly. "That's not me" forgets the
+   saved session (shared phone) and goes on with the usual steps. */
+let resumeRequested = false;
+let resumeFallback = null; // what to do if the token is refused
+
+function resumeSession(saved, fallback) {
+	if (resumeRequested) {
+		return;
+	}
+	resumeRequested = true;
+	resumeFallback = fallback || null;
+	socket.emit("resumeSession", { pin: saved.pin, playerName: saved.playerName, token: saved.token });
+}
+
+socket.on("resumeFailed", function (key) {
+	resumeRequested = false;
+	forgetSavedSession();
+	removeResumeOffer();
+	let fallback = resumeFallback;
+	resumeFallback = null;
+	if (fallback) {
+		fallback(key);
+	} else {
+		showHomeChoices();
+		displayErrorMessage(document.getElementById("errorPin"), key);
+	}
+});
+
+function removeResumeOffer() {
+	let offer = document.getElementById("resumeOffer");
+	if (offer) {
+		offer.remove();
+	}
+}
+
+function showHomeChoices() {
+	document.getElementById("startButtons").classList.remove("hidden");
+	document.getElementById("tagline").classList.remove("hidden");
+}
+
+function showResumeOffer(saved, onNotMe) {
+	removeResumeOffer();
+	document.getElementById("startButtons").classList.add("hidden");
+	document.getElementById("join").classList.add("hidden");
+	document.getElementById("tagline").classList.add("hidden");
+
+	let offer = document.createElement("div");
+	offer.id = "resumeOffer";
+	offer.className = "panel mx-auto flex w-full max-w-md flex-col gap-4 animate__animated animate__fadeInUp";
+
+	let title = document.createElement("h2");
+	title.className = "panel-title";
+	i18nText(title, "resume.title");
+
+	let hint = document.createElement("p");
+	hint.className = "muted -mt-2";
+	i18nText(hint, "resume.hint", { pin: saved.pin });
+
+	let resumeButton = document.createElement("button");
+	resumeButton.id = "resumeButton";
+	resumeButton.type = "button";
+	resumeButton.className = "btn btn-primary btn-lg btn-block btn-wrap";
+	// the name only goes through the translation parameters (text, never HTML)
+	i18nText(resumeButton, "resume.button", { name: saved.playerName });
+	resumeButton.addEventListener("click", function () {
+		resumeButton.disabled = true;
+		resumeSession(saved, function (key) {
+			// refused (game over, player removed, replaced): back to the home page
+			showHomeChoices();
+			displayErrorMessage(document.getElementById("errorPin"), key);
+		});
+	});
+
+	let notMeButton = document.createElement("button");
+	notMeButton.id = "notMeButton";
+	notMeButton.type = "button";
+	notMeButton.className = "btn btn-secondary btn-block";
+	i18nText(notMeButton, "resume.notMe");
+	notMeButton.addEventListener("click", function () {
+		forgetSavedSession();
+		removeResumeOffer();
+		onNotMe();
+	});
+
+	offer.append(title, hint, resumeButton, notMeButton);
+	document.getElementById("createOrJoin").prepend(offer);
+	resumeButton.focus();
+}
+
+// Home page opened again (no PIN in the link) with a saved session: is that game still on?
+socket.on("sessionStatus", function (status) {
+	let saved = readSavedSession();
+	if (!saved) {
+		return;
+	}
+	if (!status || !status.valid || status.pin !== saved.pin || status.playerName !== saved.playerName) {
+		forgetSavedSession();
+		return;
+	}
+	// the player already went on (clicked "Join a game" or "Create a game")
+	if (!document.querySelector("#choice") || document.getElementById("startButtons").classList.contains("hidden")) {
+		return;
+	}
+	showResumeOffer(saved, showHomeChoices);
+});
+
+// "All the players of this game are connected": shown under the PIN field, which stays usable
+function showRejoinEmpty() {
+	let joinPanel = document.querySelector("#join .panel");
+	if (!joinPanel) {
+		return;
+	}
+	document.getElementById("startButtons").classList.add("hidden");
+	document.getElementById("join").classList.remove("hidden");
+	let box = document.getElementById("rejoinEmpty");
+	if (!box) {
+		box = document.createElement("div");
+		box.id = "rejoinEmpty";
+		box.className = "callout animate__animated animate__fadeIn";
+		box.setAttribute("role", "status");
+		let title = document.createElement("p");
+		title.className = "font-extrabold";
+		i18nText(title, "rejoin.empty.title");
+		let text = document.createElement("p");
+		text.className = "mt-1";
+		i18nText(text, "rejoin.empty.text");
+		box.append(title, text);
+		joinPanel.append(box);
+	}
+	let roomPin = document.getElementById("roomPin");
+	roomPin.focus();
+	roomPin.select();
+}
+
+function hideRejoinEmpty() {
+	let box = document.getElementById("rejoinEmpty");
+	if (box) {
+		box.remove();
+	}
 }
 
 // Link from the lobby QR code (/?pin=1234): straight to the join step with the PIN filled in
 // and submitted the same way as typed (on error the toast shows and the field stays editable).
 // The PIN is removed from the address bar first, so a refresh or "back" doesn't submit it again.
+// A phone that already plays in that game (saved session) goes straight back into it.
 (function joinFromLink() {
 	let params;
 	try {
 		params = new URLSearchParams(window.location.search);
 	} catch (e) {
-		return;
+		params = null;
 	}
-	if (!params.has("pin")) {
+	let saved = readSavedSession();
+	if (!params || !params.has("pin")) {
+		// home page: offer to rejoin the game this phone was playing in
+		if (saved) {
+			socket.emit("checkSession", { pin: saved.pin, playerName: saved.playerName, token: saved.token });
+		}
 		return;
 	}
 	let pin = String(params.get("pin") || "").trim().slice(0, 12);
@@ -307,20 +460,92 @@ function joinRoom() {
 
 	joinGameInit();
 	document.getElementById("roomPin").value = pin;
+	if (saved && saved.pin === pin) {
+		// token refused (game over, player removed): the usual join steps
+		resumeSession(saved, function () {
+			joinRoom();
+		});
+		return;
+	}
 	joinRoom();
 })();
 
 // Displays error message coming from the backend if the PIN encounters a problem
 socket.on("findRoomByIdErrorMessages", function (data) {
 	displayErrorMessage(document.getElementById("errorPin"), data, null, "roomPin");
-	
+	let nameError = document.getElementById("errorName");
+	if (nameError && data === "error.playerConnected") {
+		displayErrorMessage(nameError, data);
+	}
 });
 
+// The radio buttons of the players that can be picked (names only, no connected player)
+function fillNameList(list, players) {
+	list.replaceChildren();
+	players.forEach((element, index) => {
+		let player = document.createElement("input");
+		player.setAttribute("type", "radio");
+		// the id must not depend on the player's name (a name like "main" or "pin" would clash with the page ids)
+		player.id = "player-" + index;
+		player.value = element.name;
+		player.name = "player";
+		player.className = "sr-only";
+
+		let label = document.createElement("label");
+		label.setAttribute("for", player.id);
+		label.id = "label-" + index;
+
+		let playerBlock = document.createElement("div");
+		playerBlock.className = "choice-option";
+		playerBlock.textContent = element.name;
+		label.append(playerBlock);
+
+		list.append(player);
+		list.append(label);
+	});
+}
 
 // Displays the elements to enter the player's name once he/she has joined the room or if he/she reconnects to the game
-socket.on("gamePinFound", function (pin, inGame, players) {
+// extra: { resume: name of this phone's player (valid saved token) or null, refresh: true when the
+// list is sent again after a refused pick }
+socket.on("gamePinFound", function (pin, inGame, players, extra) {
+	players = Array.isArray(players) ? players : [];
+	extra = extra && typeof extra === "object" ? extra : {};
+
+	if (extra.refresh) {
+		let list = document.getElementById("nameList");
+		if (list && players.length > 0) {
+			fillNameList(list, players);
+		} else if (list) {
+			// nobody left to pick: back to the PIN step with the message
+			window.location.replace("/?pin=" + encodeURIComponent(pin));
+		}
+		return;
+	}
+
 	// the name selection is already displayed (e.g. "Join" clicked twice)
+	if (!document.querySelector("#choice") || document.getElementById("resumeOffer")) {
+		return;
+	}
+
+	let saved = readSavedSession();
+	if (extra.resume && saved && saved.pin === String(pin) && saved.playerName === extra.resume) {
+		showResumeOffer(saved, function () {
+			document.getElementById("join").classList.remove("hidden");
+			showNameStep(pin, inGame, players);
+		});
+		return;
+	}
+	showNameStep(pin, inGame, players);
+});
+
+function showNameStep(pin, inGame, players) {
 	if (!document.querySelector("#choice")) {
+		return;
+	}
+	// game in progress and every player is connected: nobody to pick
+	if (inGame && players.length === 0) {
+		showRejoinEmpty();
 		return;
 	}
 
@@ -387,28 +612,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 		availablePlayers.className = "flex flex-col gap-3";
 		availablePlayers.setAttribute("role", "radiogroup");
 		panel.append(availablePlayers);
-
-		players.forEach((element, index) => {
-			let player = document.createElement("input");
-			player.setAttribute("type", "radio");
-			// the id must not depend on the player's name (a name like "main" or "pin" would clash with the page ids)
-			player.id = "player-" + index;
-			player.value = element.name;
-			player.name = "player";
-			player.className = "sr-only";
-
-			let label = document.createElement("label");
-			label.setAttribute("for", player.id);
-			label.id = "label-" + index;
-
-			let playerBlock = document.createElement("div");
-			playerBlock.className = "choice-option";
-			playerBlock.textContent = element.name;
-			label.append(playerBlock);
-
-			availablePlayers.append(player);
-			availablePlayers.append(label);
-		});
+		fillNameList(availablePlayers, players);
 
 		let nameButton = document.createElement("button");
 		nameButton.id = "name-button";
@@ -428,7 +632,7 @@ socket.on("gamePinFound", function (pin, inGame, players) {
 			socket.emit("joinGame", document.querySelector("#pin").value, checkedPlayer.value);
 		});
 	}
-});
+}
 
 // Displays the new player in the room with a delete button to remove him/her if needed
 socket.on("newJoiner", function (data) {

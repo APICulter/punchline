@@ -403,6 +403,16 @@
     @apply grid h-8 w-8 shrink-0 place-items-center rounded-full bg-plum text-milk transition hover:bg-pink;
   }
 
+  /* Button whose label can be long (e.g. "Rejoin as <name>"): wraps on several lines */
+  .btn-wrap {
+    @apply h-auto py-3 text-center leading-tight [overflow-wrap:anywhere];
+  }
+
+  /* Inline message inside a panel (e.g. nobody left to rejoin in this game) */
+  .callout {
+    @apply rounded-2xl border-[2.5px] border-plum bg-butter px-5 py-4 text-lg leading-snug text-plum shadow-pop-sm;
+  }
+
   /* Big choice rows (rejoin a game: pick your name) */
   .choice-option {
     @apply flex min-h-[56px] cursor-pointer items-center rounded-2xl border-[2.5px] border-plum bg-milk px-5 text-xl font-bold shadow-pop-sm transition;

@@ -5,7 +5,7 @@ window.onload = function () {
 	playerName = sessionStorage.getItem("playerName");
 
 	if (playerName && punchlinePin) {
-		socket.emit("joinRoom", punchlinePin, playerName);
+		socket.emit("joinRoom", punchlinePin, playerName, playerToken());
 		socket.emit("getAnswers", { pin: punchlinePin });
 	} else {
 		window.location = "/";

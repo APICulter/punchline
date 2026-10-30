@@ -13,21 +13,171 @@ function storedSession() {
 		return { pin: null, playerName: null };
 	}
 }
+
+/* Rejoin token: given by the server when a player joins ("playerSession"), kept
+   - in sessionStorage ("punchlineToken") for the pages of this tab (joinRoom, syncPlayer),
+   - in localStorage ("punchline.session": pin, name, token, savedAt) so that the phone can take
+     its place back after the page was closed ("Rejoin as …" on the home page), for 6 hours. */
+var SAVED_SESSION_KEY = "punchline.session";
+var SAVED_SESSION_TTL_MS = 6 * 60 * 60 * 1000;
+
+function readSavedSession() {
+	try {
+		let saved = JSON.parse(localStorage.getItem(SAVED_SESSION_KEY) || "null");
+		if (!saved || typeof saved !== "object" || !saved.pin || !saved.playerName || !saved.token) {
+			return null;
+		}
+		if (!(Date.now() - Number(saved.savedAt) < SAVED_SESSION_TTL_MS)) {
+			localStorage.removeItem(SAVED_SESSION_KEY);
+			return null;
+		}
+		return { pin: String(saved.pin), playerName: String(saved.playerName), token: String(saved.token) };
+	} catch (e) {
+		return null;
+	}
+}
+
+function forgetSavedSession() {
+	try {
+		localStorage.removeItem(SAVED_SESSION_KEY);
+	} catch (e) {}
+}
+
+function saveSession(pin, playerName, token) {
+	try {
+		sessionStorage.setItem("punchlinePin", pin);
+		sessionStorage.setItem("playerName", playerName);
+		sessionStorage.setItem("punchlineToken", token);
+	} catch (e) {}
+	try {
+		localStorage.setItem(SAVED_SESSION_KEY, JSON.stringify({ pin: pin, playerName: playerName, token: token, savedAt: Date.now() }));
+	} catch (e) {}
+}
+
+// Token of the player of this tab (the saved one if it is for the same game and name)
+function playerToken() {
+	let session = storedSession();
+	try {
+		let token = sessionStorage.getItem("punchlineToken");
+		if (token) return token;
+	} catch (e) {}
+	let saved = readSavedSession();
+	return saved && saved.pin === String(session.pin) && saved.playerName === session.playerName ? saved.token : "";
+}
+
 const socket = io({
 	auth: function (cb) {
 		const session = storedSession();
-		cb(socketConnectedOnce && session.pin ? { rejoin: true, pin: session.pin, playerName: session.playerName || "" } : {});
+		cb(socketConnectedOnce && session.pin ? { rejoin: true, pin: session.pin, playerName: session.playerName || "", token: playerToken() } : {});
 	},
 });
 socket.on("connect", function () {
 	if (socketConnectedOnce) {
 		const session = storedSession();
 		if (session.pin) {
-			socket.emit("joinRoom", session.pin, session.playerName || undefined);
+			socket.emit("joinRoom", session.pin, session.playerName || undefined, playerToken() || undefined);
 		}
 	}
 	socketConnectedOnce = true;
+	// a phone that was away (network loss, screen locked, server restart) may have missed a redirect
+	syncPlayerPage();
 });
+
+// The server gives this phone its rejoin token (on joining, and again on every rejoin)
+socket.on("playerSession", function (data) {
+	if (data && data.pin && data.playerName && data.token) {
+		saveSession(String(data.pin), String(data.playerName), String(data.token));
+	}
+});
+
+/* Phone pages (waiting, prompt, vote): the server says which page this player should show right
+   now ("syncPlayer"), and the phone goes there if it is on another one. Asked on load / every
+   (re)connection, when the page becomes visible again (screen unlocked, browser back in front,
+   page restored from the back-forward cache), when the network comes back, and every few
+   seconds while visible, so that a phone that missed a "redirect" (iOS and Android suspend the
+   connection of a page in the background) never stays stuck on a stale page. */
+var PHONE_PAGES = ["/html/waiting.html", "/html/prompt.html", "/html/votePrompt.html"];
+var SYNC_TIMEOUT_MS = 5000;
+var SYNC_EVERY_MS = 10000;
+var leavingPage = false;
+var syncPending = false;
+
+function currentPhonePage() {
+	return PHONE_PAGES.indexOf(window.location.pathname) !== -1 ? window.location.pathname : null;
+}
+
+function goToPage(url) {
+	if (leavingPage) return;
+	leavingPage = true;
+	window.location = url;
+}
+
+function syncPlayerPage() {
+	let page = currentPhonePage();
+	let session = storedSession();
+	if (!page || leavingPage || !session.pin || !session.playerName) {
+		return;
+	}
+	// not connected: asked again as soon as the socket is back ("connect" above)
+	if (!socket.connected) {
+		// (and if it stopped trying to reconnect, try again now)
+		if (!socket.active) socket.connect();
+		return;
+	}
+	if (syncPending) {
+		return;
+	}
+	syncPending = true;
+	socket.timeout(SYNC_TIMEOUT_MS).emit(
+		"syncPlayer",
+		{ pin: session.pin, playerName: session.playerName, token: playerToken(), page: page },
+		function (err, result) {
+			syncPending = false;
+			if (err) {
+				// no answer: the connection looks open but is dead (phone woke up), open a new one
+				if (socket.connected) {
+					socket.disconnect();
+					socket.connect();
+				}
+				return;
+			}
+			if (!result || typeof result.url !== "string" || result.url.charAt(0) !== "/") {
+				return;
+			}
+			if (result.url === page) {
+				return;
+			}
+			if (result.notice) {
+				rememberNotice(result.notice);
+			}
+			if (result.lastAction) {
+				try {
+					sessionStorage.setItem("punchlineLastAction", result.lastAction);
+				} catch (e) {}
+			}
+			goToPage(result.url);
+		}
+	);
+}
+
+if (PHONE_PAGES.indexOf(window.location.pathname) !== -1) {
+	document.addEventListener("visibilitychange", function () {
+		if (document.visibilityState === "visible") syncPlayerPage();
+	});
+	window.addEventListener("pageshow", function (event) {
+		if (event.persisted) {
+			// back-forward cache: the page is shown again as it was, maybe long ago
+			leavingPage = false;
+			if (!socket.connected) socket.connect();
+			syncPlayerPage();
+		}
+	});
+	window.addEventListener("online", syncPlayerPage);
+	window.addEventListener("focus", syncPlayerPage);
+	setInterval(function () {
+		if (document.visibilityState === "visible") syncPlayerPage();
+	}, SYNC_EVERY_MS);
+}
 
 // Message to show once the next page is loaded (game stopped by an error or by an admin,
 // game resumed after a server restart). Read before index.js clears the session storage.
@@ -302,5 +452,6 @@ socket.on("redirect", (newGameURL, pin, playerName) => {
 	if (playerName) {
 		sessionStorage.setItem("playerName", playerName);
 	}
+	leavingPage = true;
 	window.location = newGameURL;
 });

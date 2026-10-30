@@ -199,7 +199,7 @@ function defaultLog(level, msg, fields) {
 // ---------------------------------------------------------------------------
 
 module.exports = function mountAdmin(app, options) {
-	const { mongoose, getGames, abortGame, premium } = options || {};
+	const { mongoose, getGames, abortGame, premium, isConnected } = options || {};
 	const log = (options && options.log) || defaultLog;
 	const credentials = loadCredentials();
 	const router = express.Router();
@@ -377,7 +377,7 @@ module.exports = function mountAdmin(app, options) {
 
 	api.use(questionsRouter({ mongoose, audit }));
 	api.use(ai.aiRouter({ service: aiService, audit, toClient: questionsRouter.toClient }));
-	api.use(gamesRouter({ getGames, abortGame, audit }));
+	api.use(gamesRouter({ getGames, abortGame, audit, isConnected }));
 	api.use(settingsRouter({ premium, audit }));
 
 	api.use((req, res) => res.status(404).json({ error: "admin.error.notFound" }));
