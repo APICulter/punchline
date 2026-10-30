@@ -6,7 +6,7 @@ window.onload = function () {
 
 	if (playerName && punchlinePin) {
 		socket.emit("joinRoom", punchlinePin, playerName, playerToken());
-		socket.emit("getAnswers", { pin: punchlinePin });
+		socket.emit("getAnswers", { pin: punchlinePin, playerName: playerName, token: playerToken() });
 	} else {
 		window.location = "/";
 	}
@@ -85,7 +85,8 @@ button.addEventListener("click", function () {
 // server closes the votes and sends the phone to the waiting page ("voteTimeUp" below).
 var voteTimerElement = document.getElementById("voteTimer");
 var voteTimerInterval = null;
-socket.on("voteTimer", function (data) {
+// Also called by common.js when the page sync brings the time left (a phone that missed "voteTimer")
+function applyVoteTimer(data) {
 	if (!data || !voteTimerElement) {
 		return;
 	}
@@ -109,7 +110,9 @@ socket.on("voteTimer", function (data) {
 	tick();
 	voteTimerElement.classList.remove("hidden");
 	voteTimerInterval = setInterval(tick, 250);
-});
+}
+window.applyVoteTimer = applyVoteTimer;
+socket.on("voteTimer", applyVoteTimer);
 
 // The votes are closed and this player did not vote: a toast on the waiting page ("redirect" follows)
 socket.on("voteTimeUp", function (key) {

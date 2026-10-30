@@ -16,7 +16,8 @@
  *   seedKey        bank questions only: norm of the original bank text (kept when an admin
  *                  edits the text, so that the seed does not add the original back)
  *
- * Bank / import CSV: no header, ";" separator, no quoting:
+ * Bank / import CSV: UTF-8, ";" separator, one question per line (a header line is skipped,
+ * spreadsheet quotes are removed):
  *   question;reponse_1;reponse_2;reponse_3;explicit[;category[;lang]]
  */
 "use strict";
@@ -206,63 +207,330 @@ function validateQuestion(input, options) {
 	return { value, errors };
 }
 
+// ---------------------------------------------------------------------------
+// CSV import: decoding, structure checks, per-line validation
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// CSV import: decoding, structure checks, per-line validation
+// ---------------------------------------------------------------------------
+
+const CSV_COLUMNS = ["question", "reponse_1", "reponse_2", "reponse_3", "explicit", "category", "lang"];
+const CSV_MIN_COLUMNS = 5; // question;reponse_1;reponse_2;reponse_3;explicit (category and lang optional)
+const CSV_VALUE_SHOWN = 40; // offending values are sent back truncated
+// explicit: Excel in French turns TRUE / FALSE into VRAI / FAUX
+const EXPLICIT_VALUES = { "": false, false: false, true: true, faux: false, vrai: true };
+// header cell words (normalized with normKey, digits removed)
+const HEADER_WORDS = new Set([
+	"question", "questions", "texte", "text", "reponse", "reponses", "answer", "answers", "bot",
+	"explicit", "explicite", "premium", "category", "categorie", "lang", "langue", "language",
+]);
+// UTF-8 read as Windows-1252 / Latin-1 then saved again as UTF-8 ("Ã©" for "é", "â€™" for "’")
+const CP1252_HIGH = "€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ";
+const MOJIBAKE = new RegExp("(?:[ÃÂÅ]|â€)[\\u0080-\\u00BF" + CP1252_HIGH + "]");
+
+function shortValue(value, max) {
+	const chars = Array.from(String(value == null ? "" : value).replace(/\s+/g, " ").trim());
+	max = max || CSV_VALUE_SHOWN;
+	return chars.length > max ? chars.slice(0, max - 1).join("") + "…" : chars.join("");
+}
+
+/**
+ * Bytes of an uploaded file -> { text, fatal: [{ code, params }] }.
+ * Refuses UTF-16 ("Unicode text" in Excel), spreadsheets (.xlsx / .xls), binary files and
+ * anything that is not valid UTF-8 (a Windows-1252 / Latin-1 "CSV" from an old Excel).
+ */
+function decodeCsv(buffer) {
+	if (!Buffer.isBuffer(buffer)) buffer = Buffer.from(String(buffer == null ? "" : buffer), "utf8");
+	const fail = (code, params) => ({ text: "", fatal: [{ code, params: params || {} }] });
+	if (buffer.length >= 2 && ((buffer[0] === 0xff && buffer[1] === 0xfe) || (buffer[0] === 0xfe && buffer[1] === 0xff))) {
+		return fail("admin.import.fatal.utf16");
+	}
+	if (buffer.length >= 4 && buffer[0] === 0x50 && buffer[1] === 0x4b && buffer[2] === 0x03 && buffer[3] === 0x04) {
+		return fail("admin.import.fatal.spreadsheet"); // .xlsx / .ods (zip)
+	}
+	if (buffer.length >= 4 && buffer[0] === 0xd0 && buffer[1] === 0xcf && buffer[2] === 0x11 && buffer[3] === 0xe0) {
+		return fail("admin.import.fatal.spreadsheet"); // old .xls
+	}
+	if (buffer.includes(0)) return fail("admin.import.fatal.binary");
+	try {
+		const text = new TextDecoder("utf-8", { fatal: true }).decode(buffer); // the BOM is removed
+		return { text, fatal: [] };
+	} catch (error) {
+		// first line with an invalid byte, to show the admin where (é, è, à… saved in Latin-1)
+		const loose = new TextDecoder("utf-8").decode(buffer).split(/\r\n|\n|\r/);
+		const index = loose.findIndex((line) => line.includes("�"));
+		const line = index + 1;
+		return fail("admin.import.fatal.encoding", {
+			line,
+			value: index >= 0 ? shortValue(loose[index]).replace(/�/g, "�") : "",
+		});
+	}
+}
+
+/**
+ * One line -> cells. ";" separates the cells; a cell written by a spreadsheet as "..." (with
+ * "" for a quote) is read as one cell even if it holds a ";" (then refused by the validation).
+ * Returns { cells, quoted } (quoted: at least one cell was wrapped in quotes).
+ */
+function splitCsvLine(raw) {
+	const cells = [];
+	let quoted = false;
+	let i = 0;
+	const n = raw.length;
+	for (;;) {
+		if (raw.charAt(i) === '"') {
+			let j = i + 1;
+			let text = "";
+			let closed = false;
+			while (j < n) {
+				const char = raw.charAt(j);
+				if (char === '"') {
+					if (raw.charAt(j + 1) === '"') {
+						text += '"';
+						j += 2;
+						continue;
+					}
+					let k = j + 1;
+					while (k < n && (raw.charAt(k) === " " || raw.charAt(k) === "\t")) k++;
+					if (k >= n || raw.charAt(k) === ";") {
+						closed = true;
+						j = k;
+					}
+					break;
+				}
+				text += char;
+				j++;
+			}
+			if (closed) {
+				cells.push(text);
+				quoted = true;
+				if (j >= n) return { cells, quoted };
+				i = j + 1;
+				continue;
+			}
+		}
+		const next = raw.indexOf(";", i);
+		if (next < 0) {
+			cells.push(raw.slice(i));
+			return { cells, quoted };
+		}
+		cells.push(raw.slice(i, next));
+		i = next + 1;
+	}
+}
+
+function looksLikeHeader(cells) {
+	const words = cells.map((cell) => normKey(cell).replace(/[\d_ ]+/g, " ").trim());
+	if (!HEADER_WORDS.has(words[0])) return false;
+	return words.slice(1).filter((word) => HEADER_WORDS.has(word) || HEADER_WORDS.has(word.split(" ")[0])).length >= 1;
+}
+
+// category cell -> key ("École" -> "ecole", "Pop" -> "pop"); null when unknown
+function readCategory(text) {
+	const key = normKey(text).replace(/\s+/g, "");
+	if (!key) return "";
+	return CATEGORIES.find((name) => name === key) || null;
+}
+
 /**
  * Parses CSV text: question;reponse_1;reponse_2;reponse_3;explicit[;category[;lang]]
- * (the old 5-field format is still accepted). Blank lines are skipped, a missing explicit
- * means "false", a missing lang means options.defaultLang. Strict: extra columns, an unknown
- * explicit, category or lang are reported as errors.
- * Returns { rows: [{ line, value }], errors: [{ line, errors: [key] }], lines, tooMany }.
+ * - structure (the whole file is refused, `fatal`): wrong separator (no ";" at all), wrong
+ *   encoding (mojibake such as "Ã©"), every line with more than 7 columns, no data line,
+ *   more than half of the lines invalid, more than options.maxLines lines;
+ * - per line (`errors`, the line is skipped): number of columns (5 to 7), empty question, no bot
+ *   answer, too long, forbidden characters, ";" inside a quoted text, unknown explicit /
+ *   category / lang;
+ * - warnings (the line is imported): header line skipped, spreadsheet quotes removed, empty
+ *   trailing columns removed; file level: the texts look written in the other language.
+ * Returns { rows: [{ line, value }], errors: [{ line, errors: ["field:key"], issues }],
+ *   warnings: [{ line, code, params }], fatal: [{ code, params }], lines, dataLines,
+ *   headerSkipped, tooMany }. issues: [{ field, code, params }] (field null = whole line).
  */
 function parseCsv(text, options) {
 	options = options || {};
 	const maxLines = options.maxLines || Infinity;
+	const defaultLang = options.defaultLang || DEFAULT_LANG;
 	const rows = [];
 	const errors = [];
+	const warnings = [];
+	const fatal = [];
+	const result = { rows, errors, warnings, fatal, lines: 0, dataLines: 0, headerSkipped: false };
 	const lines = String(text).replace(/^﻿/, "").split(/\r\n|\n|\r/);
 	// a trailing newline is not a line
 	if (lines.length > 1 && lines[lines.length - 1] === "") lines.pop();
+	result.lines = lines.length;
 	if (lines.length > maxLines) {
-		return { rows, errors: [{ line: 0, errors: ["admin.import.tooManyLines"] }], lines: lines.length, tooMany: true };
+		fatal.push({ code: "admin.import.tooManyLines", params: { max: maxLines } });
+		errors.push({ line: 0, errors: ["admin.import.tooManyLines"], issues: [] });
+		result.tooMany = true;
+		return result;
 	}
+
+	const filled = [];
 	lines.forEach((raw, index) => {
-		const line = index + 1;
-		if (raw.trim() === "") return;
-		const cells = raw.split(";");
-		if (cells.length > 7) {
-			errors.push({ line, errors: ["admin.import.tooManyColumns"] });
+		if (raw.trim() !== "") filled.push({ line: index + 1, raw });
+	});
+	if (filled.length === 0) {
+		fatal.push({ code: "admin.import.fatal.empty", params: {} });
+		return result;
+	}
+
+	// encoding: UTF-8 file opened as Windows-1252 and saved again
+	const garbled = filled.filter((item) => MOJIBAKE.test(item.raw));
+	if (garbled.length > 0) {
+		const match = garbled[0].raw.match(MOJIBAKE);
+		const at = Math.max(0, match.index - 15);
+		fatal.push({
+			code: "admin.import.fatal.mojibake",
+			params: { line: garbled[0].line, count: garbled.length, value: shortValue(garbled[0].raw.slice(at, at + 40)) },
+		});
+	}
+
+	// separator: no ";" anywhere
+	if (!filled.some((item) => item.raw.includes(";"))) {
+		const tabs = filled.filter((item) => item.raw.includes("\t")).length;
+		const commas = filled.filter((item) => item.raw.includes(",")).length;
+		const found = tabs === 0 && commas === 0 ? "none" : tabs >= commas ? "tab" : "comma";
+		fatal.push({ code: "admin.import.fatal.separator." + found, params: {} });
+	}
+	if (fatal.length > 0) return result;
+
+	// header line ("question;reponse_1;…"): skipped
+	let data = filled;
+	if (looksLikeHeader(splitCsvLine(filled[0].raw).cells)) {
+		warnings.push({ line: filled[0].line, code: "admin.import.warn.header", params: { value: shortValue(filled[0].raw) } });
+		result.headerSkipped = true;
+		data = filled.slice(1);
+	}
+	result.dataLines = data.length;
+	if (data.length === 0) {
+		fatal.push({ code: "admin.import.fatal.empty", params: {} });
+		return result;
+	}
+
+	let tooWideLines = 0;
+	const sameLangCheck = []; // rows without a lang column: language guessed from the texts
+	data.forEach(({ line, raw }) => {
+		const issues = [];
+		const lineWarnings = [];
+		let { cells, quoted } = splitCsvLine(raw);
+
+		// empty trailing columns (spreadsheet exports, "…;fr;;;"): removed
+		if (cells.length > CSV_COLUMNS.length && cells.slice(CSV_COLUMNS.length).every((cell) => cell.trim() === "")) {
+			lineWarnings.push({ line, code: "admin.import.warn.trailing", params: { count: cells.length - CSV_COLUMNS.length } });
+			cells = cells.slice(0, CSV_COLUMNS.length);
+		}
+		if (cells.length > CSV_COLUMNS.length || cells.length < CSV_MIN_COLUMNS) {
+			if (cells.length > CSV_COLUMNS.length) tooWideLines++;
+			issues.push({ field: null, code: cells.length > CSV_COLUMNS.length ? "admin.import.issue.tooManyColumns" : "admin.import.issue.tooFewColumns", params: { count: cells.length } });
+			errors.push({ line, errors: [cells.length > CSV_COLUMNS.length ? "admin.import.tooManyColumns" : "admin.import.tooFewColumns"], issues });
 			return;
 		}
-		const explicitText = (cells[4] || "").trim().toLowerCase() || "false";
-		if (explicitText !== "true" && explicitText !== "false") {
-			errors.push({ line, errors: ["admin.import.badExplicit"] });
+
+		// texts
+		const texts = {};
+		let quotesRemoved = quoted;
+		["question"].concat(ANSWER_FIELDS).forEach((field, index) => {
+			const rawCell = cells[index] || "";
+			const collapsed = String(rawCell).normalize("NFC").replace(/\s+/g, " ").trim();
+			const [value, error] = checkText(rawCell, field === "question" ? QUESTION_MAX : ANSWER_MAX, field === "question");
+			texts[field] = value;
+			if (collapsed !== value && /["“”«»]/.test(collapsed)) quotesRemoved = true;
+			if (!error) return;
+			const issue = { field, code: "admin.import.issue." + error.split(".").pop(), params: { value: shortValue(value) } };
+			if (error === "admin.error.tooLong") {
+				issue.params.length = Array.from(value).length;
+				issue.params.max = field === "question" ? QUESTION_MAX : ANSWER_MAX;
+			}
+			if (error === "admin.error.badChars") {
+				// eslint-disable-next-line no-control-regex
+				const bad = value.match(/[\u0000-\u001f\u007f�]/);
+				issue.params.char = bad ? "U+" + bad[0].charCodeAt(0).toString(16).toUpperCase().padStart(4, "0") : "";
+			}
+			issues.push(issue);
+		});
+		if (!issues.some((issue) => issue.field !== "question") && ANSWER_FIELDS.every((field) => texts[field].length === 0)) {
+			issues.push({ field: "reponse_1", code: "admin.import.issue.noAnswer", params: {} });
+		}
+
+		// explicit
+		const explicitRaw = tidy(cells[4] || "");
+		const explicitKey = explicitRaw.toLowerCase();
+		if (!Object.prototype.hasOwnProperty.call(EXPLICIT_VALUES, explicitKey)) {
+			issues.push({ field: "explicit", code: "admin.import.issue.explicit", params: { value: shortValue(explicitRaw) } });
+		}
+
+		// category
+		const categoryRaw = tidy(cells[5] || "");
+		const category = readCategory(categoryRaw);
+		if (category === null) {
+			issues.push({ field: "category", code: "admin.import.issue.category", params: { value: shortValue(categoryRaw) } });
+		}
+
+		// lang
+		const langRaw = tidy(cells[6] || "");
+		const langKey = langRaw.toLowerCase();
+		if (langKey && !LANGS.includes(langKey)) {
+			issues.push({ field: "lang", code: "admin.import.issue.lang", params: { value: shortValue(langRaw) } });
+		}
+
+		if (issues.length > 0) {
+			errors.push({
+				line,
+				errors: issues.map((issue) => (issue.field ? issue.field + ":" : "") + issue.code),
+				issues,
+			});
 			return;
 		}
-		const category = (cells[5] || "").trim().toLowerCase();
-		const langText = (cells[6] || "").trim().toLowerCase();
-		if (langText && !LANGS.includes(langText)) {
-			errors.push({ line, errors: ["admin.import.badLang"] });
-			return;
-		}
+
 		const { value, errors: fieldErrors } = validateQuestion(
 			{
-				question: cells[0],
-				reponse_1: cells[1],
-				reponse_2: cells[2],
-				reponse_3: cells[3],
-				explicit: explicitText === "true",
+				question: texts.question,
+				reponse_1: texts.reponse_1,
+				reponse_2: texts.reponse_2,
+				reponse_3: texts.reponse_3,
+				explicit: EXPLICIT_VALUES[explicitKey],
 				category,
-				lang: langText || options.defaultLang || DEFAULT_LANG,
+				lang: langKey || defaultLang,
 			},
 			{ requireLang: true }
 		);
 		const keys = Object.keys(fieldErrors);
 		if (keys.length > 0) {
-			errors.push({ line, errors: keys.map((field) => field + ":" + fieldErrors[field]) });
+			// not reached in practice (same checks as above), kept as a safety net
+			errors.push({
+				line,
+				errors: keys.map((field) => field + ":" + fieldErrors[field]),
+				issues: keys.map((field) => ({ field, code: "admin.import.issue.invalid", params: {} })),
+			});
 			return;
 		}
+		if (quotesRemoved) lineWarnings.push({ line, code: "admin.import.warn.quotes", params: {} });
+		warnings.push(...lineWarnings);
+		if (!langKey) sameLangCheck.push(value);
 		rows.push({ line, value });
 	});
-	return { rows, errors, lines: lines.length };
+
+	// structure: every line too wide, or more than half of the lines invalid
+	if (tooWideLines === data.length) {
+		fatal.push({ code: "admin.import.fatal.columns", params: { max: CSV_COLUMNS.length } });
+	} else if (errors.length * 2 > data.length) {
+		fatal.push({ code: "admin.import.fatal.mostlyInvalid", params: { count: errors.length, total: data.length } });
+	}
+
+	// the texts of the lines without lang look written in the other language
+	if (sameLangCheck.length >= 3) {
+		const other = sameLangCheck.filter((value) => detectLang(value) !== defaultLang).length;
+		if (other * 10 >= sameLangCheck.length * 7) {
+			warnings.unshift({
+				line: 0,
+				code: "admin.import.warn.otherLang",
+				params: { lang: defaultLang, detected: defaultLang === "fr" ? "en" : "fr", count: other, total: sameLangCheck.length },
+			});
+		}
+	}
+	return result;
 }
 
 // One CSV cell; old documents may contain characters the format can't hold: replaced by spaces
@@ -499,7 +767,11 @@ async function seedFile(mongoose, file, options) {
 	const text = fs.readFileSync(file, "utf8");
 	const parsed = parseCsv(text, { defaultLang: lang });
 	report.lines = parsed.lines;
-	report.invalid = parsed.errors;
+	report.invalid = parsed.errors.slice();
+	if (parsed.fatal.length > 0) {
+		report.invalid.unshift({ line: 0, errors: parsed.fatal.map((item) => item.code) });
+		return report;
+	}
 
 	// rows of another language (7th column) are ignored: the language comes from the file name
 	const rows = [];
@@ -607,6 +879,9 @@ module.exports = {
 	detectLang,
 	checkText,
 	validateQuestion,
+	CSV_COLUMNS,
+	decodeCsv,
+	splitCsvLine,
 	parseCsv,
 	toCsvLine,
 	getModel,

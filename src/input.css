@@ -1095,8 +1095,13 @@
     @apply grid-cols-3;
   }
 
+  /* phones: the counter goes under the label (three labels + counters don't fit in a row) */
   .segmented--3 label {
-    @apply gap-1.5 px-2 text-base;
+    @apply flex-col gap-0 px-1 py-1 text-base sm:flex-row sm:gap-1.5 sm:px-2 sm:py-0;
+  }
+
+  .segmented--3 .seg-count {
+    @apply text-xs leading-none sm:text-sm sm:leading-normal;
   }
 
   .seg-count {
@@ -1241,14 +1246,78 @@
     @apply bg-pink text-white;
   }
 
-  .pager {
-    @apply flex items-center justify-between gap-3 pb-4;
+  /* ----- List head ("518 questions" + per page) and pager ----- */
+
+  .list-head {
+    @apply flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-1;
   }
 
-  /* ----- Sheets ----- */
+  .per-page {
+    @apply flex items-center gap-2;
+  }
+
+  .per-page-label {
+    @apply whitespace-nowrap text-base font-extrabold tracking-tight;
+  }
+
+  /* First / previous on the left, "Page 2 of 26" in the middle, next / last on the right.
+     Phones: icon-only buttons (44px), the labels come back from sm. */
+  .pager {
+    @apply flex items-center justify-between gap-2 pb-4;
+  }
+
+  .pager-group {
+    @apply flex shrink-0 gap-2;
+  }
+
+  .pager-icon {
+    @apply w-11 px-0;
+  }
+
+  .pager-step {
+    @apply w-11 px-0 sm:w-auto sm:px-4;
+  }
+
+  .pager-step-label {
+    @apply hidden sm:inline;
+  }
+
+  .pager-info {
+    @apply flex min-w-0 flex-col items-center text-center leading-tight;
+  }
+
+  .pager-page {
+    @apply text-lg font-extrabold tabular-nums;
+  }
+
+  .pager-range {
+    @apply text-sm font-semibold tabular-nums text-plum/60;
+  }
+
+  /* ----- Sheets -----
+     The backdrop never scrolls: the card is a column (head / scrolling body / actions)
+     no taller than the screen, so there is one scrollbar at most, inside the card. */
+
+  .admin-sheet {
+    @apply overflow-hidden;
+    overscroll-behavior: contain;
+  }
 
   .admin-sheet-card {
-    @apply max-h-[92dvh] overflow-y-auto sm:max-w-2xl;
+    @apply flex flex-col overflow-hidden p-0 sm:max-w-2xl;
+    max-height: calc(100vh - 2.5rem);
+    max-height: calc(100dvh - 2.5rem);
+  }
+
+  @media (min-width: 640px) {
+    .admin-sheet.sheet {
+      @apply p-4;
+    }
+
+    .admin-sheet-card {
+      max-height: calc(100vh - 2rem);
+      max-height: calc(100dvh - 2rem);
+    }
   }
 
   .admin-sheet-card--narrow {
@@ -1263,8 +1332,55 @@
     @apply mb-5 flex items-center justify-between gap-4;
   }
 
+  .admin-sheet-card > .sheet-head {
+    @apply m-0 shrink-0 px-6 pb-3 pt-6 sm:pb-2 sm:pt-5;
+  }
+
+  /* room for the focus ring (ring-4) of the first and last fields */
+  .admin-sheet-body {
+    @apply min-h-0 flex-auto overflow-y-auto px-6 pb-6 pt-1.5;
+    overscroll-behavior: contain;
+  }
+
+  .admin-sheet-body--top {
+    @apply pt-6;
+  }
+
+  .admin-sheet-body::-webkit-scrollbar-track {
+    margin-block: 0.5rem;
+  }
+
   .sheet-actions {
     @apply flex flex-col-reverse gap-3 sm:flex-row sm:justify-end;
+  }
+
+  /* Actions always visible under the scrolling body; a row on phones too */
+  .admin-sheet-foot {
+    @apply shrink-0 flex-row flex-nowrap border-t-2 border-dashed border-plum/20 bg-milk px-6 pt-4 sm:pt-3.5;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 640px) {
+    .admin-sheet-foot {
+      padding-bottom: 1rem;
+    }
+  }
+
+  .admin-sheet-foot .btn {
+    @apply min-w-0 flex-1 px-4 sm:flex-none sm:px-6;
+  }
+
+  /* the head has a close button: no second "Close" on phones */
+  .admin-sheet-foot .admin-foot-close {
+    @apply hidden sm:inline-flex;
+  }
+
+  .admin-sheet-foot .btn-wrap {
+    @apply text-lg sm:text-xl;
+  }
+
+  .admin-sheet-foot .btn svg {
+    @apply h-6 w-6 shrink-0;
   }
 
   .has-sheet {
@@ -1286,7 +1402,11 @@
   }
 
   .import-stats {
-    @apply grid grid-cols-3 gap-2;
+    @apply grid grid-cols-2 gap-2 sm:grid-cols-4;
+  }
+
+  .import-stat--info {
+    @apply border-dashed bg-milk;
   }
 
   .import-stat {
@@ -1317,8 +1437,9 @@
     @apply cursor-pointer rounded-xl py-1 font-extrabold;
   }
 
+  /* no inner scrolling: the sheet body is the only scroller (long lists are collapsed) */
   .import-lines {
-    @apply mt-2 max-h-56 space-y-1.5 overflow-y-auto pr-1 text-base;
+    @apply mt-2 space-y-1.5 text-base;
   }
 
   .import-lines li {
@@ -1328,6 +1449,142 @@
 
   .import-line-no {
     @apply inline-flex h-6 shrink-0 items-center rounded-full bg-plum px-2 text-xs font-extrabold tabular-nums text-milk;
+  }
+
+  .import-line-body {
+    @apply flex min-w-0 flex-col gap-1;
+  }
+
+  .import-details--error summary {
+    @apply text-pink-deep;
+  }
+
+  /* "Col. 6 category" + "unknown category « sportt » (…)" */
+  .import-issue {
+    @apply flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5;
+  }
+
+  .import-col {
+    @apply inline-flex h-6 shrink-0 items-center gap-1 rounded-full border-2 border-plum bg-milk px-2 text-xs font-extrabold;
+  }
+
+  .import-col code {
+    @apply font-mono font-bold;
+  }
+
+  .import-msg {
+    @apply min-w-0 font-semibold;
+  }
+
+  .import-value {
+    @apply mt-1 inline-block max-w-full rounded-lg bg-plum px-2 py-0.5 font-mono text-sm font-semibold text-butter;
+    overflow-wrap: anywhere;
+  }
+
+  .import-note {
+    @apply rounded-xl border-2 border-dashed border-plum/40 bg-milk px-3 py-2 text-base font-semibold;
+  }
+
+  /* Whole file refused (separator, encoding, mostly invalid lines…) */
+  .import-fatal {
+    @apply flex flex-col gap-2 rounded-2xl border-[2.5px] border-plum bg-pink p-4 text-white shadow-pop-sm;
+  }
+
+  .import-fatal-title {
+    @apply text-xl font-extrabold tracking-tight;
+  }
+
+  .import-fatal-list {
+    @apply flex list-disc flex-col gap-2 pl-5 text-base font-bold leading-snug marker:text-white/70;
+  }
+
+  .import-fatal-list .import-value {
+    @apply block w-fit;
+  }
+
+  /* ----- Import: expected format ----- */
+
+  .import-help {
+    @apply rounded-[1.5rem] border-[2.5px] border-plum bg-milk-dim;
+  }
+
+  .import-help-summary {
+    @apply flex cursor-pointer list-none items-center justify-between gap-3 rounded-[1.25rem] px-4 py-3 text-lg font-extrabold tracking-tight;
+  }
+
+  .import-help-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .import-help-chevron {
+    @apply h-5 w-5 shrink-0 transition-transform;
+  }
+
+  .import-help[open] .import-help-chevron {
+    @apply rotate-180;
+  }
+
+  .import-help-body {
+    @apply flex flex-col gap-4 border-t-2 border-dashed border-plum/20 px-4 pb-4 pt-3;
+  }
+
+  /* One column per row: number, CSV name, description (below the name on phones) */
+  .csv-cols {
+    @apply flex flex-col gap-2.5;
+  }
+
+  .csv-cols li {
+    @apply grid grid-cols-[1.5rem_1fr] items-baseline gap-x-3 gap-y-1 sm:grid-cols-[1.5rem_6.5rem_1fr];
+  }
+
+  .csv-col-no {
+    @apply grid h-6 w-6 place-items-center self-start rounded-full bg-plum text-xs font-extrabold tabular-nums text-milk sm:row-span-1;
+    grid-row: span 2;
+  }
+
+  .csv-col-name {
+    @apply justify-self-start rounded-md border-2 border-plum bg-butter px-1.5 font-mono text-sm font-bold leading-normal;
+  }
+
+  .csv-col-desc {
+    @apply col-start-2 text-base leading-snug sm:col-start-3 sm:row-start-1;
+  }
+
+  .csv-cats {
+    @apply mt-1 flex flex-wrap gap-1;
+  }
+
+  .csv-cat {
+    @apply rounded-md border-2 border-plum/30 bg-milk px-1.5 font-mono text-sm font-semibold;
+  }
+
+  .import-rules {
+    @apply list-disc space-y-1 pl-5 text-base leading-snug marker:text-plum/50;
+  }
+
+  .import-example {
+    @apply flex flex-col gap-2;
+  }
+
+  /* each CSV line is a block; a long line wraps with a hanging indent */
+  .admin-code--example {
+    @apply max-h-56 overflow-y-auto whitespace-normal break-normal text-sm leading-relaxed sm:text-sm;
+  }
+
+  .admin-code--example:focus-visible {
+    outline: 3px solid theme("colors.plum.DEFAULT");
+    outline-offset: 2px;
+  }
+
+  .code-line {
+    @apply block whitespace-pre-wrap;
+    padding-left: 1.25em;
+    text-indent: -1.25em;
+    overflow-wrap: anywhere;
+  }
+
+  .code-line + .code-line {
+    @apply mt-1.5 border-t border-dashed border-butter/30 pt-1.5;
   }
 
   /* ----- Duplicates ----- */
@@ -1448,16 +1705,107 @@
     @apply grid gap-4 sm:grid-cols-3 lg:col-span-2;
   }
 
+  /* Real <select> (keyboard, screen readers, phone pickers) dressed like the fields: no native
+     arrow, a butter "sticker" chevron, the same border / shadow / focus ring as .field */
   .field--select {
-    @apply cursor-pointer appearance-none truncate pr-12 text-lg;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232B1740' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-position: right 1rem center;
+    @apply cursor-pointer appearance-none truncate pr-14 text-lg font-bold;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    color-scheme: light;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23FFD45E' stroke='%232B1740' stroke-width='2.5'/%3E%3Cpath d='m10.5 13.5 5.5 5.5 5.5-5.5' fill='none' stroke='%232B1740' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
     background-repeat: no-repeat;
-    background-size: 1.25rem;
+    background-size: 1.875rem;
+  }
+
+  .field--select:hover:not(:disabled) {
+    @apply bg-white;
+  }
+
+  .field--select:focus {
+    @apply bg-white;
+  }
+
+  .field--select::-ms-expand {
+    display: none;
+  }
+
+  /* the open list (when the browser lets us style it) */
+  .field--select option {
+    @apply bg-milk font-semibold text-plum;
+  }
+
+  .field--select option:checked {
+    @apply bg-butter font-bold;
+  }
+
+  /* Small select (per page) */
+  .field--compact {
+    @apply min-h-[44px] w-auto rounded-xl py-0 pl-4 pr-11 text-base font-extrabold tabular-nums;
+    background-position: right 0.5rem center;
+    background-size: 1.625rem;
   }
 
   .field:disabled {
     @apply cursor-not-allowed opacity-50;
+  }
+
+  /* ----- Scrollbars: thin, rounded plum thumb on a clear track (page, sheets, lists, code) ----- */
+
+  html:has(> body.admin)::-webkit-scrollbar,
+  .admin ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  html:has(> body.admin)::-webkit-scrollbar-track,
+  .admin ::-webkit-scrollbar-track,
+  html:has(> body.admin)::-webkit-scrollbar-corner,
+  .admin ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  html:has(> body.admin)::-webkit-scrollbar-thumb,
+  .admin ::-webkit-scrollbar-thumb {
+    min-height: 2.5rem;
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background-color: rgb(43 23 64 / 0.4);
+    background-clip: padding-box;
+  }
+
+  html:has(> body.admin)::-webkit-scrollbar-thumb:hover,
+  .admin ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(43 23 64 / 0.62);
+  }
+
+  html:has(> body.admin)::-webkit-scrollbar-thumb:active,
+  .admin ::-webkit-scrollbar-thumb:active {
+    background-color: rgb(43 23 64 / 0.78);
+  }
+
+  /* on the plum code blocks: a butter thumb */
+  .admin .admin-code::-webkit-scrollbar-thumb {
+    background-color: rgb(255 212 94 / 0.45);
+  }
+
+  .admin .admin-code::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(255 212 94 / 0.7);
+  }
+
+  /* Firefox (no ::-webkit-scrollbar). Chrome 121+ would drop the rules above for any element
+     with scrollbar-width / scrollbar-color, hence the @supports. */
+  @supports not selector(::-webkit-scrollbar) {
+    html:has(> body.admin),
+    .admin,
+    .admin * {
+      scrollbar-width: thin;
+      scrollbar-color: rgb(43 23 64 / 0.4) transparent;
+    }
+
+    .admin .admin-code {
+      scrollbar-color: rgb(255 212 94 / 0.5) transparent;
+    }
   }
 
   .q-badges {
@@ -1717,6 +2065,12 @@
 /* votes received / awaited, next to the time left to vote: a pill readable from the sofa */
 .phase-votes {
   @apply inline-flex h-12 shrink-0 items-center rounded-full border-[3px] border-plum bg-milk px-4 text-2xl font-extrabold tabular-nums text-plum shadow-pop-sm lg:h-16 lg:px-5 lg:text-4xl;
+}
+
+/* this section is outside the Tailwind layers, so its display rules beat the .hidden utility:
+   without this, the votes counter stayed on screen after the votes ("Next question in 1/2") */
+.phase-votes.hidden {
+  display: none;
 }
 
 /* waiting for the server (time left not known yet): milk + pink, breathing */

@@ -100,14 +100,17 @@
 									<label for="categoryFilter" class="field-label" data-i18n="admin.q.category">Category</label>
 									<select id="categoryFilter" class="field field--select" data-category-select="filter"></select>
 								</div>
-								<div class="min-w-0">
-									<label for="statusFilter" class="field-label" data-i18n="admin.q.status">Status</label>
-									<select id="statusFilter" class="field field--select">
-										<option value="approved" data-i18n="admin.status.approvedPlural">Approved</option>
-										<option value="rejected" data-i18n="admin.status.rejectedPlural">Rejected</option>
-										<option value="all" data-i18n="admin.status.all">All statuses</option>
-									</select>
-								</div>
+								<fieldset class="min-w-0">
+									<legend class="field-label" data-i18n="admin.q.status">Status</legend>
+									<div class="segmented segmented--3">
+										<input type="radio" id="statusApproved" name="statusFilter" value="approved" checked />
+										<label for="statusApproved" data-i18n="admin.status.approvedPlural">Approved</label>
+										<input type="radio" id="statusRejected" name="statusFilter" value="rejected" />
+										<label for="statusRejected" data-i18n="admin.status.rejectedPlural">Rejected</label>
+										<input type="radio" id="statusAll" name="statusFilter" value="all" />
+										<label for="statusAll" data-i18n="admin.status.allShort">All</label>
+									</div>
+								</fieldset>
 							</div>
 
 							<div class="admin-actions">
@@ -130,22 +133,41 @@
 							</div>
 						</div>
 
-						<div class="flex items-baseline justify-between gap-3 px-1">
+						<div class="list-head">
 							<p id="questionsSummary" class="admin-summary" aria-live="polite"></p>
+							<div class="per-page">
+								<label for="pageSizeQuestions" class="per-page-label" data-i18n="admin.pager.perPage">Per page</label>
+								<select id="pageSizeQuestions" class="field field--select field--compact" data-page-size>
+									<option value="10">10</option>
+									<option value="20">20</option>
+									<option value="50">50</option>
+									<option value="100">100</option>
+								</select>
+							</div>
 						</div>
 
 						<div id="questionsList" class="q-list" aria-busy="true"></div>
 
 						<nav id="pager" class="pager hidden" aria-label="Pages" data-i18n-aria-label="admin.pager">
-							<button id="prevPage" type="button" class="btn btn-secondary btn-sm">
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6" /></svg>
-								<span data-i18n="admin.pager.prev">Previous</span>
-							</button>
-							<p id="pageInfo" class="font-bold tabular-nums"></p>
-							<button id="nextPage" type="button" class="btn btn-secondary btn-sm">
-								<span data-i18n="admin.pager.next">Next</span>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 6 6 6-6 6" /></svg>
-							</button>
+							<div class="pager-group">
+								<button id="firstPage" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="First page" title="First page" data-i18n-aria-label="admin.pager.first" data-i18n-title="admin.pager.first">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17.5 6-6 6 6 6" /><path d="M7 6v12" /></svg>
+								</button>
+								<button id="prevPage" type="button" class="btn btn-secondary btn-sm pager-step" aria-label="Previous page" data-i18n-aria-label="admin.pager.prevPage">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6" /></svg>
+									<span class="pager-step-label" data-i18n="admin.pager.prev">Previous</span>
+								</button>
+							</div>
+							<p id="pageInfo" class="pager-info" aria-live="polite"></p>
+							<div class="pager-group">
+								<button id="nextPage" type="button" class="btn btn-secondary btn-sm pager-step" aria-label="Next page" data-i18n-aria-label="admin.pager.nextPage">
+									<span class="pager-step-label" data-i18n="admin.pager.next">Next</span>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 6 6 6-6 6" /></svg>
+								</button>
+								<button id="lastPage" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="Last page" title="Last page" data-i18n-aria-label="admin.pager.last" data-i18n-title="admin.pager.last">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 6 6 6-6 6" /><path d="M17 6v12" /></svg>
+								</button>
+							</div>
 						</nav>
 					</section>
 
@@ -183,22 +205,41 @@
 							</div>
 						</div>
 
-						<div class="flex items-baseline justify-between gap-3 px-1">
+						<div class="list-head">
 							<p id="reviewSummary" class="admin-summary" aria-live="polite"></p>
+							<div class="per-page">
+								<label for="pageSizeReview" class="per-page-label" data-i18n="admin.pager.perPage">Per page</label>
+								<select id="pageSizeReview" class="field field--select field--compact" data-page-size>
+									<option value="10">10</option>
+									<option value="20">20</option>
+									<option value="50">50</option>
+									<option value="100">100</option>
+								</select>
+							</div>
 						</div>
 
 						<div id="reviewList" class="q-list" aria-busy="true"></div>
 
 						<nav id="reviewPager" class="pager hidden" aria-label="Pages" data-i18n-aria-label="admin.pager">
-							<button id="reviewPrev" type="button" class="btn btn-secondary btn-sm">
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6" /></svg>
-								<span data-i18n="admin.pager.prev">Previous</span>
-							</button>
-							<p id="reviewPageInfo" class="font-bold tabular-nums"></p>
-							<button id="reviewNext" type="button" class="btn btn-secondary btn-sm">
-								<span data-i18n="admin.pager.next">Next</span>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 6 6 6-6 6" /></svg>
-							</button>
+							<div class="pager-group">
+								<button id="reviewFirst" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="First page" title="First page" data-i18n-aria-label="admin.pager.first" data-i18n-title="admin.pager.first">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17.5 6-6 6 6 6" /><path d="M7 6v12" /></svg>
+								</button>
+								<button id="reviewPrev" type="button" class="btn btn-secondary btn-sm pager-step" aria-label="Previous page" data-i18n-aria-label="admin.pager.prevPage">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6" /></svg>
+									<span class="pager-step-label" data-i18n="admin.pager.prev">Previous</span>
+								</button>
+							</div>
+							<p id="reviewPageInfo" class="pager-info" aria-live="polite"></p>
+							<div class="pager-group">
+								<button id="reviewNext" type="button" class="btn btn-secondary btn-sm pager-step" aria-label="Next page" data-i18n-aria-label="admin.pager.nextPage">
+									<span class="pager-step-label" data-i18n="admin.pager.next">Next</span>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 6 6 6-6 6" /></svg>
+								</button>
+								<button id="reviewLast" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="Last page" title="Last page" data-i18n-aria-label="admin.pager.last" data-i18n-title="admin.pager.last">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 6 6 6-6 6" /><path d="M17 6v12" /></svg>
+								</button>
+							</div>
 						</nav>
 					</section>
 
@@ -291,7 +332,7 @@
 					</button>
 				</div>
 
-				<div class="flex flex-col gap-5">
+				<div class="admin-sheet-body flex flex-col gap-4">
 					<div>
 						<div class="flex items-baseline justify-between gap-3">
 							<label for="fieldQuestion" class="field-label" data-i18n="admin.field.question">Question</label>
@@ -349,15 +390,15 @@
 							<input type="radio" id="typePremium" name="explicit" value="true" />
 							<label for="typePremium" data-i18n="admin.field.premium">Premium (explicit)</label>
 						</div>
-						<p class="muted mt-2 text-base" data-i18n="admin.field.typeHint">Premium questions only come up in games started with the premium code.</p>
+						<p class="muted mt-2 text-sm font-semibold" data-i18n="admin.field.typeHint">Premium questions only come up in games started with the premium code.</p>
 					</fieldset>
 
 					<p id="errorForm" class="form-error hidden" role="alert"></p>
+				</div>
 
-					<div class="sheet-actions">
-						<button type="button" class="btn btn-secondary" data-close data-i18n="admin.cancel">Cancel</button>
-						<button id="saveButton" type="submit" class="btn btn-primary" data-i18n="admin.save">Save</button>
-					</div>
+				<div class="admin-sheet-foot sheet-actions">
+					<button type="button" class="btn btn-secondary" data-close data-i18n="admin.cancel">Cancel</button>
+					<button id="saveButton" type="submit" class="btn btn-primary" data-i18n="admin.save">Save</button>
 				</div>
 			</form>
 		</div>
@@ -372,13 +413,48 @@
 					</button>
 				</div>
 
-				<div class="flex flex-col gap-5">
-					<div class="flex flex-col gap-2">
-						<p data-i18n="admin.import.format">A UTF-8 text file without header, one question per line:</p>
-						<pre class="admin-code"><code>question;reponse_1;reponse_2;reponse_3;explicit;category;lang</code></pre>
-						<p class="muted text-base" data-i18n="admin.import.formatHint">explicit is true or false (false if missing). No ";" inside the texts. 1 MB max. Questions already in the database are skipped.</p>
-						<p class="muted text-base" data-i18n="admin.import.formatHint2">category and lang are optional (the old 5-column files still work): a line without lang gets the language chosen below.</p>
-					</div>
+				<div class="admin-sheet-body flex flex-col gap-5">
+					<p class="text-lg leading-snug" data-i18n="admin.import.intro">A CSV file saved as "CSV UTF-8", with ";" as separator and one question per line.</p>
+
+					<details id="importHelp" class="import-help" open>
+						<summary class="import-help-summary">
+							<span data-i18n="admin.import.help.title">Expected format</span>
+							<svg class="import-help-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+						</summary>
+						<div class="import-help-body">
+							<ol class="csv-cols">
+								<li><span class="csv-col-no">1</span><code class="csv-col-name">question</code><span class="csv-col-desc" data-i18n="admin.import.col.questionDesc">The question or the sentence to complete. Required, 300 characters max.</span></li>
+								<li><span class="csv-col-no">2</span><code class="csv-col-name">reponse_1</code><span class="csv-col-desc" data-i18n="admin.import.col.answerDesc">A bot answer, 100 characters max. At least one of the three.</span></li>
+								<li><span class="csv-col-no">3</span><code class="csv-col-name">reponse_2</code><span class="csv-col-desc" data-i18n="admin.import.col.answerOptDesc">Another bot answer (can be empty).</span></li>
+								<li><span class="csv-col-no">4</span><code class="csv-col-name">reponse_3</code><span class="csv-col-desc" data-i18n="admin.import.col.answerOptDesc">Another bot answer (can be empty).</span></li>
+								<li><span class="csv-col-no">5</span><code class="csv-col-name">explicit</code><span class="csv-col-desc" data-i18n="admin.import.col.explicitDesc">true (premium, explicit) or false (classic). Empty = false.</span></li>
+								<li><span class="csv-col-no">6</span><code class="csv-col-name">category</code><span class="csv-col-desc"><span data-i18n="admin.import.col.categoryDesc">Optional. One of these values (empty = no category):</span> <span id="importCategories" class="csv-cats"></span></span></li>
+								<li><span class="csv-col-no">7</span><code class="csv-col-name">lang</code><span class="csv-col-desc" data-i18n="admin.import.col.langDesc">Optional: fr or en. Empty = the language chosen below.</span></li>
+							</ol>
+							<ul class="import-rules">
+								<li data-i18n="admin.import.rule.separator">No ";" inside the texts: it is the column separator.</li>
+								<li data-i18n="admin.import.rule.header">A header line (question;reponse_1;…) is allowed: it is skipped.</li>
+								<li data-i18n="admin.import.rule.quotes">Quotes added by Excel or LibreOffice are removed.</li>
+								<li data-i18n="admin.import.rule.limits">1 MB and 10,000 lines max. Questions already in the database are skipped.</li>
+							</ul>
+							<div class="import-example">
+								<div class="flex flex-wrap items-center justify-between gap-2">
+									<p class="field-label mb-0" data-i18n="admin.import.example">Example</p>
+									<div class="flex flex-wrap gap-2">
+										<button id="importCopyExample" type="button" class="btn btn-secondary btn-sm">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg>
+											<span data-i18n="admin.settings.copy">Copy</span>
+										</button>
+										<button id="importTemplate" type="button" class="btn btn-secondary btn-sm">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11" /><path d="m7.5 10.5 4.5 4.5 4.5-4.5" /><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" /></svg>
+											<span data-i18n="admin.import.template">Download a template</span>
+										</button>
+									</div>
+								</div>
+								<pre class="admin-code admin-code--example" tabindex="0" aria-label="Example" data-i18n-aria-label="admin.import.example"><code id="importExample" translate="no"></code></pre>
+							</div>
+						</div>
+					</details>
 
 					<fieldset>
 						<legend class="field-label" data-i18n="admin.import.lang">Language of the lines without lang</legend>
@@ -392,17 +468,18 @@
 
 					<div>
 						<label for="importFile" class="field-label" data-i18n="admin.import.file">CSV file</label>
-						<input id="importFile" type="file" accept=".csv,.txt,text/csv,text/plain" class="file-field" aria-describedby="importError" />
+						<input id="importFile" type="file" accept=".csv,.txt,text/csv,text/plain" class="file-field" aria-describedby="importFileHint importError" />
+						<p id="importFileHint" class="muted mt-2 text-base" data-i18n="admin.import.fileHint">The file is checked first: nothing is imported before you confirm.</p>
 						<p id="importError" class="field-error hidden" role="alert"></p>
 					</div>
 
 					<div id="importReport" class="import-report hidden" aria-live="polite"></div>
+				</div>
 
-					<div class="sheet-actions">
-						<button type="button" class="btn btn-secondary" data-close data-i18n="common.close">Close</button>
-						<button id="importCheck" type="button" class="btn btn-secondary" data-i18n="admin.import.check">Check the file</button>
-						<button id="importRun" type="button" class="btn btn-primary hidden"></button>
-					</div>
+				<div class="admin-sheet-foot sheet-actions">
+					<button type="button" class="btn btn-secondary admin-foot-close" data-close data-i18n="common.close">Close</button>
+					<button id="importCheck" type="button" class="btn btn-secondary" data-i18n="admin.import.check">Check the file</button>
+					<button id="importRun" type="button" class="btn btn-primary btn-wrap hidden" disabled></button>
 				</div>
 			</div>
 		</div>
@@ -417,7 +494,7 @@
 					</button>
 				</div>
 
-				<div class="flex flex-col gap-5">
+				<div class="admin-sheet-body flex flex-col gap-5">
 					<div id="aiOff" class="ai-off hidden">
 						<p class="font-extrabold" data-i18n="admin.ai.offTitle">AI generation is turned off on this server</p>
 						<p class="mt-1 text-base" data-i18n="admin.ai.offText">To turn it on, give the server an Anthropic API key, then restart it:</p>
@@ -469,15 +546,15 @@
 					<p id="generateInfo" class="muted text-sm font-semibold"></p>
 					<p id="generateError" class="form-error hidden" role="alert"></p>
 					<div id="generateReport" class="import-report hidden" aria-live="polite"></div>
+				</div>
 
-					<div class="sheet-actions">
-						<button type="button" class="btn btn-secondary" data-close data-i18n="common.close">Close</button>
-						<button id="generateReview" type="button" class="btn btn-secondary hidden" data-i18n="admin.ai.seeReview">See them in To review</button>
-						<button id="generateRun" type="submit" class="btn btn-primary">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1-5.1-1.9 5.1-1.9z" /><path d="M19 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" /></svg>
-							<span id="generateRunLabel" data-i18n="admin.ai.run">Generate</span>
-						</button>
-					</div>
+				<div class="admin-sheet-foot sheet-actions">
+					<button type="button" class="btn btn-secondary admin-foot-close" data-close data-i18n="common.close">Close</button>
+					<button id="generateReview" type="button" class="btn btn-secondary hidden" data-i18n="admin.ai.seeReview">See them in To review</button>
+					<button id="generateRun" type="submit" class="btn btn-primary">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1-5.1-1.9 5.1-1.9z" /><path d="M19 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" /></svg>
+						<span id="generateRunLabel" data-i18n="admin.ai.run">Generate</span>
+					</button>
 				</div>
 			</form>
 		</div>
@@ -491,18 +568,22 @@
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
 					</button>
 				</div>
-				<p class="muted mb-4 text-base" data-i18n="admin.dup.hint">Same question text, ignoring case, spaces and apostrophes.</p>
-				<div id="duplicatesList" class="flex flex-col gap-5" aria-live="polite"></div>
+				<div class="admin-sheet-body">
+					<p class="muted mb-4 text-base" data-i18n="admin.dup.hint">Same question text, ignoring case, spaces and apostrophes.</p>
+					<div id="duplicatesList" class="flex flex-col gap-5" aria-live="polite"></div>
+				</div>
 			</div>
 		</div>
 
 		<!-- ============ Sheet: confirmation ============ -->
 		<div id="confirmSheet" class="sheet admin-sheet admin-sheet--confirm hidden" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmText">
 			<div class="sheet-card admin-sheet-card admin-sheet-card--narrow">
-				<h2 id="confirmTitle" class="mb-3 text-2xl font-extrabold tracking-tight"></h2>
-				<p id="confirmText" class="mb-4 text-lg"></p>
-				<blockquote id="confirmQuote" class="bubble mb-8 hidden"></blockquote>
-				<div class="sheet-actions">
+				<div class="admin-sheet-body admin-sheet-body--top">
+					<h2 id="confirmTitle" class="mb-3 text-2xl font-extrabold tracking-tight"></h2>
+					<p id="confirmText" class="mb-4 text-lg"></p>
+					<blockquote id="confirmQuote" class="bubble mb-4 hidden"></blockquote>
+				</div>
+				<div class="admin-sheet-foot sheet-actions">
 					<button id="confirmCancel" type="button" class="btn btn-secondary" data-close data-i18n="admin.cancel">Cancel</button>
 					<button id="confirmOk" type="button" class="btn btn-pink"></button>
 				</div>

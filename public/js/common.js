@@ -145,6 +145,10 @@ function syncPlayerPage() {
 				return;
 			}
 			if (result.url === page) {
+				// vote page: the time left comes with every sync (in case "voteTimer" was missed)
+				if (result.vote && typeof window.applyVoteTimer === "function") {
+					window.applyVoteTimer(result.vote);
+				}
 				return;
 			}
 			if (result.notice) {

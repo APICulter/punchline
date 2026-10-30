@@ -47,6 +47,22 @@ const MESSAGES = {
 	"admin.import.badExplicit": "explicit must be true or false",
 	"admin.import.badLang": "lang must be the language of the file",
 	"admin.import.tooManyColumns": "more than 7 columns (a \";\" inside a text?)",
+	"admin.import.tooFewColumns": "fewer than 5 columns",
+	"admin.import.issue.required": "required",
+	"admin.import.issue.tooLong": "too long",
+	"admin.import.issue.badChars": "invalid characters",
+	"admin.import.issue.semicolon": "contains \";\"",
+	"admin.import.issue.noAnswer": "at least one bot answer is needed",
+	"admin.import.issue.explicit": "explicit must be true or false",
+	"admin.import.issue.category": "unknown category (expected one of: " + bank.CATEGORIES.join(", ") + ")",
+	"admin.import.issue.lang": "lang must be fr or en",
+	"admin.import.fatal.empty": "no question in the file",
+	"admin.import.fatal.mojibake": "wrong encoding (\"Ã©\" instead of \"é\"): save the file as UTF-8",
+	"admin.import.fatal.separator.comma": "the separator must be \";\" (commas found)",
+	"admin.import.fatal.separator.tab": "the separator must be \";\" (tabs found)",
+	"admin.import.fatal.separator.none": "the separator must be \";\" (none found)",
+	"admin.import.fatal.columns": "every line has more than 7 columns",
+	"admin.import.fatal.mostlyInvalid": "more than half of the lines are invalid: nothing imported",
 };
 
 function describe(code) {

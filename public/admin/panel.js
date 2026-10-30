@@ -12,6 +12,23 @@
 
 	var IMPORT_MAX_BYTES = 1024 * 1024;
 	var GAMES_REFRESH_MS = 5000;
+	var PAGE_SIZES = [10, 20, 50, 100];
+	var PAGE_SIZE_DEFAULT = 20;
+
+	// Number of questions per page, remembered per list ("questions", "review") in this browser
+	function storedPageSize(list) {
+		try {
+			var value = parseInt(window.localStorage.getItem("punchline.admin.pageSize." + list), 10);
+			if (PAGE_SIZES.indexOf(value) >= 0) return value;
+		} catch (e) {}
+		return PAGE_SIZE_DEFAULT;
+	}
+
+	function storePageSize(list, value) {
+		try {
+			window.localStorage.setItem("punchline.admin.pageSize." + list, String(value));
+		} catch (e) {}
+	}
 
 	// ======================================================================
 	// Session
@@ -82,7 +99,7 @@
 	// Questions: list, search, filter, pagination
 	// ======================================================================
 
-	var questions = { q: "", filter: "all", lang: panelLang(), category: "all", status: "approved", page: 1, pageSize: 20, data: null, request: 0 };
+	var questions = { q: "", filter: "all", lang: panelLang(), category: "all", status: "approved", page: 1, pageSize: storedPageSize("questions"), data: null, request: 0 };
 
 	var CATEGORIES = ["quotidien", "travail", "couple", "famille", "nourriture", "voyage", "ecole", "tech", "pop", "absurde", "animaux", "sport", "fete"];
 	var LANGS = ["fr", "en"];
@@ -313,6 +330,28 @@
 		if (review.data || currentTab === "review") loadReview();
 	}
 
+	/**
+	 * Pager of a list: "Page 2 of 26" + "Questions 21–40 of 518", first / previous / next / last.
+	 * ids: { nav, info, first, prev, next, last }
+	 */
+	function renderPager(ids, data, pageSize) {
+		$(ids.nav).classList.toggle("hidden", data.pages <= 1);
+		var info = $(ids.info);
+		var from = data.total ? (data.page - 1) * pageSize + 1 : 0;
+		var to = Math.min(data.total, data.page * pageSize);
+		info.replaceChildren(
+			el("span", { className: "pager-page", i18n: "admin.pager.info", params: { page: data.page, pages: data.pages } }),
+			el("span", { className: "pager-range", i18n: "admin.pager.range", params: { from: from, to: to, count: data.total } })
+		);
+		$(ids.first).disabled = data.page <= 1;
+		$(ids.prev).disabled = data.page <= 1;
+		$(ids.next).disabled = data.page >= data.pages;
+		$(ids.last).disabled = data.page >= data.pages;
+	}
+
+	var QUESTIONS_PAGER = { nav: "pager", info: "pageInfo", first: "firstPage", prev: "prevPage", next: "nextPage", last: "lastPage" };
+	var REVIEW_PAGER = { nav: "reviewPager", info: "reviewPageInfo", first: "reviewFirst", prev: "reviewPrev", next: "reviewNext", last: "reviewLast" };
+
 	function renderQuestions() {
 		var data = questions.data;
 		if (!data) return;
@@ -350,11 +389,7 @@
 			});
 		}
 
-		var pager = $("pager");
-		pager.classList.toggle("hidden", data.pages <= 1);
-		i18nText($("pageInfo"), "admin.pager.info", { page: data.page, pages: data.pages });
-		$("prevPage").disabled = data.page <= 1;
-		$("nextPage").disabled = data.page >= data.pages;
+		renderPager(QUESTIONS_PAGER, data, data.pageSize || questions.pageSize);
 	}
 
 	var searchTimer;
@@ -392,25 +427,55 @@
 		loadQuestions();
 	});
 
-	$("statusFilter").addEventListener("change", function (event) {
-		questions.status = event.target.value;
-		questions.page = 1;
-		loadQuestions();
+	Array.prototype.forEach.call(document.querySelectorAll('input[name="statusFilter"]'), function (radio) {
+		radio.addEventListener("change", function () {
+			if (!radio.checked) return;
+			questions.status = radio.value;
+			questions.page = 1;
+			loadQuestions();
+		});
 	});
 
-	function goToPage(page) {
-		questions.page = page;
-		loadQuestions().then(function () {
-			$("panel-questions").scrollIntoView({ block: "start", behavior: "smooth" });
+	// Pager buttons and "per page" select of a list
+	// list: { state, load, panel, ids, select, storage }
+	function bindPager(list) {
+		function go(page) {
+			var data = list.state.data;
+			if (!data) return;
+			page = Math.max(1, Math.min(data.pages, page));
+			if (page === list.state.page) return;
+			list.state.page = page;
+			list.load().then(function () {
+				// back to the top of the list (the toolbar stays reachable)
+				var top = $(list.head).getBoundingClientRect().top;
+				if (top < 0) $(list.head).scrollIntoView({ block: "start", behavior: "smooth" });
+			});
+		}
+		$(list.ids.first).addEventListener("click", function () {
+			go(1);
+		});
+		$(list.ids.prev).addEventListener("click", function () {
+			go(list.state.page - 1);
+		});
+		$(list.ids.next).addEventListener("click", function () {
+			go(list.state.page + 1);
+		});
+		$(list.ids.last).addEventListener("click", function () {
+			if (list.state.data) go(list.state.data.pages);
+		});
+		var select = $(list.select);
+		select.value = String(list.state.pageSize);
+		select.addEventListener("change", function () {
+			var value = parseInt(select.value, 10);
+			if (PAGE_SIZES.indexOf(value) < 0) return;
+			list.state.pageSize = value;
+			list.state.page = 1;
+			storePageSize(list.storage, value);
+			list.load();
 		});
 	}
 
-	$("prevPage").addEventListener("click", function () {
-		if (questions.data && questions.page > 1) goToPage(questions.page - 1);
-	});
-	$("nextPage").addEventListener("click", function () {
-		if (questions.data && questions.page < questions.data.pages) goToPage(questions.page + 1);
-	});
+	bindPager({ state: questions, load: loadQuestions, head: "questionsSummary", ids: QUESTIONS_PAGER, select: "pageSizeQuestions", storage: "questions" });
 
 	// ======================================================================
 	// Add / edit sheet
@@ -604,7 +669,63 @@
 	var importReport = $("importReport");
 	var importRun = $("importRun");
 	var importCheck = $("importCheck");
-	var lastReport = null;
+	var lastReport = null; // last check of the file currently selected (dry run)
+	var importRequest = 0;
+
+	// Example lines (the same as the downloaded template), in the panel's language
+	var IMPORT_EXAMPLES = {
+		fr: [
+			"Le pire cadeau à offrir à sa belle-mère ?;Un abonnement à la salle de sport;Un livre de recettes pour débutants;Une photo de moi, encadrée;false;famille;fr",
+			"Ce que ton chat pense vraiment de toi;Un distributeur de croquettes sur pattes;Le colocataire bruyant;L’employé du mois;false;animaux;fr",
+			"La pire chose à dire à un premier rendez-vous;Ma mère arrive dans dix minutes;Tu ressembles à mon ex;Je paie en tickets resto;true;couple;fr",
+		],
+		en: [
+			"The worst gift for your mother-in-law?;A gym membership;A cookbook for beginners;A framed photo of me;false;famille;en",
+			"What your cat really thinks of you;A kibble dispenser with legs;The noisy roommate;Employee of the month;false;animaux;en",
+			"The worst thing to say on a first date;My mom arrives in ten minutes;You look like my ex;I pay in coupons;true;couple;en",
+		],
+	};
+	var CSV_HEADER = "question;reponse_1;reponse_2;reponse_3;explicit;category;lang";
+
+	function importExampleLines() {
+		return IMPORT_EXAMPLES[getLang() === "en" ? "en" : "fr"];
+	}
+
+	function renderImportHelp() {
+		// one block per CSV line (a long line wraps with a hanging indent); copying keeps the line breaks
+		$("importExample").replaceChildren.apply(
+			$("importExample"),
+			importExampleLines().map(function (line, index, lines) {
+				return el("span", { className: "code-line", text: line + (index < lines.length - 1 ? "\n" : "") });
+			})
+		);
+		$("importCategories").replaceChildren.apply(
+			$("importCategories"),
+			CATEGORIES.map(function (name) {
+				return el("code", { className: "csv-cat", text: name, attrs: { title: t("admin.cat." + name) } });
+			})
+		);
+	}
+	renderImportHelp();
+
+	$("importCopyExample").addEventListener("click", function () {
+		copyText(importExampleLines().join("\n")).then(function (ok) {
+			Admin.toast(ok ? "admin.import.copied" : "admin.settings.copyFailed");
+		});
+	});
+
+	// Template: UTF-8 with BOM (Excel then reads the accents right), header + 2 example lines
+	$("importTemplate").addEventListener("click", function () {
+		var body = "﻿" + [CSV_HEADER].concat(importExampleLines().slice(0, 2)).join("\r\n") + "\r\n";
+		var url = URL.createObjectURL(new Blob([body], { type: "text/csv;charset=utf-8" }));
+		var link = el("a", { attrs: { href: url, download: "punchline-modele-" + (getLang() === "en" ? "en" : "fr") + ".csv" } });
+		document.body.appendChild(link);
+		link.click();
+		link.remove();
+		setTimeout(function () {
+			URL.revokeObjectURL(url);
+		}, 1000);
+	});
 
 	function setImportError(key, params) {
 		var error = $("importError");
@@ -618,28 +739,45 @@
 		error.classList.remove("hidden");
 	}
 
-	function resetImport() {
-		importFile.value = "";
-		$(questions.lang === "en" || (questions.lang === "all" && getLang() === "en") ? "importLangEn" : "importLangFr").checked = true;
+	// The import button only works after a successful check of the current file
+	function setImportReady(report) {
+		var ready = Boolean(report && report.dryRun && !report.blocked && report.toInsert > 0);
+		importRun.classList.toggle("hidden", !ready);
+		importRun.disabled = !ready;
+		// checked and importable: "Import" replaces "Check" (choosing another file checks it again)
+		importCheck.classList.toggle("hidden", ready || Boolean(report && !report.dryRun));
+		if (ready) {
+			i18nText(importRun, report.errorCount > 0 ? "admin.import.runValid" : "admin.import.run", { count: report.toInsert });
+		}
+	}
+
+	function clearImportReport() {
 		lastReport = null;
+		importRequest++;
 		setImportError(null);
 		importReport.replaceChildren();
 		importReport.classList.add("hidden");
-		importRun.classList.add("hidden");
+		setImportReady(null);
 		importCheck.classList.remove("hidden");
+		importCheck.disabled = false;
+	}
+
+	function resetImport() {
+		importFile.value = "";
+		$(questions.lang === "en" || (questions.lang === "all" && getLang() === "en") ? "importLangEn" : "importLangFr").checked = true;
+		$("importHelp").open = true;
+		clearImportReport();
 	}
 
 	$("importButton").addEventListener("click", function () {
 		resetImport();
-		Admin.openSheet(importSheet, importFile);
+		// the format help first (focusing the file field would scroll it out of view)
+		Admin.openSheet(importSheet, $("importHelp").querySelector("summary"));
+		importSheet.querySelector(".admin-sheet-body").scrollTop = 0;
 	});
 
 	importFile.addEventListener("change", function () {
-		lastReport = null;
-		setImportError(null);
-		importReport.classList.add("hidden");
-		importRun.classList.add("hidden");
-		importCheck.classList.remove("hidden");
+		clearImportReport();
 		if (importFile.files[0]) checkImport();
 	});
 
@@ -661,16 +799,27 @@
 		return file;
 	}
 
-	// "question:admin.error.tooLong" -> "Question: too long"
-	function lineErrorText(code) {
-		var parts = String(code).split(":");
-		if (parts.length === 2) {
-			return t("admin.field." + parts[0]) + t("admin.colon") + t(parts[1], { max: parts[0] === "question" ? 300 : 100 });
+	// Column of an issue: "Col. 6 · category"
+	var CSV_FIELDS = ["question", "reponse_1", "reponse_2", "reponse_3", "explicit", "category", "lang"];
+
+	function issueNode(issue) {
+		var params = Object.assign({}, issue.params || {});
+		if (issue.code === "admin.import.issue.category") params.allowed = CATEGORIES.join(", ");
+		var key = PunchlineI18n.has(issue.code) ? issue.code : "admin.error.invalid";
+		var nodes = [];
+		if (issue.field) {
+			nodes.push(
+				el("span", { className: "import-col" }, [
+					el("span", { i18n: "admin.import.colNo", params: { n: CSV_FIELDS.indexOf(issue.field) + 1 } }),
+					el("code", { text: issue.field }),
+				])
+			);
 		}
-		return t(code);
+		nodes.push(el("span", { className: "import-msg", i18n: key, params: params }));
+		return el("span", { className: "import-issue" }, nodes);
 	}
 
-	// tone: import-stat--ok import-stat--warn import-stat--error (full names kept for the Tailwind build)
+	// tone: import-stat--ok import-stat--warn import-stat--error import-stat--info (full names kept for the Tailwind build)
 	function stat(value, key, tone) {
 		return el("li", { className: "import-stat" + (tone ? " import-stat--" + tone : "") }, [
 			el("span", { className: "import-stat-value", text: value }),
@@ -678,15 +827,23 @@
 		]);
 	}
 
-	function detailList(titleKey, count, shown, items) {
+	// items: [{ line (0 = whole file), nodes }]
+	function detailList(titleKey, count, shown, items, tone, open) {
 		var list = el(
 			"ul",
 			{ className: "import-lines" },
 			items.map(function (item) {
-				return el("li", {}, [el("span", { className: "import-line-no", i18n: "admin.import.line", params: { line: item.line } }), item.node]);
+				return el("li", {}, [
+					el("span", {
+						className: "import-line-no",
+						i18n: item.line ? "admin.import.line" : "admin.import.wholeFile",
+						params: { line: item.line },
+					}),
+					el("span", { className: "import-line-body" }, item.nodes),
+				]);
 			})
 		);
-		var details = el("details", { className: "import-details", attrs: { open: count <= 10 } }, [
+		var details = el("details", { className: "import-details" + (tone ? " import-details--" + tone : ""), attrs: { open: open } }, [
 			el("summary", { i18n: titleKey, params: { count: count } }),
 			list,
 		]);
@@ -696,28 +853,51 @@
 		return details;
 	}
 
+	function renderFatal(report) {
+		var box = el("div", { className: "import-fatal", attrs: { role: "alert" } }, [
+			el("p", { className: "import-fatal-title", i18n: "admin.import.blockedTitle" }),
+			el(
+				"ul",
+				{ className: "import-fatal-list" },
+				report.fatal.map(function (item) {
+					var key = PunchlineI18n.has(item.code) ? item.code : "admin.import.blockedTitle";
+					var params = Object.assign({}, item.params || {});
+					return el("li", {}, [
+						el("span", { i18n: key, params: params }),
+						item.params && item.params.value ? el("code", { className: "import-value", text: item.params.value }) : null,
+					]);
+				})
+			),
+			el("p", { className: "text-base font-semibold", i18n: "admin.import.blockedHint" }),
+		]);
+		importReport.appendChild(box);
+	}
+
 	function renderImportReport(report) {
 		importReport.replaceChildren();
 		importReport.classList.remove("hidden");
 
-		if (report.tooManyLines) {
-			importReport.appendChild(el("p", { className: "form-error", i18n: "admin.import.tooManyLines" }));
-			return;
-		}
-
 		var duplicates = report.duplicatesDbCount + report.duplicatesFileCount;
-		var head = report.dryRun
+		var head = report.blocked
+			? null
+			: report.dryRun
 			? el("p", { className: "panel-title", i18n: "admin.import.previewTitle" })
 			: el("p", { className: "panel-title", i18n: "admin.import.doneTitle", params: { count: report.inserted } });
-		importReport.appendChild(head);
+		if (head) importReport.appendChild(head);
 
-		importReport.appendChild(
-			el("ul", { className: "import-stats" }, [
-				stat(report.dryRun ? report.toInsert : report.inserted, report.dryRun ? "admin.import.stat.new" : "admin.import.stat.added", (report.dryRun ? report.toInsert : report.inserted) ? "ok" : null),
-				stat(duplicates, "admin.import.stat.duplicates", duplicates ? "warn" : null),
-				stat(report.errorCount, "admin.import.stat.errors", report.errorCount ? "error" : null),
-			])
-		);
+		if (report.blocked) renderFatal(report);
+
+		if (!report.blocked || report.errorCount > 0 || report.warningCount > 0) {
+			var count = report.dryRun ? report.toInsert : report.inserted;
+			importReport.appendChild(
+				el("ul", { className: "import-stats" }, [
+					stat(count, report.dryRun ? "admin.import.stat.valid" : "admin.import.stat.added", count && !report.blocked ? "ok" : null),
+					stat(duplicates, "admin.import.stat.duplicates", duplicates ? "info" : null),
+					stat(report.errorCount, "admin.import.stat.errors", report.errorCount ? "error" : null),
+					stat(report.warningCount, "admin.import.stat.warnings", report.warningCount ? "warn" : null),
+				])
+			);
+		}
 
 		if (report.errorCount > 0) {
 			importReport.appendChild(
@@ -726,55 +906,91 @@
 					report.errorCount,
 					report.errors.length,
 					report.errors.map(function (item) {
-						return { line: item.line, node: el("span", { text: item.errors.map(lineErrorText).join(" · ") }) };
-					})
+						var issues = item.issues && item.issues.length ? item.issues : (item.errors || []).map(function (code) {
+							return { field: null, code: code, params: {} };
+						});
+						return { line: item.line, nodes: issues.map(issueNode) };
+					}),
+					"error",
+					report.errorCount <= 20
+				)
+			);
+		}
+		if (report.warningCount > 0) {
+			importReport.appendChild(
+				detailList(
+					"admin.import.warningsTitle",
+					report.warningCount,
+					report.warnings.length,
+					report.warnings.map(function (item) {
+						var params = Object.assign({}, item.params || {});
+						// "importées en français" / "imported in French"
+						var langName = function (code) {
+							var name = t("admin.lang." + code);
+							return getLang() === "fr" ? name.toLowerCase() : name;
+						};
+						if (params.lang) params.langName = langName(params.lang);
+						if (params.detected) params.detectedName = langName(params.detected);
+						return {
+							line: item.line,
+							nodes: [
+								el("span", { className: "import-msg", i18n: PunchlineI18n.has(item.code) ? item.code : "admin.error.invalid", params: params }),
+								params.value ? el("code", { className: "import-value", text: params.value }) : null,
+							],
+						};
+					}),
+					"warn",
+					report.warningCount <= 5
 				)
 			);
 		}
 		if (duplicates > 0) {
 			var items = report.duplicatesDb
 				.map(function (item) {
-					return { line: item.line, node: el("span", {}, [el("q", { text: item.question }), " ", el("span", { className: "muted", i18n: "admin.import.inDb" })]) };
+					return { line: item.line, nodes: [el("q", { text: item.question }), " ", el("span", { className: "muted", i18n: "admin.import.inDb" })] };
 				})
 				.concat(
 					report.duplicatesFile.map(function (item) {
 						return {
 							line: item.line,
-							node: el("span", {}, [el("q", { text: item.question }), " ", el("span", { className: "muted", i18n: "admin.import.sameAs", params: { line: item.sameAs } })]),
+							nodes: [el("q", { text: item.question }), " ", el("span", { className: "muted", i18n: "admin.import.sameAs", params: { line: item.sameAs } })],
 						};
 					})
 				)
 				.sort(function (a, b) {
 					return a.line - b.line;
 				});
-			importReport.appendChild(detailList("admin.import.duplicatesTitle", duplicates, items.length, items));
+			importReport.appendChild(detailList("admin.import.duplicatesTitle", duplicates, items.length, items, null, duplicates <= 5));
 		}
 
-		if (report.dryRun) {
-			importRun.classList.toggle("hidden", report.toInsert === 0);
-			importRun.disabled = report.toInsert === 0;
-			i18nText(importRun, "admin.import.run", { count: report.toInsert });
+		if (report.dryRun && !report.blocked) {
 			if (report.toInsert === 0) {
-				importReport.appendChild(el("p", { className: "muted", i18n: "admin.import.nothing" }));
+				importReport.appendChild(el("p", { className: "import-note", i18n: "admin.import.nothing" }));
+			} else if (report.errorCount > 0) {
+				importReport.appendChild(el("p", { className: "import-note", i18n: "admin.import.skipNote", params: { count: report.errorCount } }));
 			}
-		} else {
-			importRun.classList.add("hidden");
-			importCheck.classList.add("hidden");
 		}
+		setImportReady(report);
 	}
 
 	function sendImport(dryRun) {
 		var file = selectedFile();
 		if (!file) return Promise.resolve();
+		if (!dryRun && !(lastReport && lastReport.dryRun && lastReport.checksum)) return Promise.resolve();
+		var request = ++importRequest;
 		setImportError(null);
 		importCheck.disabled = true;
 		importRun.disabled = true;
 		importReport.setAttribute("aria-busy", "true");
 		var lang = $("importLangEn").checked ? "en" : "fr";
-		return Admin.api("POST", "/admin/api/questions/import?lang=" + lang + (dryRun ? "&dryRun=1" : ""), file, { type: "text/csv" })
+		var url = "/admin/api/questions/import?lang=" + lang + (dryRun ? "&dryRun=1" : "&checked=" + encodeURIComponent(lastReport.checksum));
+		return Admin.api("POST", url, file, { type: "text/csv" })
 			.then(function (report) {
+				if (request !== importRequest) return; // another file was chosen meanwhile
 				lastReport = report;
 				renderImportReport(report);
+				// the format help makes room for the report
+				$("importHelp").open = false;
 				if (!dryRun) {
 					Admin.toast("admin.import.doneTitle", { count: report.inserted });
 					questions.page = 1;
@@ -782,12 +998,23 @@
 				}
 			})
 			.catch(function (error) {
+				if (request !== importRequest) return;
+				// refused import (structure) or a file changed since the check: show the report again
+				if (error.data && error.data.fatal) {
+					lastReport = error.data;
+					renderImportReport(error.data);
+				} else if (!dryRun) {
+					// e.g. the file changed on disk since the check: check it again first
+					lastReport = null;
+					setImportReady(null);
+				}
 				setImportError(Admin.errorText(error));
 			})
 			.then(function () {
+				if (request !== importRequest) return;
 				importCheck.disabled = false;
-				importRun.disabled = false;
 				importReport.setAttribute("aria-busy", "false");
+				if (lastReport && lastReport.dryRun) setImportReady(lastReport);
 			});
 	}
 
@@ -795,15 +1022,20 @@
 		return sendImport(true);
 	}
 
-	importCheck.addEventListener("click", checkImport);
+	importCheck.addEventListener("click", function () {
+		clearImportReport();
+		checkImport();
+	});
 	// another default language: check the file again
 	Array.prototype.forEach.call(document.querySelectorAll('input[name="importLang"]'), function (radio) {
 		radio.addEventListener("change", function () {
-			if (radio.checked && importFile.files && importFile.files[0]) checkImport();
+			if (!radio.checked || !(importFile.files && importFile.files[0])) return;
+			clearImportReport();
+			checkImport();
 		});
 	});
 	importRun.addEventListener("click", function () {
-		if (lastReport && lastReport.dryRun && lastReport.toInsert > 0) sendImport(false);
+		if (lastReport && lastReport.dryRun && !lastReport.blocked && lastReport.toInsert > 0) sendImport(false);
 	});
 
 	// ======================================================================
@@ -872,7 +1104,7 @@
 	// To review: pending questions (AI generation)
 	// ======================================================================
 
-	var review = { lang: panelLang(), page: 1, pageSize: 20, data: null, request: 0 };
+	var review = { lang: panelLang(), page: 1, pageSize: storedPageSize("review"), data: null, request: 0 };
 
 	function loadReview() {
 		var request = ++review.request;
@@ -915,11 +1147,7 @@
 				list.appendChild(questionCard(item, { review: true }));
 			});
 		}
-		var pager = $("reviewPager");
-		pager.classList.toggle("hidden", data.pages <= 1);
-		i18nText($("reviewPageInfo"), "admin.pager.info", { page: data.page, pages: data.pages });
-		$("reviewPrev").disabled = data.page <= 1;
-		$("reviewNext").disabled = data.page >= data.pages;
+		renderPager(REVIEW_PAGER, data, data.pageSize || review.pageSize);
 	}
 
 	Array.prototype.forEach.call(document.querySelectorAll('input[name="reviewLang"]'), function (radio) {
@@ -930,18 +1158,7 @@
 			loadReview();
 		});
 	});
-	$("reviewPrev").addEventListener("click", function () {
-		if (review.data && review.page > 1) {
-			review.page -= 1;
-			loadReview();
-		}
-	});
-	$("reviewNext").addEventListener("click", function () {
-		if (review.data && review.page < review.data.pages) {
-			review.page += 1;
-			loadReview();
-		}
-	});
+	bindPager({ state: review, load: loadReview, head: "reviewSummary", ids: REVIEW_PAGER, select: "pageSizeReview", storage: "review" });
 
 	function reviewAll(action) {
 		var count = review.data ? review.data.total : 0;
@@ -1549,6 +1766,8 @@
 		renderGames();
 		renderLog();
 		renderSettings();
+		renderImportHelp();
+		if (lastReport && !importReport.classList.contains("hidden")) renderImportReport(lastReport);
 	});
 
 	// ======================================================================

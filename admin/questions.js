@@ -7,13 +7,17 @@
  *     status, source, playCount, lastPlayedAt, createdAt, norm }
  * reponse_1..3 are the bot's answers. explicit stays a STRING (the game matches "false").
  *
- * CSV format: no header, one question per line, no quoting (a field can't contain ";" or a
- * line break):
+ * CSV format: UTF-8, ";" separator, one question per line (a field can't contain ";" or a
+ * line break; a header line is skipped, spreadsheet quotes are removed):
  *   question;reponse_1;reponse_2;reponse_3;explicit[;category[;lang]]
- * The old 5-field format is accepted; a missing lang is the one chosen in the import dialog.
+ * A missing lang is the one chosen in the import dialog. Checks: bank.decodeCsv / parseCsv.
+ * Import = a dry run first (report + checksum), then the real import of the SAME file
+ * (?checked=<checksum>): the valid lines are inserted, the invalid ones and the duplicates
+ * skipped; a file with a structural problem (fatal) is refused as a whole.
  */
 "use strict";
 
+const crypto = require("crypto");
 const express = require("express");
 const bank = require("../db/question-bank");
 
@@ -95,7 +99,11 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 
 	const router = express.Router();
 	const json = express.json({ limit: "16kb", strict: true });
-	const csvBody = express.text({ type: ["text/csv", "text/plain", "application/vnd.ms-excel"], limit: IMPORT_MAX_BYTES });
+	// raw bytes: the encoding is checked here (a Latin-1 file is refused, not silently garbled)
+	const csvBody = express.raw({
+		type: ["text/csv", "text/plain", "application/vnd.ms-excel", "application/octet-stream"],
+		limit: IMPORT_MAX_BYTES,
+	});
 
 	function isObjectId(id) {
 		return typeof id === "string" && /^[a-f0-9]{24}$/i.test(id);
@@ -298,21 +306,32 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 		}
 	});
 
-	// POST /questions/import?dryRun=1&lang=fr   body: the CSV file (text/csv, max 1 MB)
+	// POST /questions/import?dryRun=1&lang=fr            body: the CSV file (max 1 MB) -> report
+	// POST /questions/import?lang=fr&checked=<checksum>   same file -> inserts the valid lines
 	router.post("/questions/import", csvBody, async (req, res, next) => {
 		try {
-			if (typeof req.body !== "string") {
+			if (!Buffer.isBuffer(req.body)) {
 				return res.status(415).json({ error: "admin.import.badType" });
 			}
 			const dryRun = req.query.dryRun === "1" || req.query.dryRun === "true";
 			if (!LANGS.includes(req.query.lang)) {
 				return badRequest(res, { lang: "admin.error.invalid" });
 			}
-			const parsed = bank.parseCsv(req.body, { defaultLang: req.query.lang, maxLines: IMPORT_MAX_LINES });
+			// the file and the default language that were checked
+			const checksum = crypto.createHash("sha256").update(req.query.lang + "\n").update(req.body).digest("hex").slice(0, 32);
+			if (!dryRun && req.query.checked !== checksum) {
+				return res.status(409).json({ error: "admin.import.notChecked" });
+			}
+
+			const decoded = bank.decodeCsv(req.body);
+			const parsed = decoded.fatal.length
+				? { rows: [], errors: [], warnings: [], fatal: decoded.fatal, lines: 0, dataLines: 0, headerSkipped: false }
+				: bank.parseCsv(decoded.text, { defaultLang: req.query.lang, maxLines: IMPORT_MAX_LINES });
+			const blocked = parsed.fatal.length > 0;
 
 			// questions already in the database: indexed lookups on {lang, norm}, by chunks
 			const known = new Set();
-			for (const lang of LANGS) {
+			for (const lang of blocked ? [] : LANGS) {
 				const norms = parsed.rows.filter((row) => row.value.lang === lang).map((row) => row.value.norm);
 				for (let i = 0; i < norms.length; i += 1000) {
 					const found = await Question.find({ lang, norm: { $in: norms.slice(i, i + 1000) } }, { norm: 1 }).lean();
@@ -338,7 +357,32 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 				}
 			});
 
-			let inserted = 0;
+			const report = {
+				dryRun,
+				checksum,
+				blocked,
+				fatal: parsed.fatal,
+				lines: parsed.lines,
+				dataLines: parsed.dataLines,
+				headerSkipped: Boolean(parsed.headerSkipped),
+				valid: parsed.rows.length,
+				toInsert: blocked ? 0 : toInsert.length,
+				toInsertByLang: byLang,
+				inserted: 0,
+				duplicatesDb: duplicatesDb.slice(0, REPORT_MAX_ITEMS),
+				duplicatesDbCount: duplicatesDb.length,
+				duplicatesFile: duplicatesFile.slice(0, REPORT_MAX_ITEMS),
+				duplicatesFileCount: duplicatesFile.length,
+				errors: parsed.errors.slice(0, REPORT_MAX_ITEMS),
+				errorCount: parsed.errors.length,
+				warnings: parsed.warnings.slice(0, REPORT_MAX_ITEMS),
+				warningCount: parsed.warnings.length,
+				tooManyLines: Boolean(parsed.tooMany),
+			};
+
+			if (!dryRun && blocked) {
+				return res.status(422).json(Object.assign({ error: "admin.import.blocked" }, report));
+			}
 			if (!dryRun && toInsert.length > 0) {
 				const now = new Date();
 				const docs = toInsert.map((value) =>
@@ -346,35 +390,21 @@ module.exports = function questionsRouter({ mongoose, audit }) {
 				);
 				try {
 					const result = await Question.insertMany(docs, { ordered: false });
-					inserted = result.length;
+					report.inserted = result.length;
 				} catch (error) {
 					// a question added meanwhile (unique index): the others are inserted
 					if (!isDuplicateKeyError(error) && !(error && error.writeErrors)) throw error;
-					inserted = error.insertedDocs ? error.insertedDocs.length : (error.result && error.result.insertedCount) || 0;
+					report.inserted = error.insertedDocs ? error.insertedDocs.length : (error.result && error.result.insertedCount) || 0;
 				}
 				await audit(req, "question.import", {
-					inserted,
+					inserted: report.inserted,
 					duplicates: duplicatesDb.length + duplicatesFile.length,
 					errors: parsed.errors.length,
+					warnings: parsed.warnings.length,
 					lang: req.query.lang,
 				});
 			}
-
-			res.json({
-				dryRun,
-				lines: parsed.lines,
-				valid: parsed.rows.length,
-				toInsert: toInsert.length,
-				toInsertByLang: byLang,
-				inserted,
-				duplicatesDb: duplicatesDb.slice(0, REPORT_MAX_ITEMS),
-				duplicatesDbCount: duplicatesDb.length,
-				duplicatesFile: duplicatesFile.slice(0, REPORT_MAX_ITEMS),
-				duplicatesFileCount: duplicatesFile.length,
-				errors: parsed.errors.slice(0, REPORT_MAX_ITEMS),
-				errorCount: parsed.errors.length,
-				tooManyLines: Boolean(parsed.tooMany),
-			});
+			res.json(report);
 		} catch (error) {
 			next(error);
 		}

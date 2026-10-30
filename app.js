@@ -1289,6 +1289,11 @@ io.on("connection", function (socket) {
 		}
 		const url = playerPage(game, player);
 		const result = { url: url };
+		// vote page: the time left to vote, so that a phone that missed "voteTimer" shows it
+		if (url === PAGE_VOTE) {
+			const state = openVoteState(game);
+			if (state) result.vote = voteTiming(state);
+		}
 		if (page === PAGE_VOTE && url !== PAGE_VOTE && missedVote(game, player)) {
 			// the votes closed while this phone was away: "too late" on the waiting page
 			result.notice = MESSAGES.voteTooLate;
@@ -1723,6 +1728,15 @@ io.on("connection", function (socket) {
 		// texts and opaque ids only: who wrote what (the bot included) is only known after the
 		// votes; "yours" lets the phone disable the player's own answer
 		let player = game.players.find((player) => player.socketId === socket.id && player.id !== -1);
+		// the socket may not be attached to the player yet (joinRoom lost or still on its way):
+		// the phone also sends its name and rejoin token
+		if (!player && data.playerName != null) {
+			const named = game.players.find((p) => p.name === clean(data.playerName) && p.id !== -1);
+			if (named && mayActAs(named, clean(data.token))) {
+				rejoinRoom(socket, clean(data.pin), named.name, clean(data.token));
+				player = named;
+			}
+		}
 		socket.emit("postAnswers", answersForPlayer(game.answers, player ? player.name : null));
 		// vote page: the time left to vote, or "too late" if the votes are already closed
 		if (player && !game.votes.includes(player.name)) {
