@@ -135,6 +135,22 @@
 
 						<div class="list-head">
 							<p id="questionsSummary" class="admin-summary" aria-live="polite"></p>
+							<!-- same pages as at the bottom of the list, so no need to scroll down to change page -->
+							<nav id="pagerTop" class="pager pager--top hidden" aria-label="Pages" data-i18n-aria-label="admin.pager">
+								<button id="firstPageTop" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="First page" title="First page" data-i18n-aria-label="admin.pager.first" data-i18n-title="admin.pager.first">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17.5 6-6 6 6 6" /><path d="M7 6v12" /></svg>
+								</button>
+								<button id="prevPageTop" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="Previous page" title="Previous page" data-i18n-aria-label="admin.pager.prevPage" data-i18n-title="admin.pager.prevPage">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6" /></svg>
+								</button>
+								<p id="pageInfoTop" class="pager-info"></p>
+								<button id="nextPageTop" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="Next page" title="Next page" data-i18n-aria-label="admin.pager.nextPage" data-i18n-title="admin.pager.nextPage">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 6 6 6-6 6" /></svg>
+								</button>
+								<button id="lastPageTop" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="Last page" title="Last page" data-i18n-aria-label="admin.pager.last" data-i18n-title="admin.pager.last">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 6 6 6-6 6" /><path d="M17 6v12" /></svg>
+								</button>
+							</nav>
 							<div class="per-page">
 								<label for="pageSizeQuestions" class="per-page-label" data-i18n="admin.pager.perPage">Per page</label>
 								<select id="pageSizeQuestions" class="field field--select field--compact" data-page-size>
@@ -207,6 +223,22 @@
 
 						<div class="list-head">
 							<p id="reviewSummary" class="admin-summary" aria-live="polite"></p>
+							<!-- same pages as at the bottom of the list, so no need to scroll down to change page -->
+							<nav id="reviewPagerTop" class="pager pager--top hidden" aria-label="Pages" data-i18n-aria-label="admin.pager">
+								<button id="reviewFirstTop" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="First page" title="First page" data-i18n-aria-label="admin.pager.first" data-i18n-title="admin.pager.first">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17.5 6-6 6 6 6" /><path d="M7 6v12" /></svg>
+								</button>
+								<button id="reviewPrevTop" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="Previous page" title="Previous page" data-i18n-aria-label="admin.pager.prevPage" data-i18n-title="admin.pager.prevPage">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6" /></svg>
+								</button>
+								<p id="reviewPageInfoTop" class="pager-info"></p>
+								<button id="reviewNextTop" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="Next page" title="Next page" data-i18n-aria-label="admin.pager.nextPage" data-i18n-title="admin.pager.nextPage">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 6 6 6-6 6" /></svg>
+								</button>
+								<button id="reviewLastTop" type="button" class="btn btn-secondary btn-sm pager-icon" aria-label="Last page" title="Last page" data-i18n-aria-label="admin.pager.last" data-i18n-title="admin.pager.last">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 6 6 6-6 6" /><path d="M17 6v12" /></svg>
+								</button>
+							</nav>
 							<div class="per-page">
 								<label for="pageSizeReview" class="per-page-label" data-i18n="admin.pager.perPage">Per page</label>
 								<select id="pageSizeReview" class="field field--select field--compact" data-page-size>

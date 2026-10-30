@@ -1256,6 +1256,16 @@
     @apply flex items-center gap-2;
   }
 
+  /* Compact pages above the list (icons + "2 / 26"), between the count and "Per page" */
+  /* phone: a full row under "518 questions · Per page"; wider screens: between them */
+  .pager.pager--top {
+    @apply order-last w-full justify-between gap-1.5 pb-0 sm:order-none sm:ml-auto sm:w-auto sm:justify-end;
+  }
+
+  .pager--top .pager-info {
+    @apply min-w-[4.5rem] text-center text-base font-extrabold tabular-nums;
+  }
+
   .per-page-label {
     @apply whitespace-nowrap text-base font-extrabold tracking-tight;
   }

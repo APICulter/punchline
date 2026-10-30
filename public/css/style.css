@@ -3777,6 +3777,35 @@ video {
   gap: 0.5rem;
 }
 
+  /* Compact pages above the list (icons + "2 / 26"), between the count and "Per page" */
+  /* phone: a full row under "518 questions · Per page"; wider screens: between them */
+  .pager.pager--top {
+  order: 9999;
+  width: 100%;
+  justify-content: space-between;
+  gap: 0.375rem;
+  padding-bottom: 0px;
+}
+  @media (min-width: 640px) {
+
+  .pager.pager--top {
+    order: 0;
+    margin-left: auto;
+    width: auto;
+    justify-content: flex-end;
+  }
+}
+
+  .pager--top .pager-info {
+  min-width: 4.5rem;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 800;
+  --tw-numeric-spacing: tabular-nums;
+  font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction);
+}
+
   .per-page-label {
   white-space: nowrap;
   font-size: 1rem;

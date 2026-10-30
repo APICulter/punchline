@@ -335,6 +335,14 @@
 	 * ids: { nav, info, first, prev, next, last }
 	 */
 	function renderPager(ids, data, pageSize) {
+		// the compact copy above the list: "2 / 26" and the same buttons
+		if (ids.top) {
+			var top = ids.top;
+			$(top.nav).classList.toggle("hidden", data.pages <= 1);
+			$(top.info).textContent = data.page + " / " + data.pages;
+			$(top.first).disabled = $(top.prev).disabled = data.page <= 1;
+			$(top.next).disabled = $(top.last).disabled = data.page >= data.pages;
+		}
 		$(ids.nav).classList.toggle("hidden", data.pages <= 1);
 		var info = $(ids.info);
 		var from = data.total ? (data.page - 1) * pageSize + 1 : 0;
@@ -349,8 +357,14 @@
 		$(ids.last).disabled = data.page >= data.pages;
 	}
 
-	var QUESTIONS_PAGER = { nav: "pager", info: "pageInfo", first: "firstPage", prev: "prevPage", next: "nextPage", last: "lastPage" };
-	var REVIEW_PAGER = { nav: "reviewPager", info: "reviewPageInfo", first: "reviewFirst", prev: "reviewPrev", next: "reviewNext", last: "reviewLast" };
+	var QUESTIONS_PAGER = {
+		nav: "pager", info: "pageInfo", first: "firstPage", prev: "prevPage", next: "nextPage", last: "lastPage",
+		top: { nav: "pagerTop", info: "pageInfoTop", first: "firstPageTop", prev: "prevPageTop", next: "nextPageTop", last: "lastPageTop" },
+	};
+	var REVIEW_PAGER = {
+		nav: "reviewPager", info: "reviewPageInfo", first: "reviewFirst", prev: "reviewPrev", next: "reviewNext", last: "reviewLast",
+		top: { nav: "reviewPagerTop", info: "reviewPageInfoTop", first: "reviewFirstTop", prev: "reviewPrevTop", next: "reviewNextTop", last: "reviewLastTop" },
+	};
 
 	function renderQuestions() {
 		var data = questions.data;
@@ -451,17 +465,20 @@
 				if (top < 0) $(list.head).scrollIntoView({ block: "start", behavior: "smooth" });
 			});
 		}
-		$(list.ids.first).addEventListener("click", function () {
-			go(1);
-		});
-		$(list.ids.prev).addEventListener("click", function () {
-			go(list.state.page - 1);
-		});
-		$(list.ids.next).addEventListener("click", function () {
-			go(list.state.page + 1);
-		});
-		$(list.ids.last).addEventListener("click", function () {
-			if (list.state.data) go(list.state.data.pages);
+		[list.ids, list.ids.top].forEach(function (ids) {
+			if (!ids) return;
+			$(ids.first).addEventListener("click", function () {
+				go(1);
+			});
+			$(ids.prev).addEventListener("click", function () {
+				go(list.state.page - 1);
+			});
+			$(ids.next).addEventListener("click", function () {
+				go(list.state.page + 1);
+			});
+			$(ids.last).addEventListener("click", function () {
+				if (list.state.data) go(list.state.data.pages);
+			});
 		});
 		var select = $(list.select);
 		select.value = String(list.state.pageSize);
