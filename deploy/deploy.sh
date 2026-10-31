@@ -160,7 +160,9 @@ ensure_deps() {
 	fi
 	log "installing dependencies: npm ci --omit=dev"
 	rm -f "$STATE_DIR/deps"
-	(cd "$APP_DIR" && as_app npm ci --omit=dev --no-audit --no-fund --loglevel=warn) || return 2
+	# --ignore-scripts: no package install script runs on the server (none of the production
+	# dependencies needs one; a compromised package can't run code at install time)
+	(cd "$APP_DIR" && as_app npm ci --omit=dev --ignore-scripts --no-audit --no-fund --loglevel=warn) || return 2
 	printf '%s\n' "$key" > "$STATE_DIR/deps"
 	return 0
 }

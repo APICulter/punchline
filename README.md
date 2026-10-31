@@ -110,6 +110,10 @@ The `deploy/` folder has everything needed to run Punchline on a Linux VPS (Debi
 | `deploy/punchline.service` | systemd unit, an alternative to PM2 (use one or the other) |
 | `deploy/punchline.env.example` | Environment file for the systemd unit |
 | `deploy/nginx-punchline.conf` | nginx site: HTTP → HTTPS, Let's Encrypt certificates, WebSocket proxy to `127.0.0.1:3000` |
+| `deploy/setup-vps.sh` | One-command setup of a fresh Ubuntu 24.04 / Debian 12 VPS (everything below, plus firewall, fail2ban, MongoDB authentication) |
+| `deploy/deploy.sh`, `deploy/deploy-wrapper.sh` | Deploy of one commit with health check and automatic rollback, called by GitHub Actions |
+
+**Automatic setup and deployment**: `deploy/setup-vps.sh` installs the whole server in one command, and every push to `main` that passes CI is deployed by GitHub Actions. See [deploy/README-ci.md](deploy/README-ci.md) for the one-time setup (VPS command, GitHub secrets) and rollbacks. The manual steps below remain valid.
 
 ### How the server stays up
 

@@ -53,6 +53,8 @@ function sendAnswer() {
 			answer: DOMPurify.sanitize(answer.value),
 			pin: DOMPurify.sanitize(punchlinePin),
 			playerName: DOMPurify.sanitize(playerName),
+			// the server checks that this page is that player's
+			token: playerToken(),
 		});
 		try {
 			sessionStorage.setItem("punchlineLastAction", "answer");
@@ -63,6 +65,8 @@ function sendAnswer() {
 		button.setAttribute("disabled", "disabled");
 	}
 }
+
+button.addEventListener("click", sendAnswer);
 
 // Displays error message coming from the backend if the answer is refused
 socket.on("answerErrorMessages", function (data) {

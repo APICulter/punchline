@@ -3,8 +3,9 @@ const { unquote } = require("./db/question-bank");
 const { Player } = require("./classes/player");
 
 // Generates a random 4-digit PIN for a room between 1000 and 9999
+// (crypto.randomInt: PINs are not predictable from previous ones)
 function generatePIN() {
-	return Math.floor(1000 + Math.random() * 9000);
+	return require("crypto").randomInt(1000, 10000);
 }
 
 // Returns the players that are not currently connected (can be taken over when rejoining a started game).

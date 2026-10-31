@@ -171,7 +171,7 @@ window.onload = function () {
 	playerName = sessionStorage.getItem("playerName");
 
 	if (punchlinePin && !playerName) {
-		socket.emit("joinRoom", punchlinePin, playerName);
+		socket.emit("joinRoom", punchlinePin, playerName, hostToken());
 		getConfig();
 		getQuestion(numberQuestion);
 		document.querySelector("#punchlinePin").textContent = punchlinePin;

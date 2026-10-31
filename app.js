@@ -45,13 +45,79 @@ function parseTrustProxy(value) {
 app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
 
 const server = http.createServer(app);
-const io = socketIO(server);
+const { WindowCounter, TokenBucket, clientKey } = require("./classes/rate-limiter");
+
+// Limits of the socket.io server (environment variables, generous defaults: a party is often
+// 10+ phones and the host behind ONE public IP address, so the per-address limits are high;
+// the per-socket ones are tighter). See SECURITY.md.
+function envInt(name, fallback, min, max) {
+	const number = parseInt(process.env[name], 10);
+	return Number.isInteger(number) ? Math.min(max, Math.max(min, number)) : fallback;
+}
+const LIMITS = {
+	// largest socket.io message (a payload is a few hundred bytes at most)
+	maxMessageBytes: envInt("SOCKET_MAX_MESSAGE_BYTES", 32 * 1024, 4 * 1024, 1024 * 1024),
+	// sockets open at the same time from one address (IPv6: per /64)
+	connectionsPerAddress: envInt("SOCKET_MAX_CONNECTIONS_PER_IP", 200, 10, 100000),
+	// new connections per address and per minute (each page of the game opens a new one)
+	connectsPerMinute: envInt("SOCKET_MAX_CONNECTS_PER_IP_PER_MINUTE", 300, 10, 100000),
+	// events per socket: burst, then per second
+	eventBurst: envInt("SOCKET_EVENT_BURST", 60, 10, 10000),
+	eventsPerSecond: envInt("SOCKET_EVENTS_PER_SECOND", 15, 1, 10000),
+	// games in memory: in all, created per address (not ended yet), per socket
+	maxGames: envInt("MAX_GAMES", 2000, 10, 1000000),
+	gamesPerAddress: envInt("MAX_GAMES_PER_IP", 30, 1, 100000),
+	gamesPerSocket: 5,
+	// unknown PIN / player / token answers before the address (or socket) must wait
+	pinMissesPerAddress: envInt("PIN_MISSES_PER_IP", 60, 5, 100000),
+	pinMissesPerSocket: 20,
+	pinMissWindowMs: 10 * 60 * 1000,
+};
+
+const io = socketIO(server, {
+	maxHttpBufferSize: LIMITS.maxMessageBytes,
+	// cross-site WebSocket / polling requests are refused (see allowedSocketOrigin)
+	allowRequest: (req, callback) => callback(null, allowedSocketOrigin(req)),
+});
 var path = require("path");
 const publicPath = path.join(__dirname, "public");
+
+/* Security headers of every page and file (the admin panel sets its own, stricter ones, in
+   admin/index.js; HSTS is set by the reverse proxy). The game pages load scripts, styles, fonts
+   and sounds from this server only, no inline script or handler, no style attribute in the
+   markup: a strict CSP. socket.io connects to the same origin ('self' covers ws/wss). */
+const GAME_CSP = [
+	"default-src 'self'",
+	"script-src 'self'",
+	"style-src 'self'",
+	"img-src 'self' data:",
+	"font-src 'self'",
+	"media-src 'self'",
+	"connect-src 'self'",
+	"object-src 'none'",
+	"base-uri 'none'",
+	"form-action 'self'",
+	"frame-ancestors 'none'",
+].join("; ");
+
+app.use(function securityHeaders(req, res, next) {
+	res.set({
+		"Content-Security-Policy": GAME_CSP,
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "DENY",
+		"Referrer-Policy": "same-origin",
+		"Cross-Origin-Opener-Policy": "same-origin",
+		"Cross-Origin-Resource-Policy": "same-origin",
+		"Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+	});
+	next();
+});
+
 app.get("/", function (req, res) {
 	res.sendFile(__dirname + "/public/html/index.html");
 });
-app.use(express.static(publicPath));
+// dotfiles (e.g. .gitkeep) are never served
+app.use(express.static(publicPath, { dotfiles: "ignore" }));
 
 // Optional custom music for the host screens: audio files in public/music/<phase>/
 // GET /api/music -> { lobby: ["/music/lobby/a.mp3", ...], countdown: [], ... }
@@ -82,16 +148,20 @@ app.get("/api/music", function (req, res) {
 
 // Health check for the supervisor / reverse proxy / monitoring:
 // 200 {status: "ok", ...} when MongoDB is connected, 503 otherwise (or while shutting down)
+// The number of games and the uptime are only given to a request made on this machine without
+// a proxy (monitoring, CI); through nginx (X-Forwarded-For set) the answer is the status only.
 app.get("/healthz", function (req, res) {
 	const mongo = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
 	const ok = mongo === "connected" && !shuttingDown;
+	const remote = String((req.socket && req.socket.remoteAddress) || "");
+	const local = /^(127\.|::1$|::ffff:127\.)/.test(remote) && !req.get("x-forwarded-for");
 	res.set("Cache-Control", "no-store");
-	res.status(ok ? 200 : 503).json({
-		status: shuttingDown ? "shutting_down" : ok ? "ok" : "degraded",
-		uptime: Math.round(process.uptime()),
-		games: games.length,
-		mongo: mongo,
-	});
+	const body = { status: shuttingDown ? "shutting_down" : ok ? "ok" : "degraded", mongo: mongo };
+	if (local) {
+		body.uptime = Math.round(process.uptime());
+		body.games = games.length;
+	}
+	res.status(ok ? 200 : 503).json(body);
 });
 
 // Admin panel (admin/): login, questions management, live games.
@@ -133,8 +203,16 @@ var games = [];
 var shuttingDown = false;
 
 // Read the configuration properties from external file and create global variables from it
+// (config.properties may hold secrets and should not be tracked by git: without it, the defaults
+// of config.properties.example are used, environment variables still apply)
 var propertiesReader = require("properties-reader");
-var properties = propertiesReader(__dirname + "/config.properties");
+var properties;
+try {
+	properties = propertiesReader(__dirname + "/config.properties");
+} catch (error) {
+	log("warn", "config.properties not found: using config.properties.example (and the environment)");
+	properties = propertiesReader(__dirname + "/config.properties.example");
+}
 properties.each((key, value) => {
 	global[key] = value;
 });
@@ -231,42 +309,43 @@ const premiumStore = require("./admin/premium").createPremiumStore({
 // in 15 minutes (the address is the proxy's X-Forwarded-For only behind a trusted proxy).
 const PREMIUM_MAX_FAILURES = 10;
 const PREMIUM_WINDOW_MS = 15 * 60 * 1000;
-const premiumFailures = new Map(); // address -> { count, since }
+const premiumFailures = new WindowCounter({ max: PREMIUM_MAX_FAILURES, windowMs: PREMIUM_WINDOW_MS });
+
+// Address of the client of a request / handshake, like Express's req.ip: X-Forwarded-For is read
+// from the right, skipping the trusted proxies only (the left part is written by the client and
+// can be anything). Without a trusted proxy: the socket address.
+function requestAddress(remoteAddress, headers) {
+	const address = String(remoteAddress || "");
+	const trustFn = app.get("trust proxy fn");
+	if (typeof trustFn !== "function" || !trustFn(address, 0)) return address;
+	const forwarded = String((headers || {})["x-forwarded-for"] || "")
+		.split(",")
+		.map((part) => part.trim())
+		.filter(Boolean);
+	let client = address;
+	for (let i = forwarded.length - 1, hop = 1; i >= 0; i--, hop++) {
+		client = forwarded[i];
+		if (!trustFn(client, hop)) break;
+	}
+	return client;
+}
 
 function clientAddress(socket) {
-	const address = socket.handshake.address || "";
-	const trustFn = app.get("trust proxy fn");
-	if (typeof trustFn === "function" && trustFn(address, 0)) {
-		const forwarded = String((socket.handshake.headers || {})["x-forwarded-for"] || "").split(",")[0].trim();
-		if (forwarded) return forwarded;
-	}
-	return address;
+	return requestAddress(socket.handshake.address, socket.handshake.headers);
+}
+
+// Key of the client for the per-address limits (IPv6: its /64)
+function addressKey(socket) {
+	if (!socket.data.addressKey) socket.data.addressKey = clientKey(clientAddress(socket));
+	return socket.data.addressKey;
 }
 
 function premiumBlocked(address) {
-	const entry = premiumFailures.get(address);
-	if (!entry) return false;
-	if (Date.now() - entry.since > PREMIUM_WINDOW_MS) {
-		premiumFailures.delete(address);
-		return false;
-	}
-	return entry.count >= PREMIUM_MAX_FAILURES;
+	return premiumFailures.blocked(clientKey(address));
 }
 
 function recordPremiumFailure(address) {
-	const now = Date.now();
-	const entry = premiumFailures.get(address);
-	if (!entry || now - entry.since > PREMIUM_WINDOW_MS) {
-		premiumFailures.set(address, { count: 1, since: now });
-	} else {
-		entry.count++;
-	}
-	// keep the map small
-	if (premiumFailures.size > 10000) {
-		for (const [key, value] of premiumFailures) {
-			if (now - value.since > PREMIUM_WINDOW_MS) premiumFailures.delete(key);
-		}
-	}
+	premiumFailures.hit(clientKey(address));
 }
 
 // Database connexion: a single shared connection, kept open for the server's lifetime
@@ -315,6 +394,8 @@ const MESSAGES = {
 	premiumCodeLength: "error.premiumCodeLength",
 	premiumCodeInvalid: "error.premiumCodeInvalid",
 	premiumTooManyAttempts: "error.premiumTooManyAttempts",
+	tooManyAttempts: "error.tooManyAttempts",
+	tooManyGames: "error.tooManyGames",
 	questionsUnavailable: "error.questionsUnavailable",
 	notEnoughQuestions: "error.notEnoughQuestions",
 	fewerQuestions: "notice.fewerQuestions",
@@ -351,6 +432,8 @@ function boundedSetting(value, min, max, fallback) {
 const DEFAULT_ANSWER_TIME = boundedSetting(global.questionCountDown, ANSWER_TIME_MIN, ANSWER_TIME_MAX, 60);
 const DEFAULT_REVEAL_TIME = boundedSetting(global.revealTime, REVEAL_TIME_MIN, REVEAL_TIME_MAX, 10);
 const DEFAULT_VOTE_TIME = boundedSetting(global.voteCountDown, VOTE_TIME_MIN, VOTE_TIME_MAX, 30);
+// Players per game (a missing / invalid value must not mean "unlimited")
+const MAX_PLAYERS = boundedSetting(global.maxNumberOfPlayers, 2, 100, 10);
 
 // Validates a timer sent by the host: undefined / empty => default, otherwise an integer
 // within [min, max]; returns null when invalid
@@ -392,9 +475,19 @@ function asObject(data) {
 	return data !== null && typeof data === "object" ? data : {};
 }
 
-// Sanitizes any client value into a string
+// Sanitizes any client value into a string. Cut before DOMPurify (CPU cost grows with the
+// length; no field of the game is anywhere near this long).
+const CLEAN_MAX_LENGTH = 1000;
 function clean(value) {
-	return DOMPurify.sanitize(value == null ? "" : String(value));
+	if (value !== null && typeof value === "object") return "";
+	return DOMPurify.sanitize(value == null ? "" : String(value).slice(0, CLEAN_MAX_LENGTH));
+}
+
+// Control characters and bidirectional overrides (a name or an answer that reverses or hides
+// text on the other screens) are removed
+function stripControls(text) {
+	// eslint-disable-next-line no-control-regex
+	return String(text).replace(/[\u0000-\u001f\u007f-\u009f​‎‏‪-‮⁠-⁤⁦-⁩﻿]/g, "");
 }
 
 // Removes a game from memory (its saved copy is marked as finished on the next save)
@@ -485,8 +578,6 @@ const PIN_ARGUMENT = {
 	vote: (args) => args[1],
 	leaveRoom: (args) => (typeof args[0] === "string" && rooms[args[0]] ? rooms[args[0]].pin : undefined),
 };
-// Events a socket sends before being part of the game: the PIN of the payload is enough
-const JOINING_EVENTS = ["joinRoom", "joinGame", "setUsername", "findRoomById", "resumeSession", "syncPlayer"];
 
 // Does this socket take part in the game (room member, host or player)?
 function socketBelongsTo(socket, pin) {
@@ -506,7 +597,9 @@ function errorPin(socket, event, args) {
 		const read = PIN_ARGUMENT[event] || ((a) => (a[0] !== null && typeof a[0] === "object" ? a[0].pin : undefined));
 		const candidate = clean(read(args)).trim();
 		if (/^[0-9]{4}$/.test(candidate) && (findGame(candidate) || findRoomName(candidate))) {
-			if (JOINING_EVENTS.includes(event) || socketBelongsTo(socket, candidate)) {
+			// (a socket that is not part of that game yet, e.g. "joinRoom" with somebody else's
+			// PIN, must not be able to abort it: its error is only logged)
+			if (socketBelongsTo(socket, candidate)) {
 				return Number(candidate);
 			}
 		}
@@ -602,6 +695,8 @@ const removedPins = new Set(); // games removed from memory since the last save
 function serializeGame(game) {
 	return {
 		pin: game.pin,
+		// the host's screen keeps it across a server restart (see mayHost)
+		hostToken: game.hostToken || null,
 		players: game.players.map((player) => ({
 			id: player.id,
 			name: player.name,
@@ -791,11 +886,24 @@ function newPlayerToken() {
 	return crypto.randomBytes(24).toString("base64url");
 }
 
-function tokenMatches(player, token) {
-	if (!player || typeof player.token !== "string" || player.token.length === 0) return false;
+function sameToken(expectedToken, token) {
+	if (typeof expectedToken !== "string" || expectedToken.length === 0) return false;
 	const given = Buffer.from(String(token == null ? "" : token));
-	const expected = Buffer.from(player.token);
+	const expected = Buffer.from(expectedToken);
 	return given.length === expected.length && crypto.timingSafeEqual(given, expected);
+}
+
+function tokenMatches(player, token) {
+	return Boolean(player) && sameToken(player.token, token);
+}
+
+/* Host token: given to the screen that created the game ("newGame", 2nd argument), kept in its
+   sessionStorage and sent with "joinRoom" (and the reconnection handshake) by the lobby, game and
+   scores pages. Only a socket that presented it becomes the host's socket (game.hostSocketId):
+   knowing the PIN is not enough to drive somebody else's game. Games saved before host tokens
+   existed (no game.hostToken) keep the old rule (any page without a player name). */
+function mayHost(game, token) {
+	return !game.hostToken || sameToken(game.hostToken, token);
 }
 
 // The page that sent this token / name may act as this player (players without a token: games
@@ -941,6 +1049,9 @@ function rejoinRoom(socket, pin, playerName, token) {
 			if (typeof player === "undefined" || !mayActAs(player, token)) {
 				return;
 			}
+		} else if (typeof game !== "undefined" && !mayHost(game, token)) {
+			// a page without a player name and without the host token: neither host nor player
+			return;
 		}
 		socket.join(roomName);
 		if (!rooms[roomName].sockets.includes(socket)) {
@@ -954,7 +1065,8 @@ function rejoinRoom(socket, pin, playerName, token) {
 			player.lock = true;
 			player.disconnectedAt = null;
 		} else if (typeof game !== "undefined") {
-			// the host's screen (lobby, game or scores page): host events go to this socket
+			// the host's screen (lobby, game or scores page, host token checked above): host
+			// events go to this socket
 			game.hostSocketId = socket.id;
 			if (restoredGames.has(game)) {
 				recoverGame(game, roomName, socket);
@@ -1098,11 +1210,141 @@ io.engine.on("connection_error", (err) => {
 	log("warn", "socket.io connection error", { error: err && err.message, code: err && err.code });
 });
 
+/**  *****************************************************************************************
+ ******************************** Abuse limits (see SECURITY.md) ****************************
+ ***************************************************************************************** **/
+
+// Cross-site requests: a page of another site must not open sockets with the browsers of the
+// visitors (to spread a PIN brute force over many addresses). Browsers always send Origin;
+// it must be this server (Host header, X-Forwarded-Host from a trusted proxy, PUBLIC_URL or
+// punchlineURL, SOCKET_ALLOWED_ORIGINS). No Origin (non-browser clients): allowed.
+function originHosts(req) {
+	const hosts = new Set();
+	const add = (value) => {
+		const host = String(value || "").split(",")[0].trim().toLowerCase();
+		if (host) hosts.add(host);
+	};
+	const headers = req.headers || {};
+	add(headers.host);
+	const trustFn = app.get("trust proxy fn");
+	if (typeof trustFn === "function" && trustFn(String((req.socket && req.socket.remoteAddress) || ""), 0)) {
+		add(headers["x-forwarded-host"]);
+	}
+	const configured = [process.env.PUBLIC_URL, global.punchlineURL]
+		.concat(String(process.env.SOCKET_ALLOWED_ORIGINS || "").split(","))
+		.map((value) => String(value || "").trim())
+		.filter(Boolean);
+	configured.forEach((value) => {
+		try {
+			add(new URL(value).host);
+		} catch (e) {
+			// not a URL: ignored
+		}
+	});
+	return hosts;
+}
+
+function allowedSocketOrigin(req) {
+	const origin = (req.headers || {}).origin;
+	if (origin === undefined) return true;
+	try {
+		const url = new URL(origin);
+		if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+		return originHosts(req).has(url.host.toLowerCase());
+	} catch (e) {
+		return false;
+	}
+}
+
+// Connections per address: open at the same time, and new ones per minute
+const openSockets = new Map(); // address key -> number of open sockets
+const connectRate = new WindowCounter({ max: LIMITS.connectsPerMinute, windowMs: 60 * 1000 });
+// Unknown PIN / player / token answers, per address and per socket (PIN enumeration)
+const pinMisses = new WindowCounter({ max: LIMITS.pinMissesPerAddress, windowMs: LIMITS.pinMissWindowMs });
+// Games created and not ended, per address (game -> address key)
+const gameCreators = new WeakMap();
+// Rate-limit warnings: one log line per address and per minute
+const limitWarnings = new WindowCounter({ max: 1, windowMs: 60 * 1000 });
+
+function warnLimit(socket, what) {
+	const key = addressKey(socket);
+	if (!limitWarnings.hit(key + "|" + what)) {
+		log("warn", "rate limit reached", { limit: what, address: key });
+	}
+}
+
+io.use((socket, next) => {
+	const key = addressKey(socket);
+	if (connectRate.hit(key)) {
+		warnLimit(socket, "connectsPerMinute");
+		return next(new Error("too many connections"));
+	}
+	const open = openSockets.get(key) || 0;
+	if (open >= LIMITS.connectionsPerAddress) {
+		warnLimit(socket, "connectionsPerAddress");
+		return next(new Error("too many connections"));
+	}
+	openSockets.set(key, open + 1);
+	socket.once("disconnect", () => {
+		const left = (openSockets.get(key) || 1) - 1;
+		if (left <= 0) openSockets.delete(key);
+		else openSockets.set(key, left);
+	});
+	next();
+});
+
+// A PIN / player / token that does not exist: counted for the socket and its address.
+// Returns true when the socket must wait (the answer is then error.tooManyAttempts).
+function recordPinMiss(socket) {
+	socket.data.pinMisses = (socket.data.pinMisses || 0) + 1;
+	const addressOver = pinMisses.hit(addressKey(socket));
+	if (addressOver || socket.data.pinMisses > LIMITS.pinMissesPerSocket) {
+		warnLimit(socket, "pinMisses");
+		return true;
+	}
+	return false;
+}
+
+function pinLookupBlocked(socket) {
+	return (socket.data.pinMisses || 0) >= LIMITS.pinMissesPerSocket || pinMisses.blocked(addressKey(socket));
+}
+
+// Can this socket create one more game?
+function mayCreateGame(socket) {
+	if (games.length >= LIMITS.maxGames) return false;
+	if ((socket.data.gamesCreated || 0) >= LIMITS.gamesPerSocket) return false;
+	const key = addressKey(socket);
+	let count = 0;
+	for (const game of games) {
+		if (gameCreators.get(game) === key) count++;
+	}
+	return count < LIMITS.gamesPerAddress;
+}
+
+// Only the host's screen of a game may drive it (start, questions, timers, votes, end)
+function isHost(game, socket) {
+	return Boolean(game) && Boolean(game.hostSocketId) && game.hostSocketId === socket.id;
+}
+
 io.on("connection", function (socket) {
 	const ID = socket.id;
 
 	// Every handler goes through guardHandler: an exception only aborts the game concerned
 	const on = (event, handler, options) => socket.on(event, guardHandler(socket, event, handler, options));
+
+	// Event flood guard (per socket): events beyond the bucket are dropped; a socket that keeps
+	// flooding is disconnected. A phone sends a few events per page, the host a few per round.
+	const bucket = new TokenBucket({ burst: LIMITS.eventBurst, perSecond: LIMITS.eventsPerSecond });
+	let dropped = 0;
+	socket.use((packet, next) => {
+		if (bucket.take()) return next();
+		dropped++;
+		if (dropped === 1) warnLimit(socket, "events");
+		if (dropped > LIMITS.eventBurst * 5 && socket.connected) {
+			log("warn", "socket disconnected: event flood", { address: addressKey(socket), dropped: dropped });
+			socket.disconnect(true);
+		}
+	});
 
 	// Reconnection (e.g. after a server restart): the client sends its PIN and player name in
 	// the handshake, so the socket is back in its room before any of its buffered events is handled
@@ -1124,6 +1366,12 @@ io.on("connection", function (socket) {
 
 	// Handler for creating a new room
 	on("createGame", () => {
+		// Memory: a bounded number of games, per address and per socket
+		if (!mayCreateGame(socket)) {
+			warnLimit(socket, "games");
+			socket.emit("startGameErrorMessages", MESSAGES.tooManyGames);
+			return;
+		}
 		// Look for a PIN that is not already used by another game
 		let pin = generatePIN();
 		for (let i = 0; i < 20 && (findGame(pin) || findRoomName(pin)); i++) {
@@ -1143,9 +1391,13 @@ io.on("connection", function (socket) {
 			let game = new Game();
 			game.pin = pin;
 			game.hostSocketId = ID;
+			game.hostToken = newPlayerToken();
 			games.push(game);
+			gameCreators.set(game, addressKey(socket));
+			socket.data.gamesCreated = (socket.data.gamesCreated || 0) + 1;
 
-			socket.emit("newGame", pin);
+			// 2nd argument: the host token, kept by the host's screen (see mayHost)
+			socket.emit("newGame", pin, game.hostToken);
 		} else {
 			// Retry if the generated room name already exists (highly unlikely)
 			socket.emit("gameExists");
@@ -1167,6 +1419,10 @@ io.on("connection", function (socket) {
 			socket.emit("findRoomByIdErrorMessages", MESSAGES.pinLength);
 			return;
 		} else {
+			if (pinLookupBlocked(socket)) {
+				socket.emit("findRoomByIdErrorMessages", MESSAGES.tooManyAttempts);
+				return;
+			}
 
 			let game = findGame(data.pin);
 			if (typeof game !== "undefined") {
@@ -1176,7 +1432,7 @@ io.on("connection", function (socket) {
 				const known = game.players.find((player) => player.name === name && player.id !== -1);
 				const resume = known && !isFinished(game) && tokenMatches(known, clean(data.token)) ? known.name : null;
 				// We prevent max number of joigners before the game starts
-				if (!resume && game.players.length >= Number(maxNumberOfPlayers) && game.inGame == false) {
+				if (!resume && game.players.length >= MAX_PLAYERS && game.inGame == false) {
 					socket.emit("errorRoomFull", MESSAGES.roomFull);
 					return;
 				} else {
@@ -1184,6 +1440,7 @@ io.on("connection", function (socket) {
 					socket.emit("gamePinFound", game.pin, game.inGame, availablePlayers(game), { resume: resume });
 				}
 			} else {
+				recordPinMiss(socket);
 				socket.emit("findRoomByIdErrorMessages", MESSAGES.gameNotFound);
 			}
 		}
@@ -1200,13 +1457,19 @@ io.on("connection", function (socket) {
 		pin = clean(pin);
 		playerName = clean(playerName);
 
+		if (pinLookupBlocked(socket)) {
+			socket.emit("findRoomByIdErrorMessages", MESSAGES.tooManyAttempts);
+			return;
+		}
 		let game = findGame(pin);
 		if (typeof game === "undefined") {
+			recordPinMiss(socket);
 			socket.emit("findRoomByIdErrorMessages", MESSAGES.gameNotFound);
 			return;
 		}
 		let player = game.players.find((player) => player.name === playerName && player.id !== -1);
 		if (typeof player === "undefined") {
+			recordPinMiss(socket);
 			socket.emit("findRoomByIdErrorMessages", MESSAGES.gameNotFound);
 			return;
 		}
@@ -1227,10 +1490,15 @@ io.on("connection", function (socket) {
 	// if another page still seems connected as that player (it is detached). A new token is issued.
 	on("resumeSession", (data) => {
 		data = asObject(data);
+		if (pinLookupBlocked(socket)) {
+			socket.emit("resumeFailed", MESSAGES.tooManyAttempts);
+			return;
+		}
 		const game = findGame(clean(data.pin));
 		const name = clean(data.playerName);
 		const player = game && game.players.find((p) => p.name === name && p.id !== -1);
 		if (!player || isFinished(game) || !tokenMatches(player, clean(data.token))) {
+			recordPinMiss(socket);
 			socket.emit("resumeFailed", MESSAGES.sessionExpired);
 			return;
 		}
@@ -1305,7 +1573,7 @@ io.on("connection", function (socket) {
 	// Sets the player's name and goes to the waiting room
 	on("setUsername", function (data) {
 		data = asObject(data);
-		data.playerName = clean(data.playerName).trim();
+		data.playerName = stripControls(clean(data.playerName)).replace(/\s+/g, " ").trim();
 
 		if (data.playerName.length == 0) {
 			socket.emit("setUsernameErrorMessages", MESSAGES.nameEmpty);
@@ -1319,12 +1587,19 @@ io.on("connection", function (socket) {
 		}
 
 		data.pin = clean(data.pin);
+		if (pinLookupBlocked(socket)) {
+			socket.emit("setUsernameErrorMessages", MESSAGES.tooManyAttempts);
+			return;
+		}
 		let game = findGame(data.pin);
 		let roomName = findRoomName(data.pin);
+		if (!roomName || typeof game === "undefined") {
+			recordPinMiss(socket);
+		}
 
 		if (roomName && typeof game !== "undefined") {
 			// New players can only join the lobby, within the max number of players
-			if (game.inGame || game.players.length >= Number(maxNumberOfPlayers)) {
+			if (game.inGame || game.players.length >= MAX_PLAYERS) {
 				socket.emit("setUsernameErrorMessages", MESSAGES.roomFull);
 				return;
 			}
@@ -1434,10 +1709,14 @@ io.on("connection", function (socket) {
 		let game = findGame(data.pin);
 		if (typeof game === "undefined") {
 			let roomName = findRoomName(data.pin);
-			if (roomName) socket.to(roomName).emit("redirect", "/");
+			if (roomName && socketBelongsTo(socket, data.pin)) socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
 
+			// Only the host's screen starts its game
+			if (!isHost(game, socket)) {
+				return;
+			}
 			// The game is already started (e.g. double click on "start"): ignore
 			if (game.inGame) {
 				return;
@@ -1528,11 +1807,11 @@ io.on("connection", function (socket) {
 		let game = findGame(data.pin);
 		if (typeof game === "undefined") {
 			let roomName = findRoomName(data.pin);
-			if (roomName) socket.to(roomName).emit("redirect", "/");
+			if (roomName && socketBelongsTo(socket, data.pin)) socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
-			// late event of the host page that was running before a restart
-			if (isStaleHostSocket(game, socket)) return;
+			// only the host's screen; late event of the host page that was running before a restart
+			if (!isHost(game, socket) || isStaleHostSocket(game, socket)) return;
 			// Is there any question left ?
 			game.question++;
 			game.status = "";
@@ -1587,8 +1866,8 @@ io.on("connection", function (socket) {
 
 		let game = findGame(data.pin);
 		let roomName = findRoomName(data.pin);
-		// Players can only be removed from the lobby (nbOfPlayers is frozen once the game started)
-		if (typeof game !== "undefined" && !game.inGame) {
+		// Only the host removes players, and only in the lobby (nbOfPlayers is frozen once the game started)
+		if (typeof game !== "undefined" && isHost(game, socket) && !game.inGame) {
 			// delete player in the game object
 			data.playerId = clean(data.playerId);
 			let index = game.players.findIndex((player) => player.id == data.playerId);
@@ -1620,10 +1899,10 @@ io.on("connection", function (socket) {
 
 		if (typeof game === "undefined") {
 			let roomName = findRoomName(data.pin);
-			if (roomName) socket.to(roomName).emit("redirect", "/");
+			if (roomName && socketBelongsTo(socket, data.pin)) socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
-			if (isStaleHostSocket(game, socket)) return;
+			if (!isHost(game, socket) || isStaleHostSocket(game, socket)) return;
 			game.status = "answering";
 			let roomName = findRoomName(data.pin);
 			if (roomName) socket.to(roomName).emit("redirect", "/html/prompt.html");
@@ -1634,7 +1913,7 @@ io.on("connection", function (socket) {
 	on("answer", function (data) {
 		data = asObject(data);
 		// plain text, normalised like the bot's answers (see normalizeAnswer)
-		data.answer = normalizeAnswer(htmlToText(clean(data.answer)));
+		data.answer = normalizeAnswer(stripControls(htmlToText(clean(data.answer)).replace(/\s+/g, " ")));
 
 		if (data.answer.length == 0) {
 			socket.emit("answerErrorMessages", MESSAGES.answerEmpty);
@@ -1648,7 +1927,7 @@ io.on("connection", function (socket) {
 		let game = findGame(data.pin);
 		if (typeof game === "undefined") {
 			let roomName = findRoomName(data.pin);
-			if (roomName) socket.to(roomName).emit("redirect", "/");
+			if (roomName && socketBelongsTo(socket, data.pin)) socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
 			data.playerName = clean(data.playerName);
@@ -1656,6 +1935,15 @@ io.on("connection", function (socket) {
 			let player = game.players.find(
 				(player) => player.name === data.playerName && player.id !== -1
 			);
+			// The sender must be that player: its attached socket, or its rejoin token (the phone
+			// sends it too; the socket may not be attached yet if "joinRoom" was lost)
+			if (typeof player !== "undefined" && player.socketId !== socket.id) {
+				if (mayActAs(player, clean(data.token))) {
+					rejoinRoom(socket, data.pin, player.name, clean(data.token));
+				} else {
+					player = undefined;
+				}
+			}
 			// Answers are only accepted while the prompt is open (not after the time is up),
 			// from a known player, and only once per player and per round
 			if (
@@ -1693,7 +1981,7 @@ io.on("connection", function (socket) {
 		if (typeof game === "undefined") {
 			if (roomName) socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
-		} else if (isStaleHostSocket(game, socket)) {
+		} else if (!isHost(game, socket) || isStaleHostSocket(game, socket)) {
 			return;
 		} else if (game.status === "answering") {
 			// Only once per round: if every player already answered, answers were already displayed
@@ -1711,7 +1999,7 @@ io.on("connection", function (socket) {
 			socket.emit("redirect", "/");
 			return;
 		}
-		if (isStaleHostSocket(game, socket)) return;
+		if (!isHost(game, socket) || isStaleHostSocket(game, socket)) return;
 		// only once the answers are closed (not while the players are still writing)
 		if (game.status === "answering") return;
 		openVotes(game, findRoomName(data.pin));
@@ -1737,6 +2025,11 @@ io.on("connection", function (socket) {
 				player = named;
 			}
 		}
+		// somebody who is neither a player of this game nor its host gets nothing
+		if (!player && !isHost(game, socket)) {
+			socket.emit("postAnswers", []);
+			return;
+		}
 		socket.emit("postAnswers", answersForPlayer(game.answers, player ? player.name : null));
 		// vote page: the time left to vote, or "too late" if the votes are already closed
 		if (player && !game.votes.includes(player.name)) {
@@ -1757,7 +2050,7 @@ io.on("connection", function (socket) {
 		let game = findGame(pin);
 		if (typeof game === "undefined") {
 			let roomName = findRoomName(pin);
-			if (roomName) socket.to(roomName).emit("redirect", "/");
+			if (roomName && socketBelongsTo(socket, pin)) socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
 		} else {
 			// The voter is identified by its socket (updated by "joinRoom" on the vote page)
@@ -1824,8 +2117,11 @@ io.on("connection", function (socket) {
 
 		if (typeof game === "undefined") {
 			let roomName = findRoomName(data.pin);
-			if (roomName) socket.to(roomName).emit("redirect", "/");
+			if (roomName && socketBelongsTo(socket, data.pin)) socket.to(roomName).emit("redirect", "/");
 			socket.emit("redirect", "/");
+		} else if (!socketBelongsTo(socket, data.pin)) {
+			// only the screens of this game
+			socket.emit("scores", []);
 		} else {
 			let playersRankedByPoints = game.players;
 			playersRankedByPoints.sort(function (a, b) {
@@ -1841,9 +2137,11 @@ io.on("connection", function (socket) {
 		data = asObject(data);
 		data.pin = clean(data.pin);
 		let game = findGame(data.pin);
-		if (typeof game !== "undefined") {
-			removeGame(game);
+		// only the host's screen ends its game
+		if (typeof game === "undefined" || !isHost(game, socket)) {
+			return;
 		}
+		removeGame(game);
 
 		let roomName = findRoomName(data.pin);
 		if (roomName) {

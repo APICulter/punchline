@@ -18,6 +18,7 @@ class Game {
        this.answerTime = answerTime; // seconds to write an answer (null = questionCountDown from config)
        this.revealTime = revealTime; // seconds per answer during the reveals (null = revealTime from config)
        this.voteTime = voteTime; // seconds to vote (null = voteCountDown from config)
+       this.hostToken = null; // secret of the host's screen (see mayHost in app.js)
     }
 }
 

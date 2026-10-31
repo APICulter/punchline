@@ -65,17 +65,41 @@ function playerToken() {
 	return saved && saved.pin === String(session.pin) && saved.playerName === session.playerName ? saved.token : "";
 }
 
+/* Host token: given by the server to the screen that created the game ("newGame"), kept in
+   sessionStorage ("punchlineHostToken") for the lobby, game and scores pages of this tab. The
+   server only treats a page as the host's screen with it (a player who knows the PIN can't). */
+var HOST_TOKEN_KEY = "punchlineHostToken";
+
+function hostToken() {
+	try {
+		return sessionStorage.getItem(HOST_TOKEN_KEY) || "";
+	} catch (e) {
+		return "";
+	}
+}
+
+function saveHostToken(token) {
+	try {
+		if (token) sessionStorage.setItem(HOST_TOKEN_KEY, String(token));
+	} catch (e) {}
+}
+
+// The token of this tab: the player's one on a phone, the host's one on the big screen
+function sessionToken() {
+	return storedSession().playerName ? playerToken() : hostToken();
+}
+
 const socket = io({
 	auth: function (cb) {
 		const session = storedSession();
-		cb(socketConnectedOnce && session.pin ? { rejoin: true, pin: session.pin, playerName: session.playerName || "", token: playerToken() } : {});
+		cb(socketConnectedOnce && session.pin ? { rejoin: true, pin: session.pin, playerName: session.playerName || "", token: sessionToken() } : {});
 	},
 });
 socket.on("connect", function () {
 	if (socketConnectedOnce) {
 		const session = storedSession();
 		if (session.pin) {
-			socket.emit("joinRoom", session.pin, session.playerName || undefined, playerToken() || undefined);
+			socket.emit("joinRoom", session.pin, session.playerName || undefined, sessionToken() || undefined);
 		}
 	}
 	socketConnectedOnce = true;
@@ -401,6 +425,18 @@ window.onclick = function (event) {
 
 
 
+
+// Buttons of the markup (no inline onclick: the Content-Security-Policy forbids inline scripts)
+(function bindHomeButtons() {
+	["home", "playAgain"].forEach(function (id) {
+		let button = document.getElementById(id);
+		if (button) {
+			button.addEventListener("click", function () {
+				home();
+			});
+		}
+	});
+})();
 
 // To go back to the lobby
 function home() {

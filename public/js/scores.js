@@ -8,7 +8,7 @@ window.onload = function () {
 		window.location = "/";
 		return;
 	}
-	socket.emit("joinRoom", punchlinePin);
+	socket.emit("joinRoom", punchlinePin, undefined, hostToken());
 	if (window.PunchlineAudio) PunchlineAudio.setPhase("scores");
 	socket.emit("getScores", {
 		pin: punchlinePin,

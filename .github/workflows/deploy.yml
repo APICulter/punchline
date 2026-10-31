@@ -64,15 +64,24 @@ jobs:
           echo "Deploying $sha" >> "$GITHUB_STEP_SUMMARY"
 
       - name: SSH key and pinned host key
+        id: keys
         env:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
+          if [ -z "$VPS_SSH_KEY" ] && [ -z "$VPS_KNOWN_HOSTS" ] && [ -z "$VPS_HOST" ]; then
+            # no VPS configured yet: nothing to deploy to, the run stays green
+            echo "::notice::Deploy skipped: the production secrets are not set yet (docs/DEPLOY.md)"
+            echo "Deploy skipped: VPS_HOST, VPS_SSH_KEY and VPS_KNOWN_HOSTS are not set" >> "$GITHUB_STEP_SUMMARY"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ -z "$VPS_SSH_KEY" ] || [ -z "$VPS_KNOWN_HOSTS" ] || [ -z "$VPS_HOST" ]; then
-            echo "::error::missing secret: VPS_HOST, VPS_SSH_KEY and VPS_KNOWN_HOSTS are required (deploy/README-ci.md)"
+            echo "::error::missing secret: VPS_HOST, VPS_SSH_KEY and VPS_KNOWN_HOSTS are all required (docs/DEPLOY.md)"
             exit 1
           fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
           install -d -m 700 ~/.ssh
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
@@ -80,6 +89,7 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
 
       - name: Deploy over SSH
+        if: ${{ steps.keys.outputs.ready == 'true' }}
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
@@ -96,7 +106,7 @@ jobs:
             "deploy@$VPS_HOST" "$SHA"
 
       - name: Public health check
-        if: ${{ vars.PUBLIC_URL != '' }}
+        if: ${{ steps.keys.outputs.ready == 'true' && vars.PUBLIC_URL != '' }}
         env:
           PUBLIC_URL: ${{ vars.PUBLIC_URL }}
         run: |

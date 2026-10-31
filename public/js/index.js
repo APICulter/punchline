@@ -233,7 +233,9 @@ function displayLobbyPin(pin) {
 	});
 }
 
-socket.on("newGame", function (data) {
+socket.on("newGame", function (data, token) {
+	// the host token: this screen drives the game (lobby, game and scores pages)
+	saveHostToken(token);
 	document.getElementById("punchlinePin").textContent = data;
 	document.getElementById("punchlinePin").classList.remove("invisible");
 	displayLobbyPin(data);
@@ -597,7 +599,7 @@ function showNameStep(pin, inGame, players) {
 		nameButton.type = "button";
 		nameButton.name = "button";
 		i18nText(nameButton, "name.go");
-		nameButton.setAttribute("onclick", "setUsername()");
+		nameButton.addEventListener("click", setUsername);
 		nameButton.className = "btn btn-primary btn-block";
 		panel.append(nameButton);
 		panel.append(errorContainer);
@@ -658,7 +660,9 @@ socket.on("newJoiner", function (data) {
 		deleteButton.className = "chip-remove";
 		// the player's name only goes through the translation parameters (set as an attribute, never as HTML)
 		i18nAttr(deleteButton, "aria-label", "lobby.remove", { name: data.playerName });
-		deleteButton.setAttribute("onclick", "deletePlayer(this)");
+		deleteButton.addEventListener("click", function () {
+			deletePlayer(deleteButton);
+		});
 		deleteButton.innerHTML =
 			'<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 		playerBlock.append(deleteButton);
@@ -785,3 +789,31 @@ socket.on("errorRoomFull", function (data) {
 	displayErrorMessage(document.getElementById("maxNbOfPlayersReached"), data, null, "roomPin");
 	
 });
+
+/* Controls of the markup (no inline onclick / oninput: the Content-Security-Policy of the game
+   pages forbids inline scripts) */
+(function bindHomeControls() {
+	function on(id, event, handler) {
+		let element = document.getElementById(id);
+		if (element) element.addEventListener(event, handler);
+	}
+	on("createGame", "click", createGame);
+	on("joinGameInit", "click", joinGameInit);
+	on("joinRoomButton", "click", joinRoom);
+	on("startGame", "click", startGame);
+	on("normalMode", "click", changeMode);
+	on("premiumMode", "click", changeMode);
+
+	// lobby sliders: the value next to each one (m:ss for the times)
+	function minutes(value) {
+		return Math.floor(value / 60) + ":" + String(value % 60).padStart(2, "0");
+	}
+	on("nbOfQuestions", "input", function () {
+		document.getElementById("nbOfQuestionsValue").value = this.value;
+	});
+	["answerTime", "revealTime", "voteTime"].forEach(function (id) {
+		on(id, "input", function () {
+			document.getElementById(id + "Value").value = minutes(this.value);
+		});
+	});
+})();

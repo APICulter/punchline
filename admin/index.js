@@ -26,6 +26,7 @@ const crypto = require("crypto");
 const express = require("express");
 
 const auth = require("./auth");
+const { clientKey } = require("../classes/rate-limiter");
 const questionsRouter = require("./questions");
 const gamesRouter = require("./games");
 const settingsRouter = require("./settings");
@@ -290,7 +291,8 @@ module.exports = function mountAdmin(app, options) {
 	api.use(csrfGuard);
 
 	api.post("/login", json, async (req, res, next) => {
-		const ip = clientIp(req);
+		// IPv6: counted per /64 (one client usually owns a whole /64)
+		const ip = clientKey(clientIp(req));
 		const wait = limiter.hit(ip);
 		if (wait > 0) {
 			res.set("Retry-After", String(wait));
@@ -313,6 +315,8 @@ module.exports = function mountAdmin(app, options) {
 				return res.status(401).json({ error: "admin.error.badCredentials" });
 			}
 			limiter.reset(ip);
+			// a session this browser already had is closed: one fresh token per login
+			await sessions.destroy(auth.readToken(req)).catch(() => {});
 			const token = await sessions.create(credentials.user, req);
 			auth.setSessionCookie(req, res, token);
 			if (!req.secure && process.env.NODE_ENV === "production") {
