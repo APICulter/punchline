@@ -215,6 +215,21 @@ esac
 if [[ "$(uname -m)" == x86_64 ]] && ! grep -qw avx /proc/cpuinfo; then
 	warn "this CPU does not report AVX: MongoDB $MONGO_VERSION will not start (choose another VPS type or CPU model)"
 fi
+# MongoDB 8.0 stops at startup on Linux kernels 6.19 to 7.0.13 (TCMalloc incompatibility,
+# SERVER-121912; fixed by kernel 7.0.14). Ubuntu 24.04's own kernel (6.8) is not affected; some
+# providers ship newer kernels. Check before installing anything that would not start.
+kernel_affected() {
+	local v="$1" major minor patch
+	IFS=. read -r major minor patch <<< "${v%%-*}"
+	major=${major:-0}; minor=${minor:-0}; patch=${patch//[^0-9]/}; patch=${patch:-0}
+	if ((major == 6 && minor >= 19)); then return 0; fi
+	if ((major == 7 && minor == 0 && patch < 14)); then return 0; fi
+	return 1
+}
+if kernel_affected "$(uname -r)"; then
+	msg="kernel $(uname -r): MongoDB $MONGO_VERSION refuses to start on Linux 6.19 to 7.0.13 (SERVER-121912). Boot the distribution's standard kernel (Ubuntu 24.04: sudo apt install linux-generic, then choose it at boot / ask your provider) or a kernel >= 7.0.14, then run this script again"
+	if ((DRY_RUN)); then warn "$msg"; else die "$msg"; fi
+fi
 mem_mb=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
 ((mem_mb >= 900)) || warn "only ${mem_mb} MB of RAM: 1 GB or more is recommended for MongoDB + Node.js"
 info "domain $DOMAIN, repository $REPO ($BRANCH), e-mail ${EMAIL:-none}"

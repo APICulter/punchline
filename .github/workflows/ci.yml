@@ -81,7 +81,11 @@ jobs:
       # started by hand rather than as a service container: when it fails, its own log is shown
       - name: Start MongoDB 8
         run: |
-          docker run -d --name mongo -p 127.0.0.1:27017:27017 mongo:8
+          # same major version as production (setup-vps.sh: 8.0). GitHub's runners use a Linux kernel
+          # (6.19+) on which MongoDB 8.0 refuses to start (SERVER-121912); this glibc setting is the
+          # known workaround, fine for a test database. A VPS on Ubuntu 24.04 (kernel 6.8) needs nothing.
+          docker run -d --name mongo -p 127.0.0.1:27017:27017 \
+            -e GLIBC_TUNABLES=glibc.pthread.rseq=1 mongo:8.0
           for _ in $(seq 1 60); do
             if docker exec mongo mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' 2>/dev/null | grep -q 1; then
               echo "MongoDB is up"
