@@ -113,7 +113,14 @@ jobs:
           exit 1
 
       - name: Smoke test (create a game, 2 players join, start, first question)
-        run: npm run test:smoke
+        run: |
+          set -o pipefail
+          if ! npm run test:smoke 2>&1 | tee "$RUNNER_TEMP/smoke.log"; then
+            # the end of both logs as annotations: readable in the run summary without opening the logs
+            echo "::error::smoke test: $(tail -c 1500 "$RUNNER_TEMP/smoke.log" | tr '\n' ' ')"
+            echo "::error::server log: $(tail -c 1500 "$RUNNER_TEMP/app.log" | tr '\n' ' ')"
+            exit 1
+          fi
         env:
           SMOKE_URL: http://127.0.0.1:3000
 
