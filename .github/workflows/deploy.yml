@@ -1,0 +1,112 @@
+# Deploy to the VPS after a successful CI run on a push to main (or by hand: Actions > Deploy >
+# Run workflow, optionally with an older commit SHA of main to roll back).
+#
+# The runner only runs `ssh deploy@VPS_HOST <sha>`: on the VPS that key can do nothing else than
+# /usr/local/sbin/punchline-deploy <sha> (forced command + sudoers), which checks that the commit
+# is on origin/main, deploys it, waits for /healthz and rolls back by itself on failure.
+# Setup: deploy/README-ci.md.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "Commit of main to deploy (full 40-character SHA). Empty: the latest commit of main."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+# one deploy at a time, never cancelled half-way; a newer one waits for the running one
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to production
+    # automatic: only after a successful CI run of a push to main of this repository (not a pull
+    # request, not a fork); manual: only from the main branch
+    if: >-
+      (github.event_name == 'workflow_run'
+        && github.event.workflow_run.conclusion == 'success'
+        && github.event.workflow_run.event == 'push'
+        && github.event.workflow_run.head_branch == 'main'
+        && github.event.workflow_run.head_repository.full_name == github.repository)
+      || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: ${{ vars.PUBLIC_URL }}
+    steps:
+      - name: Commit to deploy
+        id: target
+        env:
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          INPUT_SHA: ${{ inputs.sha }}
+          REF_SHA: ${{ github.sha }}
+        run: |
+          if [ -n "$RUN_SHA" ]; then sha="$RUN_SHA"
+          elif [ -n "$INPUT_SHA" ]; then sha="$INPUT_SHA"
+          else sha="$REF_SHA"
+          fi
+          if ! printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::not a full 40-character lowercase commit SHA: $sha"
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Deploying $sha" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: SSH key and pinned host key
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          if [ -z "$VPS_SSH_KEY" ] || [ -z "$VPS_KNOWN_HOSTS" ] || [ -z "$VPS_HOST" ]; then
+            echo "::error::missing secret: VPS_HOST, VPS_SSH_KEY and VPS_KNOWN_HOSTS are required (deploy/README-ci.md)"
+            exit 1
+          fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy over SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          SHA: ${{ steps.target.outputs.sha }}
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            -p "${VPS_PORT:-22}" \
+            -o IdentitiesOnly=yes \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            -o ConnectTimeout=20 \
+            -o ServerAliveInterval=15 \
+            "deploy@$VPS_HOST" "$SHA"
+
+      - name: Public health check
+        if: ${{ vars.PUBLIC_URL != '' }}
+        env:
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+        run: |
+          for _ in $(seq 1 10); do
+            if curl -fsS --max-time 10 "$PUBLIC_URL/healthz"; then echo; exit 0; fi
+            sleep 3
+          done
+          echo "::error::$PUBLIC_URL/healthz does not answer 200"
+          exit 1
+
+      - name: Remove the SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

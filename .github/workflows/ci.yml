@@ -1,0 +1,122 @@
+# CI: every push and pull request. A successful run on main triggers deploy.yml.
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # a new push to a pull request cancels its previous run; runs on main always finish
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checks:
+    name: Checks (syntax, CSS, shell, audit, secrets)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: JavaScript syntax (node --check)
+        run: git ls-files -z '*.js' | xargs -0 -n 1 node --check
+
+      - name: Committed CSS is up to date (npm run build:css)
+        run: |
+          npm run build:css
+          if ! git diff --exit-code --stat -- public/css/style.css; then
+            echo "::error file=public/css/style.css::public/css/style.css is out of date: run 'npm run build:css' and commit the result (the server does not build the CSS)"
+            exit 1
+          fi
+
+      - name: Shell scripts (bash -n, shellcheck)
+        run: |
+          mapfile -t scripts < <(git ls-files '*.sh')
+          for f in "${scripts[@]}"; do bash -n "$f"; done
+          shellcheck --version | head -n 2
+          shellcheck "${scripts[@]}"
+
+      - name: npm audit (production dependencies, high and critical)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: No committed secrets
+        run: .github/scripts/check-secrets.sh
+
+  smoke:
+    name: Smoke test (server + MongoDB 8)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      mongo:
+        image: mongo:8
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      MONGODB_URI: mongodb://127.0.0.1:27017/punchline_ci
+      PORT: "3000"
+      HOST: 127.0.0.1
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Start the server
+        run: |
+          [ -f config.properties ] || cp config.properties.example config.properties
+          nohup node app.js > "$RUNNER_TEMP/app.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/app.pid"
+          for _ in $(seq 1 60); do
+            if [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/healthz)" = 200 ]; then
+              curl -s http://127.0.0.1:3000/healthz; echo
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::the server did not answer 200 on /healthz within 60 s"
+          cat "$RUNNER_TEMP/app.log"
+          exit 1
+
+      - name: Smoke test (create a game, 2 players join, start, first question)
+        run: npm run test:smoke
+        env:
+          SMOKE_URL: http://127.0.0.1:3000
+
+      - name: Graceful stop (SIGTERM, games saved)
+        run: |
+          pid="$(cat "$RUNNER_TEMP/app.pid")"
+          kill -TERM "$pid"
+          for _ in $(seq 1 100); do kill -0 "$pid" 2>/dev/null || exit 0; sleep 0.1; done
+          echo "::error::the server did not stop within 10 s after SIGTERM"
+          exit 1
+
+      - name: Server log
+        if: always()
+        run: cat "$RUNNER_TEMP/app.log" || true
