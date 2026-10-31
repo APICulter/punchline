@@ -336,6 +336,7 @@ quelques mois.**
 | Symptôme | Piste |
 | --- | --- |
 | `healthz` répond `503` / `mongo: disconnected` | `systemctl status mongod`, puis `journalctl -u mongod -n 50` |
+| MongoDB s'arrête au démarrage : « Linux kernel versions 6.19 and newer has a known incompatibility » | MongoDB 8.0 refuse les noyaux 6.19 à 7.0.13. `uname -r` pour vérifier ; démarre sur le noyau standard d'Ubuntu 24.04 (6.8, `sudo apt install linux-generic`) ou un noyau ≥ 7.0.14. `setup-vps.sh` le détecte avant d'installer |
 | Le site affiche 502 | le jeu ne tourne pas : `journalctl -u punchline -n 50` |
 | « Admin panel disabled » dans les logs | `ADMIN_PASSWORD_HASH` manquant ou sans guillemets simples dans `punchline.env` |
 | Le QR code ou l'adresse affichée sont faux | `PUBLIC_URL='https://punchline.mondomaine.fr'` dans `punchline.env`, puis redémarrer |
