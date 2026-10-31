@@ -60,16 +60,6 @@ jobs:
     name: Smoke test (server + MongoDB 8)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    services:
-      mongo:
-        image: mongo:8
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
     env:
       MONGODB_URI: mongodb://127.0.0.1:27017/punchline_ci
       PORT: "3000"
@@ -87,6 +77,20 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+
+      # started by hand rather than as a service container: when it fails, its own log is shown
+      - name: Start MongoDB 8
+        run: |
+          docker run -d --name mongo -p 127.0.0.1:27017:27017 mongo:8
+          for _ in $(seq 1 60); do
+            if docker exec mongo mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' 2>/dev/null | grep -q 1; then
+              echo "MongoDB is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::MongoDB did not start: $(docker logs --tail 15 mongo 2>&1 | tr '\n' ' ' | cut -c1-1500)"
+          exit 1
 
       - name: Start the server
         run: |

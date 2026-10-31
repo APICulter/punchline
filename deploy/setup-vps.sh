@@ -138,14 +138,17 @@ set_env_key() {
 	cat "$tmp"
 	rm -f "$tmp"
 }
-get_env_key() { [[ -f "$1" ]] && sed -n "s/^$2=//p" "$1" | tail -n 1 || true; }
+get_env_key() {
+	if [[ -f "$1" ]]; then sed -n "s/^$2=//p" "$1" | tail -n 1; fi
+	return 0
+}
 
 user_exists() { getent passwd "$1" >/dev/null; }
 pkg_installed() { dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q 'install ok installed'; }
 as_app() { run runuser -u "$APP_USER" -- env HOME="$APP_DIR" npm_config_cache="$NPM_CACHE" npm_config_update_notifier=false "$@"; }
 
 TMP_DIR=""
-# shellcheck disable=SC2329 # called by the EXIT trap
+# shellcheck disable=SC2317,SC2329 # called by the EXIT trap (SC2317 on shellcheck < 0.10)
 cleanup() { [[ -n "$TMP_DIR" ]] && rm -rf "$TMP_DIR"; return 0; }
 trap cleanup EXIT
 
@@ -524,7 +527,9 @@ if [[ -n "$DEPLOY_KEY" ]]; then
 	{
 		echo "# GitHub Actions deploy key (setup-vps.sh). restrict = no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty,no-user-rc"
 		# keep the other keys, replace this one
-		[[ -f "$CI_KEYS" ]] && grep -v -F "$key_body" "$CI_KEYS" | grep -v '^# GitHub Actions deploy key' || true
+		if [[ -f "$CI_KEYS" ]]; then
+			grep -v -F "$key_body" "$CI_KEYS" | grep -v '^# GitHub Actions deploy key' || true
+		fi
 		echo "$FORCED $DEPLOY_KEY"
 	} | put_file "$CI_KEYS" 644 root:root
 elif [[ -s "$CI_KEYS" ]]; then
