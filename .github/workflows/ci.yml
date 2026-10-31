@@ -76,7 +76,8 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        # --include=dev: NODE_ENV=production (job env, for the server) would skip socket.io-client
+        run: npm ci --include=dev --no-audit --no-fund
 
       # started by hand rather than as a service container: when it fails, its own log is shown
       - name: Start MongoDB 8
