@@ -5,6 +5,12 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # major versions change APIs (express 5, mongoose 9, uuid 14 ESM-only, properties-reader 3):
+    # upgraded on purpose, not by a weekly bot. Security fixes still come (Dependabot security
+    # updates are not affected by this rule when "Dependabot security updates" is enabled).
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       # Tailwind / PostCSS / socket.io-client: one pull request for the build and test tools
       dev-dependencies:
