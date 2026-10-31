@@ -219,7 +219,8 @@ info "domain $DOMAIN, repository $REPO ($BRANCH), e-mail ${EMAIL:-none}"
 # ------------------------------------------------------------------------------------ packages
 step "Base packages"
 BASE_PKGS=(ca-certificates curl gnupg git openssl sudo dnsutils ufw fail2ban python3-systemd
-	unattended-upgrades nginx certbot python3-certbot-nginx logrotate)
+	unattended-upgrades nginx certbot python3-certbot-nginx logrotate
+	age rclone rsync)   # backups: encryption, off-site copy, pull by another machine (docs/DEPLOY.md)
 missing=()
 for p in "${BASE_PKGS[@]}"; do pkg_installed "$p" || missing+=("$p"); done
 if ((${#missing[@]})); then

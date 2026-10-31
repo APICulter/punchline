@@ -20,6 +20,7 @@
 #                         and no plaintext copy is kept. Strongly recommended.
 #   BACKUP_RCLONE_REMOTE  off-site copy with rclone, e.g. "b2-backup:my-bucket/punchline"
 #                         (upload only: remote files are never replaced or deleted)
+#   RCLONE_CONFIG         rclone configuration file (e.g. /etc/punchline/rclone.conf, mode 600)
 #   BACKUP_PING_URL       optional monitoring URL (e.g. https://hc-ping.com/<uuid>): pinged on
 #                         success, "<url>/fail" on failure, so a missing backup raises an alert
 #
@@ -28,7 +29,7 @@
 set -euo pipefail
 
 ENV_FILE="${PUNCHLINE_ENV_FILE:-/etc/punchline/punchline.env}"
-KEYS="MONGODB_URI BACKUP_DIR BACKUP_KEEP_DAILY BACKUP_KEEP_WEEKLY BACKUP_AGE_RECIPIENT BACKUP_RCLONE_REMOTE BACKUP_PING_URL"
+KEYS="MONGODB_URI BACKUP_DIR BACKUP_KEEP_DAILY BACKUP_KEEP_WEEKLY BACKUP_AGE_RECIPIENT BACKUP_RCLONE_REMOTE BACKUP_PING_URL RCLONE_CONFIG"
 if [[ -r "$ENV_FILE" ]]; then
 	# only the keys this script uses, without executing the file
 	while IFS='=' read -r key value; do

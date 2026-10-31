@@ -102,6 +102,11 @@ In VS Code, the "Launch Punchline" configuration in `.vscode/launch.json` starts
 
 ## Deploying on a VPS
 
+> **Step-by-step guide (French): [docs/DEPLOY.md](docs/DEPLOY.md)** — fresh VPS in one command
+> (`deploy/setup-vps.sh`), GitHub Actions CI/CD with automatic rollback, encrypted backups that
+> survive a compromised server, security checklist and incident playbook. Security details:
+> [SECURITY.md](SECURITY.md). The sections below are the reference.
+
 The `deploy/` folder has everything needed to run Punchline on a Linux VPS (Debian / Ubuntu here) behind nginx with HTTPS:
 
 | File | Purpose |
