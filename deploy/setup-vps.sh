@@ -231,7 +231,9 @@ if kernel_affected "$(uname -r)"; then
 	if ((DRY_RUN)); then warn "$msg"; else die "$msg"; fi
 fi
 mem_mb=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
-((mem_mb >= 900)) || warn "only ${mem_mb} MB of RAM: 1 GB or more is recommended for MongoDB + Node.js"
+((mem_mb >= 1800)) || warn "only ${mem_mb} MB of RAM: 2 GB is the minimum for MongoDB + Node.js + nginx (measured: ~1 GB in use)"
+disk_gb=$(df -BG --output=avail / | tail -1 | tr -dc '0-9')
+((disk_gb >= 8)) || warn "only ${disk_gb} GB free on /: 8 GB or more is recommended (system, MongoDB, logs, local backups)"
 info "domain $DOMAIN, repository $REPO ($BRANCH), e-mail ${EMAIL:-none}"
 
 # ------------------------------------------------------------------------------------ packages
@@ -319,6 +321,28 @@ fi
 NODE_BIN="$(command -v node || echo /usr/bin/node)"
 
 # ------------------------------------------------------------------------------------ MongoDB
+step "Memory and logs (small VPS)"
+# a swap file absorbs the peaks of apt upgrades and npm ci on a 1-2 GB machine (not used in play)
+if ((mem_mb < 3000)) && ! swapon --show=NAME --noheadings | grep -q .; then
+	if [[ ! -f /swapfile ]]; then
+		run fallocate -l 1G /swapfile
+		run chmod 600 /swapfile
+		run mkswap /swapfile
+	fi
+	run swapon /swapfile
+	grep -q '^/swapfile ' /etc/fstab || run sh -c "echo '/swapfile none swap sw 0 0' >> /etc/fstab"
+	info "1 GB swap file added (${mem_mb} MB of RAM)"
+else
+	current_swap="$(swapon --show=NAME,SIZE --noheadings | tr '\n' ' ')"
+	info "swap: ${current_swap:-none, not needed with ${mem_mb} MB of RAM}"
+fi
+printf 'vm.swappiness=10\n' | put_file /etc/sysctl.d/90-punchline-swappiness.conf 644 root:root
+if ((CHANGED)); then run sysctl -q -p /etc/sysctl.d/90-punchline-swappiness.conf; fi
+# logs: at most 200 MB of journal on a small disk
+run mkdir -p /etc/systemd/journald.conf.d
+printf '[Journal]\nSystemMaxUse=200M\n' | put_file /etc/systemd/journald.conf.d/90-punchline.conf 644 root:root
+if ((CHANGED)); then run systemctl restart systemd-journald; fi
+
 step "MongoDB $MONGO_VERSION (official repository)"
 if ! [[ -f /etc/apt/sources.list.d/mongodb-org-$MONGO_VERSION.list ]]; then
 	if ((DRY_RUN)); then
@@ -336,11 +360,18 @@ if ((mongo_repo_changed)) || ! pkg_installed mongodb-org || ! pkg_installed mong
 	run apt-get install -y -q mongodb-org mongodb-database-tools
 fi
 
+# small machine (< 3 GB): WiredTiger's cache would take up to half of (RAM - 1 GB); the game's
+# data is a few MB, 256 MB of cache is plenty and leaves room for Node, nginx and apt
+if ((mem_mb < 3000)); then
+	MONGO_CACHE=$'\n  wiredTiger:\n    engineConfig:\n      cacheSizeGB: 0.25'
+else
+	MONGO_CACHE=""
+fi
 # only reachable from this machine, authentication required
-put_file /etc/mongod.conf 644 root:root <<'EOF'
+put_file /etc/mongod.conf 644 root:root <<EOF
 # written by punchline deploy/setup-vps.sh
 storage:
-  dbPath: /var/lib/mongodb
+  dbPath: /var/lib/mongodb${MONGO_CACHE}
 systemLog:
   destination: file
   logAppend: true

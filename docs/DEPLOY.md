@@ -33,9 +33,13 @@ Les détails techniques sont dans [deploy/README-ci.md](../deploy/README-ci.md) 
 
 ### Chez Infomaniak (VPS Lite)
 
-- **Offre** : VPS Lite **2 vCPU / 4 Go / 60 Go** (7,20 CHF HT par mois, engagement d'un an
-  payé d'avance). KVM sur AMD EPYC, donc compatible MongoDB 8. Évite les offres à 2 Go : MongoDB
-  et Node y sont à l'étroit.
+- **Offre** : pour un trafic faible, le VPS Lite **1 vCPU / 2 Go / 20 Go** (2,70 CHF HT par
+  mois, engagement d'un an payé d'avance) suffit : mesuré, le jeu (≈ 160 Mo) et MongoDB
+  (≈ 200 Mo) restent stables même avec plusieurs parties simultanées, soit environ 1 Go utilisé
+  avec le système. Sur moins de 3 Go de RAM, `setup-vps.sh` ajoute 1 Go de swap (pour les pics
+  des mises à jour), limite le cache de MongoDB à 256 Mo et les journaux à 200 Mo. Si un jour
+  le jeu rame ou que la mémoire sature (`free -h`), passe au 2 vCPU / 4 Go depuis le Manager.
+  KVM sur AMD EPYC, donc compatible MongoDB 8.
 - **À la commande** : choisis **Ubuntu 24.04** et importe ta clé SSH personnelle (ou laisse
   Infomaniak en générer une et garde-la précieusement : c'est ton seul accès).
 - **Première connexion** : pas de connexion root directe ; l'utilisateur est `ubuntu`
