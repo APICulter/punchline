@@ -31,6 +31,25 @@ Les détails techniques sont dans [deploy/README-ci.md](../deploy/README-ci.md) 
 - Pour les sauvegardes hors serveur : **un compte Backblaze B2** (10 Go gratuits) *ou* une autre
   machine allumée en permanence (NAS, Raspberry Pi, second petit serveur).
 
+### Chez Infomaniak (VPS Lite)
+
+- **Offre** : VPS Lite **2 vCPU / 4 Go / 60 Go** (7,20 CHF HT par mois, engagement d'un an
+  payé d'avance). KVM sur AMD EPYC, donc compatible MongoDB 8. Évite les offres à 2 Go : MongoDB
+  et Node y sont à l'étroit.
+- **À la commande** : choisis **Ubuntu 24.04** et importe ta clé SSH personnelle (ou laisse
+  Infomaniak en générer une et garde-la précieusement : c'est ton seul accès).
+- **Première connexion** : pas de connexion root directe ; l'utilisateur est `ubuntu`
+  (`ssh -i ta_cle ubuntu@IP`, puis `sudo`). Inutile de passer `--admin-user` à `setup-vps.sh` :
+  `ubuntu` a déjà sudo et ta clé, le script le détecte avant de durcir SSH.
+- **Pare-feu Infomaniak** : le Manager a son propre pare-feu devant le VPS. Dans
+  *VPS → Pare-feu → Ajouter une règle → Sélection manuelle*, ouvre en entrée **TCP 80** et
+  **TCP 443** (IPv4 et IPv6) **avant** de lancer `setup-vps.sh`, sinon le certificat HTTPS
+  échoue. Le port 22 (SSH) doit rester ouvert. Le pare-feu `ufw` installé par le script s'ajoute
+  à celui-ci, ils ne se gênent pas.
+- **Pas de snapshots sur VPS Lite** : les sauvegardes de la section 8 (chiffrées, hors du
+  serveur) sont ta seule protection. Ne saute pas cette étape.
+- **Port 25 sortant bloqué** : sans effet pour Punchline, qui n'envoie pas d'e-mails.
+
 ## 2. Préparer les clés (sur ton ordinateur)
 
 ```bash
