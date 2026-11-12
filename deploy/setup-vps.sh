@@ -781,8 +781,12 @@ info "security updates of $OS_ID are automatic; Node.js and MongoDB (their own r
 step "SSH hardening (no root login, no passwords)"
 # a sudo user that can log in with a key and use sudo: otherwise hardening could lock the owner out
 sudo_key_users=()
-for u in $(getent group sudo | cut -d: -f4 | tr ',' ' '); do
-	[[ "$u" == "$CI_USER" ]] && continue
+# members of the sudo group, plus accounts that get sudo from a sudoers rule (cloud images:
+# "ubuntu" or "debian" via /etc/sudoers.d/90-cloud-init-users)
+candidates="$( { getent group sudo | cut -d: -f4 | tr ',' '\n'; getent passwd | awk -F: '$3 >= 1000 && $3 < 60000 {print $1}'; } | sort -u)"
+for u in $candidates; do
+	[[ -n "$u" && "$u" != "$CI_USER" ]] || continue
+	id -nG "$u" 2>/dev/null | tr ' ' '\n' | grep -qx sudo || sudo -l -U "$u" 2>/dev/null | grep -q '(ALL' || continue
 	home="$(getent passwd "$u" | cut -d: -f6)"
 	keys="$home/.ssh/authorized_keys"
 	[[ -s "$keys" ]] || continue
