@@ -647,32 +647,6 @@ server {
 }
 EOF
 }
-install_nginx_site() {
-	if [[ -f "$CERT_DIR/fullchain.pem" ]]; then
-		sed -e "s#punchline\.example\.com#$DOMAIN#g" -e "s#127\.0\.0\.1:3000#127.0.0.1:$APP_PORT#" "$SRC/nginx-punchline.conf" \
-			| put_file /etc/nginx/sites-available/punchline 644 root:root
-	else
-		nginx_http_only | put_file /etc/nginx/sites-available/punchline 644 root:root
-	fi
-	local changed=$CHANGED
-	if [[ ! -L /etc/nginx/sites-enabled/punchline ]]; then
-		run ln -sfn /etc/nginx/sites-available/punchline /etc/nginx/sites-enabled/punchline
-		changed=1
-	fi
-	if [[ -e /etc/nginx/sites-enabled/default ]]; then
-		run rm -f /etc/nginx/sites-enabled/default
-		changed=1
-	fi
-	run systemctl enable nginx
-	if ((changed)); then
-		run nginx -t
-		run systemctl reload-or-restart nginx
-	else
-		run systemctl start nginx
-	fi
-}
-install_nginx_site
-
 # certbot's TLS settings, included by the HTTPS site (normally written by the nginx plugin)
 ensure_tls_includes() {
 	local f
@@ -694,6 +668,34 @@ ensure_tls_includes() {
 		fi
 	fi
 }
+
+install_nginx_site() {
+	if [[ -f "$CERT_DIR/fullchain.pem" ]]; then
+		# the HTTPS site includes these files: write them first, or "nginx -t" fails
+		ensure_tls_includes
+		sed -e "s#punchline\.example\.com#$DOMAIN#g" -e "s#127\.0\.0\.1:3000#127.0.0.1:$APP_PORT#" "$SRC/nginx-punchline.conf" \
+			| put_file /etc/nginx/sites-available/punchline 644 root:root
+	else
+		nginx_http_only | put_file /etc/nginx/sites-available/punchline 644 root:root
+	fi
+	local changed=$CHANGED
+	if [[ ! -L /etc/nginx/sites-enabled/punchline ]]; then
+		run ln -sfn /etc/nginx/sites-available/punchline /etc/nginx/sites-enabled/punchline
+		changed=1
+	fi
+	if [[ -e /etc/nginx/sites-enabled/default ]]; then
+		run rm -f /etc/nginx/sites-enabled/default
+		changed=1
+	fi
+	run systemctl enable nginx
+	# always check and reload (cheap): a previous run may have written the file and stopped before
+	# reloading, and nginx would keep serving the old site while the file looks "unchanged"
+	((changed)) || info "nginx site unchanged, reloading anyway"
+	run nginx -t
+	run systemctl reload-or-restart nginx
+}
+install_nginx_site
+
 
 # does the domain point to this server?
 dns_points_here() {
