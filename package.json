@@ -28,7 +28,7 @@
   "homepage": "https://github.com/APICulter/punchline#readme",
   "dependencies": {
     "express": "^4.22.3",
-    "isomorphic-dompurify": "^4.6.0",
+    "isomorphic-dompurify": "^4.7.0",
     "mongoose": "^7.8.13",
     "properties-reader": "^2.3.0",
     "socket.io": "^4.8.4",
