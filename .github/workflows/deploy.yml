@@ -85,6 +85,13 @@ jobs:
           install -d -m 700 ~/.ssh
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # the fingerprint is public: compare it on the VPS with
+          #   sudo ssh-keygen -lf /home/deploy/.ssh/authorized_keys
+          if ! pub="$(ssh-keygen -y -P '' -f ~/.ssh/deploy_key 2>/dev/null)"; then
+            echo "::error::VPS_SSH_KEY is not a usable private key: paste the whole private file (BEGIN/END lines included), without a passphrase, not the .pub"
+            exit 1
+          fi
+          echo "Deploy key fingerprint: $(ssh-keygen -lf - <<< "$pub")"
           printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
